@@ -1,0 +1,11 @@
+[requires]
+boost/1.84.0
+openssl/3.2.0
+
+[generators]
+CMakeToolchain
+CMakeDeps
+
+[options]
+openssl/3.2.0:shared=False
+boost/1.84.0:shared=False
