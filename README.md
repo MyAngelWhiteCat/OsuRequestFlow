@@ -24,6 +24,7 @@
 ## Task Board
 
 ### IRC Client
+- Проверка соединения.
 - Тестирование.
 
 ### Downloader
