@@ -233,5 +233,163 @@ namespace irc {
         return badges_;
     }
 
+    void Client::ConnectionVisitor::operator()(tcp::socket& socket) {
+        tcp::resolver resolver(socket.get_executor()); // bad prac :(
+        auto endpoints = resolver.resolve(domain::IRC_EPS::HOST, domain::IRC_EPS::PORT);
+        net::connect(socket, endpoints, client_.ec_);
+        if (client_.ec_) {
+            ReportError(client_.ec_, "Connection"sv);
+            return;
+        }
+        client_.no_ssl_connected_ = true;
+    }
+
+    void Client::ConnectionVisitor::operator()(ssl::stream<tcp::socket>& socket) {
+        tcp::resolver resolver(socket.get_executor()); // again :(
+        auto endpoints = resolver.resolve(domain::IRC_EPS::HOST, domain::IRC_EPS::SSL_PORT);
+        net::connect(socket.lowest_layer(), endpoints, client_.ec_);
+        if (client_.ec_) {
+            ReportError(client_.ec_, "SSL Connection"sv);
+            return;
+        }
+        socket.lowest_layer().set_option(tcp::no_delay(true));
+        socket.handshake(ssl::stream_base::client, client_.ec_);
+        if (client_.ec_) {
+            ReportError(client_.ec_, "SSL Handshake"sv);
+            socket.lowest_layer().close();
+            return;
+        }
+        client_.ssl_connected_ = true;
+    }
+
+    Client::PingPongVisitor::PingPongVisitor(Client& client, std::string_view ball)
+        : client_(client)
+        , ball_(ball) 
+    {
+        if (ball.size() < domain::Command::PONG.size()) {
+            throw std::invalid_argument("incorrect PONG message"s);
+        }
+    }
+
+    void Client::PingPongVisitor::operator()(tcp::socket& socket) {
+        net::write(socket, net::buffer(std::string(domain::Command::PONG)
+            .append(std::string(ball_.substr(domain::Command::PONG.size())))), client_.ec_);
+        if (client_.ec_) {
+            ReportError(client_.ec_, "CRITICAL!! Sending PONG Error! Disconnection expected..."sv);
+        }
+    }
+
+    void Client::PingPongVisitor::operator()(ssl::stream<tcp::socket>& socket) {
+        net::write(socket, net::buffer(std::string(domain::Command::PONG)
+            .append(std::string(ball_.substr(domain::Command::PONG.size())))), client_.ec_);
+        if (client_.ec_) {
+            ReportError(client_.ec_, "CRITICAL!! Sending PONG Error! Disconnection expected..."sv);
+        }
+    }
+
+    std::vector<Message> Client::ReadMessageVisitor::operator()(tcp::socket& socket) {
+        net::streambuf streambuf;
+
+        if (client_.no_ssl_connected_) {
+            net::read_until(socket, streambuf, "\r\n"s, client_.ec_);
+        }
+        else {
+            throw std::runtime_error("Trying read socket without connection");
+        }
+
+        return ReadMessages(streambuf);
+    }
+
+    std::vector<Message> Client::ReadMessageVisitor::operator()(ssl::stream<tcp::socket>& socket) {
+        net::streambuf streambuf;
+
+        if (client_.ssl_connected_) {
+            net::read_until(socket, streambuf, "\r\n"s, client_.ec_);
+        }
+        else {
+            throw std::runtime_error("Trying read socket without connection");
+        }
+
+        return ReadMessages(streambuf);
+    }
+
+    std::vector<Message> Client::ReadMessageVisitor::ReadMessages(net::streambuf& streambuf) {
+        std::vector<Message> read_result;
+        std::string line;
+        std::istream is(&streambuf);
+        while (std::getline(is, line)) {
+            Message msg = client_.IdentifyMessageType(line);
+            if (msg.GetMessageType() == domain::MessageType::PING) {
+                client_.Pong(msg.GetContent());
+            }
+            read_result.push_back(msg);
+        }
+
+        return read_result;
+    }
+
+    void Client::DisconnectVisitor::operator()(tcp::socket& socket) {
+        socket.shutdown(net::socket_base::shutdown_send, ignor_);
+        socket.close(client_.ec_);
+        client_.no_ssl_connected_ = false;
+    }
+
+    void Client::DisconnectVisitor::operator()(ssl::stream<tcp::socket>& socket) {
+        socket.shutdown(ignor_);
+        socket.lowest_layer().close(client_.ec_);
+        client_.ssl_connected_ = false;
+    }
+
+    void Client::JoinVisitor::operator()(tcp::socket& socket) {
+        if (!client_.no_ssl_connected_) {
+            throw std::runtime_error("Join without connection attempt");
+        }
+        net::write(socket, net::buffer((std::string(domain::Command::JOIN_CHANNEL) + std::string(channel_name_) + "\r\n"s)), client_.ec_);
+    }
+
+    void Client::JoinVisitor::operator()(ssl::stream<tcp::socket>& socket) {
+        if (!client_.ssl_connected_) {
+            throw std::runtime_error("Join without connection attempt");
+        }
+        net::write(socket, net::buffer((std::string(domain::Command::JOIN_CHANNEL) + std::string(channel_name_) + "\r\n"s)), client_.ec_);
+    }
+
+    void Client::AuthorizeVisitor::operator()(tcp::socket& socket) {
+        if (!client_.no_ssl_connected_) {
+            throw std::runtime_error("Authorizing without connection attempt");
+        }
+        net::write(socket, net::buffer(auth_data_.GetAuthMessage()), client_.ec_);
+        client_.authorized_ = true;
+    }
+
+    void Client::AuthorizeVisitor::operator()(ssl::stream<tcp::socket>& socket) {
+        if (!client_.ssl_connected_) {
+            throw std::runtime_error("Authorizing without connection attempt");
+        }
+        net::write(socket, net::buffer(auth_data_.GetAuthMessage()), client_.ec_);
+        client_.authorized_ = true;
+    }
+
+    void Client::CapRequestVisitor::operator()(tcp::socket& socket) {
+        if (!client_.no_ssl_connected_) {
+            throw std::runtime_error("Authorizing without connection attempt");
+        }
+        net::write(socket, net::buffer(std::string(domain::Command::CREQ)
+            + std::string(domain::Capabilityes::COMMANDS) + " "
+            + std::string(domain::Capabilityes::MEMBERSHIP) + " "
+            + std::string(domain::Capabilityes::TAGS) + "\n\r"), client_.ec_);
+    }
+
+    void Client::CapRequestVisitor::operator()(ssl::stream<tcp::socket>& socket) {
+        if (!client_.ssl_connected_) {
+            throw std::runtime_error("Authorizing without connection attempt");
+        }
+        net::write(socket, net::buffer(std::string(domain::Command::CREQ)
+            + std::string(domain::Capabilityes::COMMANDS) + " "
+            + std::string(domain::Capabilityes::MEMBERSHIP) + " "
+            + std::string(domain::Capabilityes::TAGS) + "\n\r"), client_.ec_);
+    }
+
+
 } // namespace irc
 
