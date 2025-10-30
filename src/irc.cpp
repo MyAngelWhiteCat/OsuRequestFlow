@@ -32,8 +32,8 @@ namespace irc {
     }
 
     Client::Client(net::io_context& ioc, ssl::context& ctx)
-        : socket_(ssl::stream<tcp::socket>(ioc, ctx)) 
-    {    
+        : socket_(ssl::stream<tcp::socket>(ioc, ctx))
+    {
     }
 
     void Client::Connect() {
@@ -112,77 +112,123 @@ namespace irc {
 
     void Client::CheckConnect() {
         ec_.clear();
-        
+
         //TODO;
     }
 
     Message Client::IdentifyMessageType(std::string_view raw_message) {
+        const int EMPTY = 0;
+        const int STATUSCODE_TAG_INDEX = 1;
+        const int CAPABILITIES_REQUEST_TAG_INDEX = 1;
+        const int PING_EXPECTED = 2;
+        const int JOIN_PART_EXPECTED = 3;
+        const int ROOMSTATE_OR_STATUSCODE_EXPECTED = 4;
+        const int CORRECT_USER_MESSAGE_MINIMUM_SIZE = 4;
+
+
         auto split_raw_message = domain::Split(raw_message);
 
         switch (split_raw_message.size()) {
-        case (0):
+        case (EMPTY):
             return std::move(Message(domain::MessageType::EMPTY, ""));
-        case (2):
-            return CheckForPong(split_raw_message, raw_message);
+
+        case (PING_EXPECTED):
+            return CheckForPing(split_raw_message, raw_message);
             break;
 
-        case (3):
-            if (split_raw_message[1] == domain::Command::JOIN) {
-                return std::move(Message(domain::MessageType::JOIN, std::move(std::string(split_raw_message[2]))));
-            }
-            if (split_raw_message[1] == domain::Command::PART) {
-                return std::move(Message(domain::MessageType::PART, std::move(std::string(split_raw_message[2]))));
-            }
+        case (JOIN_PART_EXPECTED):
+            return CheckForJoinPart(split_raw_message, raw_message);
             break;
 
-        case (4):
-            if (split_raw_message[2] == domain::Command::ROOMSTATE) {
-                return std::move(Message(domain::MessageType::ROOMSTATE, std::move(std::string(split_raw_message[0]))));
-            }
-            if (domain::IsNumber(split_raw_message[1])) {
-                return std::move(Message(domain::MessageType::STATUSCODE, std::move(std::string(split_raw_message[1]))));
-            }
-
-            throw std::invalid_argument("Unknown message type"s);
+        case (ROOMSTATE_OR_STATUSCODE_EXPECTED):
+            return CheckForRoomstateOrStatusCode(split_raw_message, raw_message);
 
         default:
-            if (split_raw_message.size() >= 2) {
-                if (split_raw_message[2] == domain::Command::PRIVMSG) {
-                    if (split_raw_message.size() < 4) {
-                        throw std::invalid_argument("Empty user message");
-                    }
-                    std::string user_content = GetUserMessageFromSplitRawMessage(split_raw_message);
-                    
-                    return std::move(Message(domain::MessageType::PRIVMSG
-                        , std::move(user_content)
-                        , std::move(std::string(split_raw_message[0]))));
-                }
+            if (split_raw_message.size() >= CORRECT_USER_MESSAGE_MINIMUM_SIZE) {
+                return CheckForUserMessage(split_raw_message, raw_message);
             }
-            if (domain::IsNumber(split_raw_message[1])) {
-                return std::move(Message(domain::MessageType::STATUSCODE, std::move(std::string(split_raw_message[1]))));
+            if (domain::IsNumber(split_raw_message[STATUSCODE_TAG_INDEX])) {
+                return std::move(Message(domain::MessageType::STATUSCODE
+                     , std::move(std::string(split_raw_message[STATUSCODE_TAG_INDEX]))));
             }
-            if (split_raw_message[1] == domain::Command::CRES) {
-                return std::move(Message(domain::MessageType::CAPRES, std::move(std::string(raw_message)))); // Dummy
+            if (split_raw_message[CAPABILITIES_REQUEST_TAG_INDEX] == domain::Command::CRES) {
+                return std::move(Message(domain::MessageType::CAPRES
+                     , std::move(std::string(raw_message)))); // Dummy
             }
 
-            return std::move(Message(domain::MessageType::UNKNOWN, std::move(std::string(raw_message)))); // Dummy
+            return std::move(Message(domain::MessageType::UNKNOWN
+                 , std::move(std::string(raw_message)))); // Dummy
         }
-        return std::move(Message(domain::MessageType::UNKNOWN, std::move(std::string(raw_message)))); // 
+        return std::move(Message(domain::MessageType::UNKNOWN
+             , std::move(std::string(raw_message)))); // Dummy
     }
 
-    Message Client::CheckForPong(const std::vector<std::string_view>& split_raw_message, std::string_view raw_message) {
-        if (split_raw_message[0] == domain::Command::PONG) {
-            return std::move(Message(domain::MessageType::PING, std::move(std::string(split_raw_message[1]))));
+    Message Client::CheckForPing(const std::vector<std::string_view>& split_raw_message, std::string_view raw_message) {
+        const int PING_COMMAND_INDEX = 0;
+        const int PING_CONTENT_INDEX = 1;
+
+        if (split_raw_message[PING_COMMAND_INDEX] == domain::Command::PING) {
+            return std::move(Message(domain::MessageType::PING
+                 , std::move(std::string(split_raw_message[PING_CONTENT_INDEX]))));
         }
-        else {
-            return std::move(Message(domain::MessageType::UNKNOWN, std::move(std::string(raw_message))));
+        return std::move(Message(domain::MessageType::UNKNOWN
+             , std::move(std::string(raw_message))));
+    }
+
+    Message Client::CheckForJoinPart(const std::vector<std::string_view>& split_raw_message, std::string_view raw_message) {
+        const int ACTION_TAG_INDEX = 1;
+        const int CHANNEL_NAME_INDEX = 2;
+
+        if (split_raw_message[ACTION_TAG_INDEX] == domain::Command::JOIN) {
+            return std::move(Message(domain::MessageType::JOIN
+                 , std::move(std::string(split_raw_message[CHANNEL_NAME_INDEX]))));
         }
+        if (split_raw_message[ACTION_TAG_INDEX] == domain::Command::PART) {
+            return std::move(Message(domain::MessageType::PART
+                 , std::move(std::string(split_raw_message[CHANNEL_NAME_INDEX]))));
+        }
+        return std::move(Message(domain::MessageType::UNKNOWN
+             , std::move(std::string(raw_message))));
+    }
+
+    Message Client::CheckForRoomstateOrStatusCode(const std::vector<std::string_view>& split_raw_message, std::string_view raw_message) {
+        const int STATUSCODE_INDEX = 1;
+        const int ROOMSTATE_CONTENT_INDEX = 1;
+        const int ROOMSTATE_TAG_INDEX = 2;
+
+        if (split_raw_message[ROOMSTATE_TAG_INDEX] == domain::Command::ROOMSTATE) {
+            return std::move(Message(domain::MessageType::ROOMSTATE
+                 , std::move(std::string(split_raw_message[ROOMSTATE_CONTENT_INDEX]))));
+        }
+        if (domain::IsNumber(split_raw_message[STATUSCODE_INDEX])) {
+            return std::move(Message(domain::MessageType::STATUSCODE
+                 , std::move(std::string(split_raw_message[STATUSCODE_INDEX]))));
+        }
+        return std::move(Message(domain::MessageType::UNKNOWN
+             , std::move(std::string(raw_message))));
+    }
+
+    Message Client::CheckForUserMessage(const std::vector<std::string_view>& split_raw_message, std::string_view raw_message) {
+        const int BADGES_INDEX = 0;
+        const int MSG_TAG_INDEX = 2;
+
+        if (split_raw_message[MSG_TAG_INDEX] == domain::Command::PRIVMSG) {
+            std::string user_content = GetUserMessageFromSplitRawMessage(split_raw_message);
+
+            return std::move(Message(domain::MessageType::PRIVMSG
+                 , std::move(user_content)
+                 , std::move(std::string(split_raw_message[BADGES_INDEX]))));
+        }
+        return std::move(Message(domain::MessageType::EMPTY
+             , std::move(std::string(raw_message))));
     }
 
     std::string Client::GetUserMessageFromSplitRawMessage(const std::vector<std::string_view>& split_raw_message) {
+        const int USER_MESSAGE_START = 4;
+
         std::string content;
         bool is_first = true;
-        for (int i = 4; i < split_raw_message.size(); ++i) {
+        for (int i = USER_MESSAGE_START; i < split_raw_message.size(); ++i) {
             if (!is_first) {
                 content += ' ';
             }
@@ -278,7 +324,7 @@ namespace irc {
 
     Client::PingPongVisitor::PingPongVisitor(Client& client, std::string_view ball)
         : client_(client)
-        , ball_(ball) 
+        , ball_(ball)
     {
         if (ball.size() < domain::Command::PONG.size()) {
             throw std::invalid_argument("incorrect PONG message"s);
@@ -332,6 +378,7 @@ namespace irc {
         std::string line;
         std::istream is(&streambuf);
         while (std::getline(is, line)) {
+            std::cout << "ReadMessages line.size() = " << line.size() << std::endl;
             Message msg = client_.IdentifyMessageType(line);
             if (msg.GetMessageType() == domain::MessageType::PING) {
                 client_.Pong(msg.GetContent());

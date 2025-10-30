@@ -93,6 +93,10 @@ namespace irc {
         void Pong(std::string_view ball);
         void CheckConnect();
         Message IdentifyMessageType(std::string_view raw_message);
+        Message CheckForPing(const std::vector<std::string_view>& split_raw_message, std::string_view raw_message);
+        Message CheckForJoinPart(const std::vector<std::string_view>& split_raw_message, std::string_view raw_message);
+        Message CheckForRoomstateOrStatusCode(const std::vector<std::string_view>& split_raw_message, std::string_view raw_message);
+        Message CheckForUserMessage(const std::vector<std::string_view>& split_raw_message, std::string_view raw_message);
         std::string GetUserMessageFromSplitRawMessage(const std::vector<std::string_view>& split_raw_message);
 
         class ConnectionVisitor {

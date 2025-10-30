@@ -93,6 +93,10 @@ int main() {
                         if (!content.empty()) {
                             std::cout << content << std::endl;
                         }
+                        if (content.find("\n") != std::string::npos) {
+                            std::cout << "Catch this bitch" << std::endl;
+
+                        }
                         continue;
                     }
                     else {
