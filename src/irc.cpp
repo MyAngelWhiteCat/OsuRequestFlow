@@ -148,22 +148,20 @@ namespace irc {
                 return std::move(Message(domain::MessageType::STATUSCODE, std::move(std::string(splited[1]))));
             }
 
-            throw std::runtime_error("Unknown message type"s);
+            throw std::invalid_argument("Unknown message type"s);
 
         default:
-            if (splited[2] == domain::Command::PRIVMSG) {
-                std::string content;
-                bool is_first = true;
-                for (int i = 4; i < splited.size(); ++i) {
-                    if (!is_first) {
-                        content += ' ';
+            if (splited.size() >= 2) {
+                if (splited[2] == domain::Command::PRIVMSG) {
+                    if (splited.size() < 4) {
+                        throw std::invalid_argument("Empty user message");
                     }
-                    content += splited[i];
-                    is_first = false;
+                    std::string content = GetUserMessageFromRawMessage(raw_message);
+                    
+                    return std::move(Message(domain::MessageType::PRIVMSG
+                        , std::move(content)
+                        , std::move(std::string(splited[0]))));
                 }
-                return std::move(Message(domain::MessageType::PRIVMSG
-                    , std::move(content)
-                    , std::move(std::string(splited[0]))));
             }
             if (domain::IsNumber(splited[1])) {
                 return std::move(Message(domain::MessageType::STATUSCODE, std::move(std::string(splited[1]))));
@@ -176,6 +174,18 @@ namespace irc {
         }
         return std::move(Message(domain::MessageType::UNKNOWN, std::move(std::string(raw_message)))); // Dummy
 
+    }
+
+    std::string Client::GetUserMessageFromRawMessage(std::vector<std::string_view> splitted_raw_message) {
+        std::string content;
+        bool is_first = true;
+        for (int i = 4; i < splited_raw_message.size(); ++i) {
+            if (!is_first) {
+                content += ' ';
+            }
+            content += splited_raw_message[i];
+            is_first = false;
+        }
     }
 
 
