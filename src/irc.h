@@ -267,6 +267,35 @@ namespace irc {
             std::string_view channel_name_;
         };
 
+        class AuthorizeVisitor {
+        public:
+            explicit AuthorizeVisitor(Client& client, const AuthorizeData& auth_data)
+                : client_(client)
+                , auth_data_(auth_data)
+            {
+            }
+
+            void operator()(tcp::socket& socket) {
+                if (!client_.no_ssl_connected_) {
+                    throw std::runtime_error("Authorizing without connection attempt");
+                }
+                net::write(socket, net::buffer(auth_data_.GetAuthMessage()), client_.ec_);
+                client_.authorized_ = true;
+            }
+
+            void operator()(ssl::stream<tcp::socket>& socket) {
+                if (!client_.ssl_connected_) {
+                    throw std::runtime_error("Authorizing without connection attempt");
+                }
+                net::write(socket, net::buffer(auth_data_.GetAuthMessage()), client_.ec_);
+                client_.authorized_ = true;
+            }
+
+        private:
+            Client& client_;
+            AuthorizeData auth_data_;
+        };
+
     };
 
 

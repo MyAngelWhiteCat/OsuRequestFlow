@@ -67,17 +67,8 @@ namespace irc {
     void Client::Authorize(const AuthorizeData& auth_data) {
         ec_.clear();
 
-        if (no_ssl_connected_) {
-            net::write(socket_, net::buffer(auth_data.GetAuthMessage()), ec_);
-            authorized_ = true;
-        }
-        else if (ssl_connected_) {
-            net::write(ssl_socket_, net::buffer(auth_data.GetAuthMessage()), ec_);
-            authorized_ = true;
-        }
-        else {
-            throw std::runtime_error("Authorizing without connection attempt");
-        }
+        AuthorizeVisitor visitor(*this, auth_data);
+        std::visit(visitor, socket_);
         if (ec_) {
             ReportError(ec_, "Authorize"s);
             authorized_ = false;
