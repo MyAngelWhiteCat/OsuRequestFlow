@@ -78,7 +78,7 @@ int main() {
         client.Connect();
         client.CapRequest();
         client.Authorize(a_data);
-        client.Join("yourragegaming");
+        client.Join("chicony");
 
         auto start = std::chrono::steady_clock::now();
         while (/*std::chrono::steady_clock::now() - start < 10000ms*/true) {
@@ -86,6 +86,16 @@ int main() {
                 auto rr = client.Read();
                 for (const auto& r : rr) {
                     if (r.GetMessageType() == domain::MessageType::EMPTY) {
+                        continue;
+                    }
+                    if (r.GetMessageType() == domain::MessageType::UNKNOWN) {
+                        auto content = r.GetContent();
+                        if (!content.empty()) {
+                            std::cout << content << std::endl;
+                        }
+                        continue;
+                    }
+                    else {
                         continue;
                     }
                     if (r.GetMessageType() == domain::MessageType::PRIVMSG) {

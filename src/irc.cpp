@@ -117,75 +117,79 @@ namespace irc {
     }
 
     Message Client::IdentifyMessageType(std::string_view raw_message) {
-        auto splited = domain::Split(raw_message);
+        auto split_raw_message = domain::Split(raw_message);
 
-        switch (splited.size()) {
+        switch (split_raw_message.size()) {
         case (0):
             return std::move(Message(domain::MessageType::EMPTY, ""));
         case (2):
-            if (splited[0] == domain::Command::PONG) {
-                return std::move(Message(domain::MessageType::PING, std::move(std::string(splited[1]))));
-            }
-            else {
-                return std::move(Message(domain::MessageType::UNKNOWN, std::move(std::string(raw_message))));
-            }
+            return CheckForPong(split_raw_message, raw_message);
             break;
 
         case (3):
-            if (splited[1] == domain::Command::JOIN) {
-                return std::move(Message(domain::MessageType::JOIN, std::move(std::string(splited[2]))));
+            if (split_raw_message[1] == domain::Command::JOIN) {
+                return std::move(Message(domain::MessageType::JOIN, std::move(std::string(split_raw_message[2]))));
             }
-            if (splited[1] == domain::Command::PART) {
-                return std::move(Message(domain::MessageType::PART, std::move(std::string(splited[2]))));
+            if (split_raw_message[1] == domain::Command::PART) {
+                return std::move(Message(domain::MessageType::PART, std::move(std::string(split_raw_message[2]))));
             }
             break;
 
         case (4):
-            if (splited[2] == domain::Command::ROOMSTATE) {
-                return std::move(Message(domain::MessageType::ROOMSTATE, std::move(std::string(splited[0]))));
+            if (split_raw_message[2] == domain::Command::ROOMSTATE) {
+                return std::move(Message(domain::MessageType::ROOMSTATE, std::move(std::string(split_raw_message[0]))));
             }
-            if (domain::IsNumber(splited[1])) {
-                return std::move(Message(domain::MessageType::STATUSCODE, std::move(std::string(splited[1]))));
+            if (domain::IsNumber(split_raw_message[1])) {
+                return std::move(Message(domain::MessageType::STATUSCODE, std::move(std::string(split_raw_message[1]))));
             }
 
             throw std::invalid_argument("Unknown message type"s);
 
         default:
-            if (splited.size() >= 2) {
-                if (splited[2] == domain::Command::PRIVMSG) {
-                    if (splited.size() < 4) {
+            if (split_raw_message.size() >= 2) {
+                if (split_raw_message[2] == domain::Command::PRIVMSG) {
+                    if (split_raw_message.size() < 4) {
                         throw std::invalid_argument("Empty user message");
                     }
-                    std::string content = GetUserMessageFromRawMessage(raw_message);
+                    std::string user_content = GetUserMessageFromSplitRawMessage(split_raw_message);
                     
                     return std::move(Message(domain::MessageType::PRIVMSG
-                        , std::move(content)
-                        , std::move(std::string(splited[0]))));
+                        , std::move(user_content)
+                        , std::move(std::string(split_raw_message[0]))));
                 }
             }
-            if (domain::IsNumber(splited[1])) {
-                return std::move(Message(domain::MessageType::STATUSCODE, std::move(std::string(splited[1]))));
+            if (domain::IsNumber(split_raw_message[1])) {
+                return std::move(Message(domain::MessageType::STATUSCODE, std::move(std::string(split_raw_message[1]))));
             }
-            if (splited[1] == domain::Command::CRES) {
+            if (split_raw_message[1] == domain::Command::CRES) {
                 return std::move(Message(domain::MessageType::CAPRES, std::move(std::string(raw_message)))); // Dummy
             }
 
-            return std::move(Message(domain::MessageType::ROOMSTATE, std::move(std::string(raw_message)))); // Dummy
+            return std::move(Message(domain::MessageType::UNKNOWN, std::move(std::string(raw_message)))); // Dummy
         }
-        return std::move(Message(domain::MessageType::UNKNOWN, std::move(std::string(raw_message)))); // Dummy
-
+        return std::move(Message(domain::MessageType::UNKNOWN, std::move(std::string(raw_message)))); // 
     }
 
-    std::string Client::GetUserMessageFromRawMessage(std::vector<std::string_view> splitted_raw_message) {
+    Message Client::CheckForPong(const std::vector<std::string_view>& split_raw_message, std::string_view raw_message) {
+        if (split_raw_message[0] == domain::Command::PONG) {
+            return std::move(Message(domain::MessageType::PING, std::move(std::string(split_raw_message[1]))));
+        }
+        else {
+            return std::move(Message(domain::MessageType::UNKNOWN, std::move(std::string(raw_message))));
+        }
+    }
+
+    std::string Client::GetUserMessageFromSplitRawMessage(const std::vector<std::string_view>& split_raw_message) {
         std::string content;
         bool is_first = true;
-        for (int i = 4; i < splited_raw_message.size(); ++i) {
+        for (int i = 4; i < split_raw_message.size(); ++i) {
             if (!is_first) {
                 content += ' ';
             }
-            content += splited_raw_message[i];
+            content += split_raw_message[i];
             is_first = false;
         }
+        return content;
     }
 
 
