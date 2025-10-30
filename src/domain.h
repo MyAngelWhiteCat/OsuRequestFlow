@@ -106,4 +106,22 @@ namespace irc {
 
     }
 
+    struct ConnectionVisitor {
+        void operator()(tcp::socket& socket, sys::error_code& ec) {
+            tcp::resolver resolver(socket.get_executor()); // bad prac :(
+            auto endpoints = resolver.resolve(domain::IRC_EPS::HOST, domain::IRC_EPS::PORT);
+            net::connect(socket, endpoints, ec);
+        }
+
+        void operator()(ssl::stream<tcp::socket>& socket, sys::error_code& ec) {
+            tcp::resolver resolver(socket.get_executor()); // again :(
+            auto endpoints = resolver.resolve(domain::IRC_EPS::HOST, domain::IRC_EPS::SSL_PORT);
+            net::connect(socket.lowest_layer(), endpoints, ec);
+            if (ec) {
+                return;
+            }
+            socket.handshake(ssl::stream_base::client, ec);
+        }
+    };
+
 }
