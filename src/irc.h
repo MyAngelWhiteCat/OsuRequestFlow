@@ -48,8 +48,9 @@ namespace irc {
     struct AuthorizeData {
         AuthorizeData() = default;
         AuthorizeData(std::string_view nick, std::string_view token)
-            : nick_(std::string(nick)), token_(std::string(token)) {}
-        
+            : nick_(std::string(nick)), token_(std::string(token)) {
+        }
+
         std::string GetAuthMessage() const;
         void SetNick(std::string_view nick);
         void SetToken(std::string_view token);
@@ -63,7 +64,7 @@ namespace irc {
     public:
         Client() = delete;
         Client(net::io_context& ioc);
-        Client(net::io_context& ioc, ssl::context& ctx 
+        Client(net::io_context& ioc, ssl::context& ctx
             /*set verify mode and verify path
         EXAMPLE:
             net::io_context ioc;
@@ -180,10 +181,6 @@ namespace irc {
                     throw std::runtime_error("Trying read socket without connection");
                 }
 
-                if (client_.ec_) {
-                    ReportError(client_.ec_, "Reading"s);
-                }
-
                 return ReadMessages(streambuf);
             }
 
@@ -196,9 +193,7 @@ namespace irc {
                 else {
                     throw std::runtime_error("Trying read socket without connection");
                 }
-                if (client_.ec_) {
-                    ReportError(client_.ec_, "Reading"s);
-                }
+
                 return ReadMessages(streambuf);
             }
 
@@ -219,7 +214,61 @@ namespace irc {
 
                 return read_result;
             }
-        }; 
+        };
+
+        class DisconnectVisitor {
+        public:
+            explicit DisconnectVisitor(Client& client)
+                : client_(client)
+            {
+            }
+
+            void operator()(tcp::socket& socket) {
+                socket.shutdown(net::socket_base::shutdown_send, ignor_);
+                socket.close(client_.ec_);
+                client_.no_ssl_connected_ = false;
+            }
+
+            void operator()(ssl::stream<tcp::socket>& socket) {
+                socket.shutdown(ignor_);
+                socket.lowest_layer().close(client_.ec_);
+                client_.ssl_connected_ = false;
+            }
+
+        private:
+            Client& client_;
+            sys::error_code ignor_;
+        };
+
+        class JoinVisitor {
+        public:
+            explicit JoinVisitor(Client& client, std::string_view channel_name)
+                : client_(client)
+                , channel_name_(channel_name)
+            {
+            }
+
+            void operator()(tcp::socket& socket) {
+                if (!client_.no_ssl_connected_) {
+                    throw std::runtime_error("Join without connection attempt");
+                }
+                net::write(socket, net::buffer((std::string(domain::Command::JOIN_CHANNEL) + std::string(channel_name_) + "\r\n"s)), client_.ec_);
+            }
+
+            void operator()(ssl::stream<tcp::socket>& socket) {
+                if (!client_.ssl_connected_) {
+                    throw std::runtime_error("Join without connection attempt");
+                }
+                net::write(socket, net::buffer((std::string(domain::Command::JOIN_CHANNEL) + std::string(channel_name_) + "\r\n"s)), client_.ec_);
+            }
+
+        private:
+            Client& client_;
+            std::string_view channel_name_;
+        };
+
     };
+
+
 
 } // namespace irc

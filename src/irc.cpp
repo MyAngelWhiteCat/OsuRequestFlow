@@ -46,17 +46,10 @@ namespace irc {
 
     void Client::Disconnect() {
         ec_.clear();
-        sys::error_code ignor;
-        if (no_ssl_connected_) {
-            socket_.shutdown(net::socket_base::shutdown_send, ignor);
-            socket_.close(ec_);
-            no_ssl_connected_ = false;
-        }
-        if (ssl_connected_) {
-            ssl_socket_.shutdown(ignor);
-            ssl_socket_.lowest_layer().close(ec_);
-            ssl_connected_ = false;
-        }
+
+        DisconnectVisitor visitor(*this);
+        std::visit(visitor, socket_);
+
         if (ec_) {
             ReportError(ec_, "Disconnecting");
         }
@@ -125,6 +118,10 @@ namespace irc {
         ec_.clear();
 
         ReadMessageVisitor visitor(*this);
+        if (ec_) {
+            ReportError(ec_, "Reading"s);
+            return {};
+        }
         return std::visit(visitor, socket_);
     }
 
