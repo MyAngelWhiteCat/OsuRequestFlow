@@ -5,6 +5,7 @@
 #include <string>
 #include <string_view>
 #include <iostream>
+#include <variant>
 #include <stdexcept>
 
 #include "domain.h"
@@ -60,6 +61,8 @@ namespace irc {
 
     class Client {
     public:
+        Client() = delete;
+        Client(net::io_context& ioc);
         Client(net::io_context& ioc, ssl::context& ctx 
             /*set verify mode and verify path
         EXAMPLE:
@@ -85,10 +88,7 @@ namespace irc {
         bool no_ssl_connected_ = false;
         bool authorized_ = false;
         sys::error_code ec_;
-        net::io_context& ioc_;
-        ssl::context& ctx_;
-        tcp::socket socket_{ioc_};
-        ssl::stream<tcp::socket> ssl_socket_{ ioc_, ctx_ };
+        std::variant<tcp::socket, ssl::stream<tcp::socket>> socket_;
 
         void Connect(bool secured = true);
         void Pong(std::string_view ball);

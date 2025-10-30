@@ -10,6 +10,12 @@ namespace irc {
 
         using namespace std::literals;
 
+        struct IRC_EPS {
+            static constexpr std::string_view HOST = "irc.chat.twitch.tv"sv;
+            static constexpr std::string_view PORT = "6667"sv;
+            static constexpr std::string_view SSL_PORT = "6667"sv;
+        };
+
         enum class MessageType {
             ROOMSTATE,
             JOIN,

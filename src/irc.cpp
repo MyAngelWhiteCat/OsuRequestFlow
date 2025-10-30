@@ -9,7 +9,6 @@ namespace irc {
             << code << " | because: " << message << std::endl;
     }
 
-    // AuthorizeData implementation
     std::string AuthorizeData::GetAuthMessage() const {
         std::string data;
         data.append(domain::Command::PASS).append(token_);
@@ -27,10 +26,14 @@ namespace irc {
         token_ = std::string(token);
     }
 
+    Client::Client(net::io_context& ioc)
+        : socket_(tcp::socket(ioc))
+    {
+    }
+
     Client::Client(net::io_context& ioc, ssl::context& ctx)
-        : ioc_(ioc)
-        , ctx_(ctx) {
-        // Verify mode should be set in main.cpp before creating Client
+        : socket_(ssl::stream<tcp::socket>(ioc, ctx)) 
+    {    
     }
 
     void Client::SSL_Connect() {
@@ -209,25 +212,7 @@ namespace irc {
     void Client::CheckConnect() {
         ec_.clear();
 
-        char buff[1];
-        if (ssl_socket_.lowest_layer().is_open()) {
-            ssl_socket_.read_some(net::buffer(buff, 0), ec_);
-            if (ec_ == net::error::eof || ec_ == net::error::not_connected || ec_ == net::error::connection_reset) {
-                ssl_connected_ = false;
-            }
-        }
-        else {
-            ssl_connected_ = false;
-        }
-        if (socket_.is_open()) {
-            socket_.read_some(net::buffer(buff, 0), ec_);
-            if (ec_ == net::error::eof || ec_ == net::error::not_connected || ec_ == net::error::connection_reset) {
-                no_ssl_connected_ = false;
-            }
-        }
-        else {
-            no_ssl_connected_ = false;
-        }
+        //TODO;
     }
 
     Message Client::IdentifyMessageType(std::string_view raw_message) {
