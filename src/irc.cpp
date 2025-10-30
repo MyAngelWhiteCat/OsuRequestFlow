@@ -160,41 +160,8 @@ namespace irc {
 
     void Client::Connect(bool secured) {
         ec_.clear();
-
-        tcp::resolver resolver{ ioc_ };
-        net::ip::basic_resolver_results<net::ip::tcp> endpoints;
-
-        if (secured) {
-            endpoints = resolver.resolve("irc.chat.twitch.tv", "6697", ec_);
-        }
-        else {
-            endpoints = resolver.resolve("irc.chat.twitch.tv", "6667", ec_);
-        }
-        if (ec_) {
-            ReportError(ec_, "Resolving");
-        }
-
-        if (secured) {
-            net::connect(ssl_socket_.next_layer(), endpoints, ec_);
-            ssl_connected_ = true;
-        }
-        else {
-            net::connect(socket_, endpoints, ec_);
-            no_ssl_connected_ = true;
-        }
-        if (ec_) {
-            ReportError(ec_, "Connecting");
-            no_ssl_connected_ = false;
-            ssl_connected_ = false;
-        }
-
-        if (secured) {
-            ssl_socket_.handshake(ssl::stream_base::client, ec_);
-            if (ec_) {
-                ReportError(ec_, "Handshake"s);
-                ssl_connected_ = false;
-            }
-        }
+        domain::ConnectionVisitor visitor(ec_);
+        std::visit(visitor, socket_);
     }
 
     void Client::Pong(std::string_view ball) {
