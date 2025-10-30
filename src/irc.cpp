@@ -36,12 +36,14 @@ namespace irc {
     {    
     }
 
-    void Client::SSL_Connect() {
-        Connect(true);
-    }
+    void Client::Connect() {
+        ec_.clear();
 
-    void Client::NOSSL_Connect() {
-        Connect(false);
+        ConnectionVisitor visitor(*this);
+        std::visit(visitor, socket_);
+        if (ec_) {
+            ReportError(ec_, "Connection");
+        }
     }
 
     void Client::Disconnect() {
@@ -99,13 +101,6 @@ namespace irc {
     bool Client::Connected() {
         CheckConnect();
         return ssl_connected_ || no_ssl_connected_;
-    }
-
-    void Client::Connect(bool secured) {
-        ec_.clear();
-
-        ConnectionVisitor visitor(*this);
-        std::visit(visitor, socket_);
     }
 
     void Client::Pong(std::string_view ball) {

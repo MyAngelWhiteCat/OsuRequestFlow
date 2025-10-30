@@ -75,14 +75,13 @@ namespace irc {
             irc::Client(ioc, ctx);
         */);
 
-        void SSL_Connect();
-        void NOSSL_Connect();
         void Disconnect();
         void Join(const std::string_view chanel_name);
         void Authorize(const AuthorizeData& auth_data);
         void CapRequest();
         std::vector<Message> Read();
         bool Connected();
+        void Connect();
 
     private:
         bool ssl_connected_ = false;
@@ -91,7 +90,6 @@ namespace irc {
         sys::error_code ec_;
         std::variant<tcp::socket, ssl::stream<tcp::socket>> socket_;
 
-        void Connect(bool secured = true);
         void Pong(std::string_view ball);
         void CheckConnect();
         Message IdentifyMessageType(std::string_view raw_message);
@@ -109,6 +107,7 @@ namespace irc {
                 net::connect(socket, endpoints, client_.ec_);
                 if (client_.ec_) {
                     ReportError(client_.ec_, "Connection"sv);
+                    return;
                 }
                 client_.no_ssl_connected_ = true;
             }
@@ -121,9 +120,12 @@ namespace irc {
                     ReportError(client_.ec_, "SSL Connection"sv);
                     return;
                 }
+                socket.lowest_layer().set_option(tcp::no_delay(true));
                 socket.handshake(ssl::stream_base::client, client_.ec_);
                 if (client_.ec_) {
                     ReportError(client_.ec_, "SSL Handshake"sv);
+                    socket.lowest_layer().close();
+                    return;
                 }
                 client_.ssl_connected_ = true;
             }

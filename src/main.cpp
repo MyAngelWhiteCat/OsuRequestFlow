@@ -57,7 +57,7 @@ std::string convert_utf8_to_ansi(const std::string& utf8_str) {
 
 int main() {
     //setlocale(LC_ALL, "Russian");
-    setlocale(LC_ALL, "Russian_Russia.1251"); // Для Windows
+    setlocale(LC_ALL, "Russian_Russia.1251");
     net::io_context ioc;
     ssl::context ctx{ ssl::context::tlsv12_client };
     ctx.set_verify_mode(ssl::verify_peer);
@@ -69,53 +69,73 @@ int main() {
 
     load_windows_ca_certificates(ctx);
 
-    Client client(ioc, ctx);
     AuthorizeData a_data;
 
+    {
+        Client client(ioc, ctx);
 
-    std::cout << "Test case #1. With unexpected chat users and messages" << std::endl;
-    client.SSL_Connect();
-    client.CapRequest();
-    client.Authorize(a_data);
-    client.Join("zackrawrr");
+        std::cout << "Test case #1. With unexpected chat users and messages" << std::endl;
+        client.Connect();
+        client.CapRequest();
+        client.Authorize(a_data);
+        client.Join("yourragegaming");
 
-    auto start = std::chrono::steady_clock::now();
-    while (/*std::chrono::steady_clock::now() - start < 10000ms*/true) {
-        try {
-            auto rr = client.Read();
-            for (const auto& r : rr) {
-                if (r.GetMessageType() == domain::MessageType::PRIVMSG) {
-                    std::cout << r.GetNick() << ": " << r.GetContent() << std::endl;
+        auto start = std::chrono::steady_clock::now();
+        while (/*std::chrono::steady_clock::now() - start < 10000ms*/true) {
+            try {
+                auto rr = client.Read();
+                for (const auto& r : rr) {
+                    if (r.GetMessageType() == domain::MessageType::EMPTY) {
+                        continue;
+                    }
+                    if (r.GetMessageType() == domain::MessageType::PRIVMSG) {
+                        std::cout << r.GetNick() << ": " << r.GetContent() << std::endl;
+                    }
+                    else {
+                        domain::PrintMessageType(std::cout, r.GetMessageType());
+                        std::cout << ": ";
+                        std::cout << r.GetContent() << std::endl;
+                    }
                 }
-                else {
-                    domain::PrintMessageType(std::cout, r.GetMessageType());
-                    std::cout << ": ";
-                    std::cout << r.GetContent() << std::endl;
-                }
+                std::cout << std::endl;
             }
-            std::cout << std::endl;
+            catch (const std::exception& e) {
+                std::cout << e.what() << std::endl;
+            }
         }
-        catch (const std::exception& e) {
-            std::cout << e.what() << std::endl;
-        }
+
+        client.Disconnect();
     }
 
-    client.Disconnect();
+    {
+        Client client(ioc);
+        std::cout << "Test case #2. With expected chat messages" << std::endl;
+        client.Connect();
+        client.CapRequest();
+        client.Authorize(a_data);
+        client.Join("myangelwhitecat");
 
-    std::cout << "Test case #2. With expected chat messages" << std::endl;
-    client.NOSSL_Connect();
-    client.CapRequest();
-    client.Authorize(a_data);
-    client.Join("myangelwhitecat");
-
-    while (client.Connected()) {
-        auto rr = client.Read();
-        for (const auto& r : rr) {
-            domain::PrintMessageType(std::cout, r.GetMessageType());
-            std::cout << "\n";
-            std::cout << r.GetContent();
+        while (true) {
+            try {
+                auto rr = client.Read();
+                for (const auto& r : rr) {
+                    if (r.GetMessageType() == domain::MessageType::PRIVMSG) {
+                        std::cout << r.GetNick() << ": " << r.GetContent() << std::endl;
+                    }
+                    else {
+                        domain::PrintMessageType(std::cout, r.GetMessageType());
+                        std::cout << ": ";
+                        std::cout << r.GetContent() << std::endl;
+                    }
+                }
+                std::cout << std::endl;
+            }
+            catch (const std::exception& e) {
+                std::cout << e.what() << std::endl;
+            }
         }
-    }
+        client.Disconnect();
 
+    }
 }
 
