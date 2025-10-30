@@ -85,6 +85,7 @@ conan install --build=missing --output-folder=.
 (при первом запуске может занять больше часа. Сборка библиотек Boost и SSL)
 cmake .. --preset conan-default
 cmake --build .
+(Может быть очень много ворнингов линковки. Это ок)
 ```
   
   
