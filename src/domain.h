@@ -104,58 +104,6 @@ namespace irc {
             }
         }
 
-        class ConnectionVisitor {
-        public:
-            explicit ConnectionVisitor(sys::error_code& ec)
-                : ec_(ec)
-            {
-            }
-
-            void operator()(tcp::socket& socket) {
-                tcp::resolver resolver(socket.get_executor()); // bad prac :(
-                auto endpoints = resolver.resolve(domain::IRC_EPS::HOST, domain::IRC_EPS::PORT);
-                net::connect(socket, endpoints, ec_);
-            }
-
-            void operator()(ssl::stream<tcp::socket>& socket) {
-                tcp::resolver resolver(socket.get_executor()); // again :(
-                auto endpoints = resolver.resolve(domain::IRC_EPS::HOST, domain::IRC_EPS::SSL_PORT);
-                net::connect(socket.lowest_layer(), endpoints, ec_);
-                if (ec_) {
-                    return;
-                }
-                socket.handshake(ssl::stream_base::client, ec_);
-            }
-
-        private:
-            sys::error_code& ec_;
-        };
-
-        class PingPongVisitor {
-        public:
-            explicit PingPongVisitor(sys::error_code& ec, std::string_view ball)
-                : ec_(ec)
-                , ball_(ball)
-            {
-                if (ball.size() < Command::PONG.size()) {
-                    throw std::invalid_argument("incorrect PONG message");
-                }
-            }
-
-            void operator()(tcp::socket& socket) {
-                net::write(socket, net::buffer(std::string(Command::PONG)
-                    .append(std::string(ball_.substr(Command::PONG.size())))), ec_);
-            }
-
-            void operator()(ssl::stream<tcp::socket>& socket) {
-                net::write(socket, net::buffer(std::string(Command::PONG)
-                    .append(std::string(ball_.substr(Command::PONG.size())))), ec_);
-            }
-
-        private:
-            sys::error_code& ec_;
-            std::string_view ball_;
-        };
 
     } // namespace domain
 

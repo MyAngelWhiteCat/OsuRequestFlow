@@ -106,7 +106,10 @@ namespace irc {
                 tcp::resolver resolver(socket.get_executor()); // bad prac :(
                 auto endpoints = resolver.resolve(domain::IRC_EPS::HOST, domain::IRC_EPS::PORT);
                 net::connect(socket, endpoints, client_.ec_);
-                ReportError(client_.ec_, "Connection"sv);
+                if (client_.ec_) {
+                    ReportError(client_.ec_, "Connection"sv);
+                }
+                client_.no_ssl_connected_ = true;
             }
 
             void operator()(ssl::stream<tcp::socket>& socket) {
@@ -118,7 +121,10 @@ namespace irc {
                     return;
                 }
                 socket.handshake(ssl::stream_base::client, client_.ec_);
-                ReportError(client_.ec_, "SSL Handshake"sv);
+                if (client_.ec_) {
+                    ReportError(client_.ec_, "SSL Handshake"sv);
+                }
+                client_.ssl_connected_ = true;
             }
 
         private:
@@ -140,7 +146,7 @@ namespace irc {
                 net::write(socket, net::buffer(std::string(domain::Command::PONG)
                     .append(std::string(ball_.substr(domain::Command::PONG.size())))), client_.ec_);
                 if (client_.ec_) {
-                    ReportError(client_.ec_, "CRITICAL. Sending PONG Error! Disconnection expected..."sv);
+                    ReportError(client_.ec_, "CRITICAL!! Sending PONG Error! Disconnection expected..."sv);
                 }
             }
 
@@ -148,7 +154,7 @@ namespace irc {
                 net::write(socket, net::buffer(std::string(domain::Command::PONG)
                     .append(std::string(ball_.substr(domain::Command::PONG.size())))), client_.ec_);
                 if (client_.ec_) {
-                    ReportError(client_.ec_, "CRITICAL. Sending PONG Error! Disconnection expected..."sv);
+                    ReportError(client_.ec_, "CRITICAL!! Sending PONG Error! Disconnection expected..."sv);
                 }
             }
 
@@ -156,6 +162,64 @@ namespace irc {
             Client& client_;
             std::string_view ball_;
         };
+
+        class ReadMessageVisitor {
+        public:
+            explicit ReadMessageVisitor(Client& client)
+                : client_(client)
+            {
+            }
+
+            std::vector<Message> operator()(tcp::socket& socket) {
+                net::streambuf streambuf;
+
+                if (client_.no_ssl_connected_) {
+                    net::read_until(socket, streambuf, "\r\n"s, client_.ec_);
+                }
+                else {
+                    throw std::runtime_error("Trying read socket without connection");
+                }
+
+                if (client_.ec_) {
+                    ReportError(client_.ec_, "Reading"s);
+                }
+
+                return ReadMessages(streambuf);
+            }
+
+            std::vector<Message> operator()(ssl::stream<tcp::socket>& socket) {
+                net::streambuf streambuf;
+
+                if (client_.ssl_connected_) {
+                    net::read_until(socket, streambuf, "\r\n"s, client_.ec_);
+                }
+                else {
+                    throw std::runtime_error("Trying read socket without connection");
+                }
+                if (client_.ec_) {
+                    ReportError(client_.ec_, "Reading"s);
+                }
+                return ReadMessages(streambuf);
+            }
+
+        private:
+            Client& client_;
+
+            std::vector<Message> ReadMessages(net::streambuf& streambuf) {
+                std::vector<Message> read_result;
+                std::string line;
+                std::istream is(&streambuf);
+                while (std::getline(is, line)) {
+                    Message msg = client_.IdentifyMessageType(line);
+                    if (msg.GetMessageType() == domain::MessageType::PING) {
+                        client_.Pong(msg.GetContent());
+                    }
+                    read_result.push_back(msg);
+                }
+
+                return read_result;
+            }
+        }; 
     };
 
 } // namespace irc

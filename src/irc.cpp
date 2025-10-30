@@ -124,33 +124,8 @@ namespace irc {
     std::vector<Message> Client::Read() {
         ec_.clear();
 
-        net::streambuf streambuf;
-        if (no_ssl_connected_) {
-            net::read_until(socket_, streambuf, "\r\n"s, ec_);
-        }
-        else if (ssl_connected_) {
-            net::read_until(ssl_socket_, streambuf, "\r\n"s, ec_);
-        }
-        else {
-            throw std::runtime_error("Trying read socket without connection");
-        }
-
-        if (ec_) {
-            ReportError(ec_, "Reading"s);
-        }
-
-        std::vector<Message> read_result;
-        std::string line;
-        std::istream is(&streambuf);
-        while (std::getline(is, line)) {
-            Message msg = IdentifyMessageType(line);
-            if (msg.GetMessageType() == domain::MessageType::PING) {
-                Pong(msg.GetContent());
-            }
-            read_result.push_back(msg);
-        }
-
-        return read_result;
+        ReadMessageVisitor visitor(*this);
+        return std::visit(visitor, socket_);
     }
 
     bool Client::Connected() {
@@ -160,20 +135,16 @@ namespace irc {
 
     void Client::Connect(bool secured) {
         ec_.clear();
-        domain::ConnectionVisitor visitor(ec_);
+
+        ConnectionVisitor visitor(*this);
         std::visit(visitor, socket_);
     }
 
     void Client::Pong(std::string_view ball) {
-        if (no_ssl_connected_) {
-            net::write(socket_, net::buffer("PONG"s.append(ball.substr(4))), ec_);
-        }
-        else {
-            net::write(ssl_socket_, net::buffer("PONG"s.append(ball.substr(4))), ec_);
-        }
-        if (ec_) {
-            ReportError(ec_, "Sending PONG"s);
-        }
+        ec_.clear();
+
+        PingPongVisitor visitor(*this, ball);
+        std::visit(visitor, socket_);
     }
 
     void Client::CheckConnect() {
