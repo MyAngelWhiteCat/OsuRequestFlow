@@ -94,6 +94,59 @@ namespace irc {
         void Pong(std::string_view ball);
         void CheckConnect();
         Message IdentifyMessageType(std::string_view raw_message);
+
+        class ConnectionVisitor {
+        public:
+            explicit ConnectionVisitor(Client& client)
+                : client_(client)
+            {
+            }
+
+            void operator()(tcp::socket& socket) {
+                tcp::resolver resolver(socket.get_executor()); // bad prac :(
+                auto endpoints = resolver.resolve(domain::IRC_EPS::HOST, domain::IRC_EPS::PORT);
+                net::connect(socket, endpoints, client_.ec_);
+            }
+
+            void operator()(ssl::stream<tcp::socket>& socket) {
+                tcp::resolver resolver(socket.get_executor()); // again :(
+                auto endpoints = resolver.resolve(domain::IRC_EPS::HOST, domain::IRC_EPS::SSL_PORT);
+                net::connect(socket.lowest_layer(), endpoints, client_.ec_);
+                if (client_.ec_) {
+                    return;
+                }
+                socket.handshake(ssl::stream_base::client, client_.ec_);
+            }
+
+        private:
+            Client& client_;
+        };
+
+        class PingPongVisitor {
+        public:
+            explicit PingPongVisitor(Client& client, std::string_view ball)
+                : client_(client)
+                , ball_(ball)
+            {
+                if (ball.size() < domain::Command::PONG.size()) {
+                    throw std::invalid_argument("incorrect PONG message");
+                }
+            }
+
+            void operator()(tcp::socket& socket) {
+                net::write(socket, net::buffer(std::string(domain::Command::PONG)
+                    .append(std::string(ball_.substr(domain::Command::PONG.size())))), client_.ec_);
+            }
+
+            void operator()(ssl::stream<tcp::socket>& socket) {
+                net::write(socket, net::buffer(std::string(domain::Command::PONG)
+                    .append(std::string(ball_.substr(domain::Command::PONG.size())))), client_.ec_);
+            }
+
+        private:
+            Client& client_;
+            std::string_view ball_;
+        };
     };
 
 } // namespace irc

@@ -106,7 +106,7 @@ namespace irc {
 
         class ConnectionVisitor {
         public:
-            ConnectionVisitor(sys::error_code& ec)
+            explicit ConnectionVisitor(sys::error_code& ec)
                 : ec_(ec)
             {
             }
@@ -129,6 +129,32 @@ namespace irc {
 
         private:
             sys::error_code& ec_;
+        };
+
+        class PingPongVisitor {
+        public:
+            explicit PingPongVisitor(sys::error_code& ec, std::string_view ball)
+                : ec_(ec)
+                , ball_(ball)
+            {
+                if (ball.size() < Command::PONG.size()) {
+                    throw std::invalid_argument("incorrect PONG message");
+                }
+            }
+
+            void operator()(tcp::socket& socket) {
+                net::write(socket, net::buffer(std::string(Command::PONG)
+                    .append(std::string(ball_.substr(Command::PONG.size())))), ec_);
+            }
+
+            void operator()(ssl::stream<tcp::socket>& socket) {
+                net::write(socket, net::buffer(std::string(Command::PONG)
+                    .append(std::string(ball_.substr(Command::PONG.size())))), ec_);
+            }
+
+        private:
+            sys::error_code& ec_;
+            std::string_view ball_;
         };
 
     } // namespace domain
