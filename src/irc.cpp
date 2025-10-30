@@ -49,7 +49,6 @@ namespace irc {
 
         DisconnectVisitor visitor(*this);
         std::visit(visitor, socket_);
-
         if (ec_) {
             ReportError(ec_, "Disconnecting");
         }
@@ -58,15 +57,8 @@ namespace irc {
     void Client::Join(const std::string_view chanel_name) {
         ec_.clear();
 
-        if (no_ssl_connected_) {
-            net::write(socket_, net::buffer((std::string(domain::Command::JOIN_CHANNEL) + std::string(chanel_name) + "\r\n"s)), ec_);
-        }
-        else if (ssl_connected_) {
-            net::write(ssl_socket_, net::buffer((std::string(domain::Command::JOIN_CHANNEL) + std::string(chanel_name) + "\r\n"s)), ec_);
-        }
-        else {
-            throw std::runtime_error("Authorizing without connection attempt");
-        }
+        JoinVisitor visitor(*this, chanel_name);
+        std::visit(visitor, socket_);
         if (ec_) {
             ReportError(ec_, "Join");
         }
