@@ -77,21 +77,9 @@ namespace irc {
 
     void Client::CapRequest() {
         ec_.clear();
-        // TODO: Optional capabilityes
-        if (no_ssl_connected_) {
-            net::write(socket_, net::buffer(std::string(domain::Command::CREQ)
-                + std::string(domain::Capabilityes::COMMANDS) + " "
-                + std::string(domain::Capabilityes::MEMBERSHIP) + " "
-                + std::string(domain::Capabilityes::TAGS) + "\n\r"), ec_);
-        }
-        else {
-            net::write(ssl_socket_, net::buffer(std::string(domain::Command::CREQ)
-                + std::string(domain::Capabilityes::COMMANDS) + " "
-                + std::string(domain::Capabilityes::MEMBERSHIP) + " "
-                + std::string(domain::Capabilityes::TAGS) + "\n\r"), ec_);
-        }
-        // TODO: Check answer
 
+        CapRequestVisitor visitor(*this);
+        std::visit(visitor, socket_);
         if (ec_) {
             ReportError(ec_, "CapRequest");
         }
@@ -101,11 +89,11 @@ namespace irc {
         ec_.clear();
 
         ReadMessageVisitor visitor(*this);
+        return std::visit(visitor, socket_);
         if (ec_) {
-            ReportError(ec_, "Reading"s);
+            ReportError(ec_, "Reading");
             return {};
         }
-        return std::visit(visitor, socket_);
     }
 
     bool Client::Connected() {
@@ -129,7 +117,7 @@ namespace irc {
 
     void Client::CheckConnect() {
         ec_.clear();
-
+        
         //TODO;
     }
 

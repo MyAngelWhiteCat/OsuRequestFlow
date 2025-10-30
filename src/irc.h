@@ -296,6 +296,37 @@ namespace irc {
             AuthorizeData auth_data_;
         };
 
+        class CapRequestVisitor { // TODO: Optional capabilities. Check response
+        public:
+            explicit CapRequestVisitor(Client& client)
+                : client_(client)
+            {
+            }
+
+            void operator()(tcp::socket& socket) {
+                if (!client_.no_ssl_connected_) {
+                    throw std::runtime_error("Authorizing without connection attempt");
+                }
+                net::write(socket, net::buffer(std::string(domain::Command::CREQ)
+                    + std::string(domain::Capabilityes::COMMANDS) + " "
+                    + std::string(domain::Capabilityes::MEMBERSHIP) + " "
+                    + std::string(domain::Capabilityes::TAGS) + "\n\r"), client_.ec_);
+            }
+
+            void operator()(ssl::stream<tcp::socket>& socket) {
+                if (!client_.ssl_connected_) {
+                    throw std::runtime_error("Authorizing without connection attempt");
+                }
+                net::write(socket, net::buffer(std::string(domain::Command::CREQ)
+                    + std::string(domain::Capabilityes::COMMANDS) + " "
+                    + std::string(domain::Capabilityes::MEMBERSHIP) + " "
+                    + std::string(domain::Capabilityes::TAGS) + "\n\r"), client_.ec_);
+            }
+
+        private:
+            Client& client_;
+        };
+
     };
 
 
