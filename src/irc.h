@@ -106,6 +106,7 @@ namespace irc {
                 tcp::resolver resolver(socket.get_executor()); // bad prac :(
                 auto endpoints = resolver.resolve(domain::IRC_EPS::HOST, domain::IRC_EPS::PORT);
                 net::connect(socket, endpoints, client_.ec_);
+                ReportError(client_.ec_, "Connection"sv);
             }
 
             void operator()(ssl::stream<tcp::socket>& socket) {
@@ -113,9 +114,11 @@ namespace irc {
                 auto endpoints = resolver.resolve(domain::IRC_EPS::HOST, domain::IRC_EPS::SSL_PORT);
                 net::connect(socket.lowest_layer(), endpoints, client_.ec_);
                 if (client_.ec_) {
+                    ReportError(client_.ec_, "SSL Connection"sv);
                     return;
                 }
                 socket.handshake(ssl::stream_base::client, client_.ec_);
+                ReportError(client_.ec_, "SSL Handshake"sv);
             }
 
         private:
@@ -129,18 +132,24 @@ namespace irc {
                 , ball_(ball)
             {
                 if (ball.size() < domain::Command::PONG.size()) {
-                    throw std::invalid_argument("incorrect PONG message");
+                    throw std::invalid_argument("incorrect PONG message"s);
                 }
             }
 
             void operator()(tcp::socket& socket) {
                 net::write(socket, net::buffer(std::string(domain::Command::PONG)
                     .append(std::string(ball_.substr(domain::Command::PONG.size())))), client_.ec_);
+                if (client_.ec_) {
+                    ReportError(client_.ec_, "CRITICAL. Sending PONG Error! Disconnection expected..."sv);
+                }
             }
 
             void operator()(ssl::stream<tcp::socket>& socket) {
                 net::write(socket, net::buffer(std::string(domain::Command::PONG)
                     .append(std::string(ball_.substr(domain::Command::PONG.size())))), client_.ec_);
+                if (client_.ec_) {
+                    ReportError(client_.ec_, "CRITICAL. Sending PONG Error! Disconnection expected..."sv);
+                }
             }
 
         private:
