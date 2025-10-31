@@ -36,6 +36,12 @@ namespace irc {
     {
     }
 
+    Client::~Client() {
+        if (ssl_connected_ || no_ssl_connected_) {
+            Disconnect();
+        }
+    }
+
     void Client::Connect() {
         ec_.clear();
 
@@ -56,13 +62,30 @@ namespace irc {
         }
     }
 
-    void Client::Join(const std::string_view chanel_name) {
+    void Client::Join(const std::string_view channel_name) {
         ec_.clear();
 
-        JoinVisitor visitor(*this, chanel_name);
+        JoinVisitor visitor(*this, channel_name);
         std::visit(visitor, socket_);
         if (ec_) {
             ReportError(ec_, "Join");
+            channel_name_to_connect_status_[std::string(channel_name)] = false;
+        }
+        else {
+            channel_name_to_connect_status_[std::string(channel_name)] = true;
+        }
+    }
+
+    void Client::Part(const std::string_view channel_name) {
+        ec_.clear();
+
+        PartVisitor visitor(*this, channel_name);
+        std::visit(visitor, socket_);
+        if (ec_) {
+            ReportError(ec_, "Part");
+        }
+        else {
+            channel_name_to_connect_status_[std::string(channel_name)] = false;
         }
     }
 
@@ -405,14 +428,32 @@ namespace irc {
         if (!client_.no_ssl_connected_) {
             throw std::runtime_error("Join without connection attempt");
         }
-        net::write(socket, net::buffer((std::string(domain::Command::JOIN_CHANNEL) + std::string(channel_name_) + "\r\n"s)), client_.ec_);
+        net::write(socket, net::buffer((std::string(domain::Command::JOIN_CHANNEL) 
+                         + std::string(channel_name_) + "\r\n"s)), client_.ec_);
     }
 
     void Client::JoinVisitor::operator()(ssl::stream<tcp::socket>& socket) {
         if (!client_.ssl_connected_) {
             throw std::runtime_error("Join without connection attempt");
         }
-        net::write(socket, net::buffer((std::string(domain::Command::JOIN_CHANNEL) + std::string(channel_name_) + "\r\n"s)), client_.ec_);
+        net::write(socket, net::buffer((std::string(domain::Command::JOIN_CHANNEL) 
+                         + std::string(channel_name_) + "\r\n"s)), client_.ec_);
+    }
+
+    void Client::PartVisitor::operator()(tcp::socket& socket) {
+        if (!client_.ssl_connected_) {
+            throw std::runtime_error("Part without connection attempt");
+        }
+        net::write(socket, net::buffer((std::string(domain::Command::PART_CHANNEL) 
+                         + std::string(channel_name_) + "\r\n"s)), client_.ec_);
+    }
+
+    void Client::PartVisitor::operator()(ssl::stream<tcp::socket>& socket) {
+        if (!client_.ssl_connected_) {
+            throw std::runtime_error("Part without connection attempt");
+        }
+        net::write(socket, net::buffer((std::string(domain::Command::PART_CHANNEL) 
+                         + std::string(channel_name_) + "\r\n"s)), client_.ec_);
     }
 
     void Client::AuthorizeVisitor::operator()(tcp::socket& socket) {

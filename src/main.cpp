@@ -34,6 +34,7 @@ static void TestConnect(std::string_view chanel_name
     client.CapRequest();
     client.Authorize(a_data);
     client.Join(chanel_name);
+    client.Part(chanel_name);
     std::cout << "End of test case - connect. " << std::endl;
 }
 
@@ -49,6 +50,7 @@ static void TestConnectAndReadChat(std::string_view chanel_name
     client.Authorize(a_data);
     client.Join(chanel_name);
     std::cout << "End of test case - connect. " << std::endl;
+    client.Part(chanel_name);
     client.Disconnect();
 }
 

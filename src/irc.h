@@ -77,7 +77,8 @@ namespace irc {
         ~Client();
 
         void Disconnect();
-        void Join(const std::string_view chanel_name);
+        void Join(const std::string_view channel_name);
+        void Part(const std::string_view channel_name);
         void Authorize(const AuthorizeData& auth_data);
         void CapRequest();
         std::vector<Message> Read();
@@ -90,6 +91,7 @@ namespace irc {
         bool authorized_ = false;
         sys::error_code ec_;
         std::variant<tcp::socket, ssl::stream<tcp::socket>> socket_;
+        std::unordered_map<std::string, bool> channel_name_to_connect_status_;
 
         void Pong(std::string_view ball);
         void CheckConnect();
@@ -173,6 +175,23 @@ namespace irc {
             std::string_view channel_name_;
         };
 
+        class PartVisitor {
+        public:
+            explicit PartVisitor(Client& client, std::string_view channel_name)
+                : client_(client)
+                , channel_name_(channel_name)
+            {
+            }
+
+            void operator()(tcp::socket& socket);
+            void operator()(ssl::stream<tcp::socket>& socket);
+
+        private:
+            Client& client_;
+            std::string_view channel_name_;
+        };
+
+
         class AuthorizeVisitor {
         public:
             explicit AuthorizeVisitor(Client& client, const AuthorizeData& auth_data)
@@ -203,7 +222,5 @@ namespace irc {
         };
 
     };
-
-
 
 } // namespace irc

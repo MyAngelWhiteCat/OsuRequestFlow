@@ -79,7 +79,7 @@ namespace irc {
         }
 
         template <typename Out>
-        void PrintMessageType(Out& out, const MessageType& type) {
+        static void PrintMessageType(Out& out, const MessageType& type) {
             switch (type) {
             case MessageType::ROOMSTATE:
                 out << Command::ROOMSTATE;
@@ -105,7 +105,7 @@ namespace irc {
             }
         }
 
-        std::string convert_utf8_to_ansi(const std::string& utf8_str) {
+        static std::string convert_utf8_to_ansi(const std::string& utf8_str) {
             int wide_len = MultiByteToWideChar(CP_UTF8, 0, utf8_str.c_str(), -1, nullptr, 0);
             wchar_t* wide_str = new wchar_t[wide_len];
             MultiByteToWideChar(CP_UTF8, 0, utf8_str.c_str(), -1, wide_str, wide_len);
