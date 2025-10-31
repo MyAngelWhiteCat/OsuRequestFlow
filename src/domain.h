@@ -68,9 +68,12 @@ namespace irc {
         }
 
         static bool IsNumber(const std::string_view str) {
-            std::cout << "IsNumber str.size() = " << str.size() << std::endl;
-            for (char ch : str) {
-                if (!isdigit(ch)) {
+            if (str.empty()) {
+                return false;
+            }
+            
+            for (int i = 0; i < str.size(); ++i) {
+                if (!isdigit(str[i])) {
                     return false;
                 }
             }

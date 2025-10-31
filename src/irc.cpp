@@ -38,6 +38,11 @@ namespace irc {
 
     Client::~Client() {
         if (ssl_connected_ || no_ssl_connected_) {
+            for (const auto& [name,status] : channel_name_to_connect_status_) {
+                if (status) {
+                    Part(name);
+                }
+            }
             Disconnect();
         }
     }
@@ -170,9 +175,11 @@ namespace irc {
             if (split_raw_message.size() >= CORRECT_USER_MESSAGE_MINIMUM_SIZE) {
                 return CheckForUserMessage(split_raw_message, raw_message);
             }
-            if (domain::IsNumber(split_raw_message[STATUSCODE_TAG_INDEX])) {
-                return std::move(Message(domain::MessageType::STATUSCODE
-                     , std::move(std::string(split_raw_message[STATUSCODE_TAG_INDEX]))));
+            if (split_raw_message.size() >= 2) {
+                if (domain::IsNumber(split_raw_message[STATUSCODE_TAG_INDEX])) {
+                    return std::move(Message(domain::MessageType::STATUSCODE
+                        , std::move(std::string(split_raw_message[STATUSCODE_TAG_INDEX]))));
+                }
             }
             if (split_raw_message[CAPABILITIES_REQUEST_TAG_INDEX] == domain::Command::CRES) {
                 return std::move(Message(domain::MessageType::CAPRES
@@ -401,7 +408,6 @@ namespace irc {
         std::string line;
         std::istream is(&streambuf);
         while (std::getline(is, line)) {
-            std::cout << "ReadMessages line.size() = " << line.size() << std::endl;
             Message msg = client_.IdentifyMessageType(line);
             if (msg.GetMessageType() == domain::MessageType::PING) {
                 client_.Pong(msg.GetContent());
