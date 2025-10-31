@@ -10,6 +10,10 @@ using namespace irc;
 namespace fs = std::filesystem;
 
 
+auto init = atexit([] {
+    std::cout << "BB!" << std::endl;
+    });
+
 static void TestConnect(std::string_view channel_name
     , const AuthorizeData& a_data
     , Client& client) {
