@@ -1,58 +1,55 @@
 #include "irc.h"
+#include "ca_sertificates_loader.h"
 
 #include <vector>
 #include <chrono>
 
-#ifdef _WIN32
-#include <windows.h>
-#include <wincrypt.h>
-#include <openssl/x509.h>
-#pragma comment(lib, "crypt32.lib")
-
 
 using namespace irc;
 
-void load_windows_ca_certificates(ssl::context& ctx) {
-    HCERTSTORE hStore = CertOpenSystemStoreA(NULL, "ROOT");
-    if (!hStore) {
-        return;
-    }
 
-    PCCERT_CONTEXT pContext = nullptr;
-    while ((pContext = CertEnumCertificatesInStore(hStore, pContext))) {
-        const unsigned char* cert_data = pContext->pbCertEncoded;
-        X509* x509 = d2i_X509(nullptr, &cert_data, pContext->cbCertEncoded);
-        if (x509) {
-            X509_STORE* store = SSL_CTX_get_cert_store(ctx.native_handle());
-            if (store) {
-                X509_STORE_add_cert(store, x509);
-            }
-            X509_free(x509);
-        }
-    }
+static void TestSSLConnect(std::string_view chanel_name
+    , const AuthorizeData& a_data
+    , net::io_context& ioc
+    , ssl::context& ctx) {
 
-    CertCloseStore(hStore, 0);
+    Client client(ioc, ctx);
+
+    std::cout << "Test case - SSL connect. " << "Join " << chanel_name << std::endl;
+    client.Connect();
+    client.CapRequest();
+    client.Authorize(a_data);
+    client.Join(chanel_name);
+    std::cout << "End of test case - SSL connect. " << std::endl;
 }
-#else
 
-void load_windows_ca_certificates(ssl::context& ctx) {
-    (void)ctx;
+static void TestConnect(std::string_view chanel_name
+    , const AuthorizeData& a_data
+    , net::io_context& ioc) {
+
+    Client client(ioc);
+
+    std::cout << "Test case - connect. " << "Join " << chanel_name << std::endl;
+    client.Connect();
+    client.CapRequest();
+    client.Authorize(a_data);
+    client.Join(chanel_name);
+    std::cout << "End of test case - connect. " << std::endl;
 }
-#endif
 
-std::string convert_utf8_to_ansi(const std::string& utf8_str) {
-    int wide_len = MultiByteToWideChar(CP_UTF8, 0, utf8_str.c_str(), -1, nullptr, 0);
-    wchar_t* wide_str = new wchar_t[wide_len];
-    MultiByteToWideChar(CP_UTF8, 0, utf8_str.c_str(), -1, wide_str, wide_len);
+static void TestConnectAndReadChat(std::string_view chanel_name
+    , const AuthorizeData& a_data
+    , net::io_context& ioc) {
 
-    int ansi_len = WideCharToMultiByte(CP_ACP, 0, wide_str, -1, nullptr, 0, nullptr, nullptr);
-    char* ansi_str = new char[ansi_len];
-    WideCharToMultiByte(CP_ACP, 0, wide_str, -1, ansi_str, ansi_len, nullptr, nullptr);
+    Client client(ioc);
 
-    std::string result(ansi_str);
-    delete[] wide_str;
-    delete[] ansi_str;
-    return result;
+    std::cout << "Test case - connect. " << "Join " << chanel_name << std::endl;
+    client.Connect();
+    client.CapRequest();
+    client.Authorize(a_data);
+    client.Join(chanel_name);
+    std::cout << "End of test case - connect. " << std::endl;
+    client.Disconnect();
 }
 
 int main() {
@@ -67,7 +64,7 @@ int main() {
     }
     catch (...) {}
 
-    load_windows_ca_certificates(ctx);
+    ssl_domain_utilities::load_windows_ca_certificates(ctx);
 
     AuthorizeData a_data;
 

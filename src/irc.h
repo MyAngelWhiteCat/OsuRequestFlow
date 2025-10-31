@@ -16,7 +16,7 @@ namespace irc {
 
     namespace net = boost::asio;
     namespace sys = boost::system;
-    namespace ssl = boost::asio::ssl;
+    namespace ssl = net::ssl;
     using net::ip::tcp;
     using namespace std::literals;
 
@@ -74,6 +74,7 @@ namespace irc {
             ctx_.set_default_verify_paths();
             irc::Client(ioc, ctx);
         */);
+        ~Client();
 
         void Disconnect();
         void Join(const std::string_view chanel_name);

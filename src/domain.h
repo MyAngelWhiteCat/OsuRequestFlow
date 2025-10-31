@@ -105,7 +105,20 @@ namespace irc {
             }
         }
 
+        std::string convert_utf8_to_ansi(const std::string& utf8_str) {
+            int wide_len = MultiByteToWideChar(CP_UTF8, 0, utf8_str.c_str(), -1, nullptr, 0);
+            wchar_t* wide_str = new wchar_t[wide_len];
+            MultiByteToWideChar(CP_UTF8, 0, utf8_str.c_str(), -1, wide_str, wide_len);
 
+            int ansi_len = WideCharToMultiByte(CP_ACP, 0, wide_str, -1, nullptr, 0, nullptr, nullptr);
+            char* ansi_str = new char[ansi_len];
+            WideCharToMultiByte(CP_ACP, 0, wide_str, -1, ansi_str, ansi_len, nullptr, nullptr);
+
+            std::string result(ansi_str);
+            delete[] wide_str;
+            delete[] ansi_str;
+            return result;
+        }
     } // namespace domain
 
 } // namespace irc
