@@ -1,4 +1,4 @@
-#include "irc.h"
+#include "client.h"
 #include "ca_sertificates_loader.h"
 #include "message_handler.h"
 #include "message.h"
@@ -13,22 +13,22 @@ using namespace irc;
 namespace fs = std::filesystem;
 
 
-static void ConnectAndReadMultichat(const std::vector<std::string>& channels_names
+static void ConnectAndReadMultichat(const std::vector<std::string_view>& channels_names
     , const domain::AuthorizeData& a_data
     , std::shared_ptr<Client<handler::MessageHandler>> client) {
     client->Connect();
     client->CapRequest();
     client->Authorize(a_data);
 
-    for (const auto& channel_name : channels_names) {
-        client->Join(channel_name);
-    }
+    client->Join(channels_names);
     try {
         client->Read();
     }
     catch (...) { // TODO: Error logging
         std::cout << "Ooops... Something wrong here" << std::endl;
     }
+
+    //client->Part(channels_names);
 }
 
 int main() {
@@ -52,7 +52,7 @@ int main() {
     auto client = std::make_shared<Client<handler::MessageHandler>>(ioc, irc_strand);
     auto ssl_client = std::make_shared<Client<handler::MessageHandler>>(ioc, ctx, irc_strand); // ponatno po nazvaniyam
 
-    std::vector<std::string> streamers{ "caedrel", "BTMC", "enri", "RiotGames", "jasontheween", "yourragegaming" };
+    std::vector<std::string_view> streamers{ "ohnePixel", "rafis0", "enri", "RiotGames", "jasontheween", "yourragegaming" };
     net::post(irc_strand, [&streamers, &a_data, &ssl_client]() {
         ConnectAndReadMultichat(streamers, a_data, ssl_client);
         });

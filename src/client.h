@@ -8,6 +8,7 @@
 #include <variant>
 #include <memory>
 #include <stdexcept>
+#include <optional>
 
 #include "domain.h"
 #include "message.h"
@@ -44,11 +45,14 @@ namespace irc {
 
         ~Client() {
             if (ssl_connected_ || no_ssl_connected_) {
+                std::vector<std::string_view> joined;
+                joined.reserve(channel_name_to_connect_status_.size());
                 for (const auto& [name, status] : channel_name_to_connect_status_) {
                     if (status) {
-                        Part(name);
+                        joined.push_back(name);
                     }
                 }
+                Part(joined);
                 Disconnect();
             }
         }
@@ -73,30 +77,36 @@ namespace irc {
             }
         }
 
-        void Join(const std::string_view channel_name) {
+        void Join(const std::vector<std::string_view>& channels_names) {
             ec_.clear();
 
-            JoinVisitor visitor(*this, channel_name);
+            JoinVisitor visitor(*this, channels_names);
             std::visit(visitor, socket_);
             if (ec_) {
                 ReportError(ec_, "Join");
-                channel_name_to_connect_status_[std::string(channel_name)] = false;
+                for (const auto& channel_name : channels_names) {
+                    channel_name_to_connect_status_[std::string(channel_name)] = false; // Naaaah..This is not how it should work..
+                }
             }
             else {
-                channel_name_to_connect_status_[std::string(channel_name)] = true;
+                for (const auto& channel_name : channels_names) {
+                    channel_name_to_connect_status_[std::string(channel_name)] = true;
+                }
             }
         }
 
-        void Part(const std::string_view channel_name) {
+        void Part(const std::vector<std::string_view>& channels_names) {
             ec_.clear();
 
-            PartVisitor visitor(*this, channel_name);
+            PartVisitor visitor(*this, channels_names);
             std::visit(visitor, socket_);
             if (ec_) {
                 ReportError(ec_, "Part");
             }
             else {
-                channel_name_to_connect_status_[std::string(channel_name)] = false;
+                for (const auto& name : channels_names) {
+                    channel_name_to_connect_status_[std::string(name)] = false;
+                }
             }
         }
 
@@ -148,7 +158,7 @@ namespace irc {
             //TODO;
         }
 
-        
+
     private:
         bool ssl_connected_ = false;
         bool no_ssl_connected_ = false;
@@ -159,6 +169,9 @@ namespace irc {
         sys::error_code ec_;
         std::variant<tcp::socket, ssl::stream<tcp::socket>> socket_;
         std::unordered_map<std::string, bool> channel_name_to_connect_status_;
+
+        std::string last_read_incomplete_message_;
+
 
         domain::Message IdentifyMessageType(std::string_view raw_message) {
             const int EMPTY = 0;
@@ -194,19 +207,19 @@ namespace irc {
                 if (split_raw_message.size() >= CORRECT_STATUSCODE_MESSAGE_MINIMUM_SIZE) {
                     if (domain::IsNumber(split_raw_message[STATUSCODE_TAG_INDEX])) {
                         return domain::Message(domain::MessageType::STATUSCODE
-                             , std::string(split_raw_message[STATUSCODE_TAG_INDEX]));
+                            , std::string(split_raw_message[STATUSCODE_TAG_INDEX]));
                     }
                 }
                 if (split_raw_message[CAPABILITIES_REQUEST_TAG_INDEX] == domain::Command::CRES) {
                     return domain::Message(domain::MessageType::CAPRES
-                         , std::string(raw_message)); // Dummy
+                        , std::string(raw_message)); // Dummy
                 }
 
                 return domain::Message(domain::MessageType::UNKNOWN
-                     , std::string(raw_message)); // Dummy
+                    , std::string(raw_message)); // Dummy
             }
             return domain::Message(domain::MessageType::UNKNOWN
-                 , std::string(raw_message)); // Dummy
+                , std::string(raw_message)); // Dummy
         }
 
         domain::Message CheckForPing(const std::vector<std::string_view>& split_raw_message, std::string_view raw_message) {
@@ -215,10 +228,10 @@ namespace irc {
 
             if (split_raw_message[PING_COMMAND_INDEX] == domain::Command::PING) {
                 return domain::Message(domain::MessageType::PING
-                     , std::string(split_raw_message[PING_CONTENT_INDEX]));
+                    , std::string(split_raw_message[PING_CONTENT_INDEX]));
             }
             return domain::Message(domain::MessageType::UNKNOWN
-                 , std::string(raw_message));
+                , std::string(raw_message));
         }
 
         domain::Message CheckForJoinPart(const std::vector<std::string_view>& split_raw_message, std::string_view raw_message) {
@@ -227,14 +240,14 @@ namespace irc {
 
             if (split_raw_message[ACTION_TAG_INDEX] == domain::Command::JOIN) {
                 return domain::Message(domain::MessageType::JOIN
-                     , std::string(split_raw_message[CHANNEL_NAME_INDEX]));
+                    , std::string(split_raw_message[CHANNEL_NAME_INDEX]));
             }
             if (split_raw_message[ACTION_TAG_INDEX] == domain::Command::PART) {
                 return domain::Message(domain::MessageType::PART
-                     , std::string(split_raw_message[CHANNEL_NAME_INDEX]));
+                    , std::string(split_raw_message[CHANNEL_NAME_INDEX]));
             }
             return domain::Message(domain::MessageType::UNKNOWN
-                 , std::string(raw_message));
+                , std::string(raw_message));
         }
 
         domain::Message CheckForRoomstateOrStatusCode(const std::vector<std::string_view>& split_raw_message, std::string_view raw_message) {
@@ -244,14 +257,14 @@ namespace irc {
 
             if (split_raw_message[ROOMSTATE_TAG_INDEX] == domain::Command::ROOMSTATE) {
                 return domain::Message(domain::MessageType::ROOMSTATE
-                     , std::string(split_raw_message[ROOMSTATE_CONTENT_INDEX]));
+                    , std::string(split_raw_message[ROOMSTATE_CONTENT_INDEX]));
             }
             if (domain::IsNumber(split_raw_message[STATUSCODE_INDEX])) {
                 return domain::Message(domain::MessageType::STATUSCODE
-                     , std::string(split_raw_message[STATUSCODE_INDEX]));
+                    , std::string(split_raw_message[STATUSCODE_INDEX]));
             }
             return domain::Message(domain::MessageType::UNKNOWN
-                 , std::string(raw_message));
+                , std::string(raw_message));
         }
 
         domain::Message CheckForUserMessage(const std::vector<std::string_view>& split_raw_message, std::string_view raw_message) {
@@ -337,23 +350,24 @@ namespace irc {
 
             void operator()(tcp::socket& socket) {
                 net::write(socket, net::buffer(std::string(domain::Command::PONG)
-                    .append(std::string(ball_.substr(domain::Command::PING.size())))), client_.ec_);
+                    .append(std::string(ball_.substr(domain::Command::PING.size())).append("\r\n"))), client_.ec_);
                 if (client_.ec_) {
-                    ReportError(client_.ec_, "CRITICAL!! Sending PONG Error! Disconnection expected..."sv);
+                    ReportError(client_.ec_, "CRITICAL!! Sending PONG Error! Disconnect expected..."sv);
                 }
             }
 
             void operator()(ssl::stream<tcp::socket>& socket) {
                 net::write(socket, net::buffer(std::string(domain::Command::PONG)
-                    .append(std::string(ball_.substr(domain::Command::PING.size())))), client_.ec_);
+                    .append(std::string(ball_.substr(domain::Command::PING.size())).append("\r\n"))), client_.ec_);
                 if (client_.ec_) {
-                    ReportError(client_.ec_, "CRITICAL!! Sending PONG Error! Disconnection expected..."sv);
+                    ReportError(client_.ec_, "CRITICAL!! Sending PONG Error! Disconnect expected..."sv);
                 }
             }
 
         private:
             Client& client_;
             std::string_view ball_;
+
         };
 
         class ReadMessageVisitor : public std::enable_shared_from_this<ReadMessageVisitor> {
@@ -374,13 +388,14 @@ namespace irc {
         private:
             std::shared_ptr<Client> client_;
             net::streambuf streambuf_;
+            std::vector<domain::Message> read_result_;
 
             template <typename Socket>
             void ReadMessages(bool is_connected, Socket& socket) {
                 if (is_connected) {
                     net::async_read_until(socket, streambuf_, "\r\n"s, [self = this->shared_from_this()](const sys::error_code& ec, std::size_t bytes_readed) {
-                        auto read_result = self->ExtractMessages(self->streambuf_);
-                        self->OnRead(ec, read_result);
+                        self->ExtractMessages();
+                        self->OnRead(ec);
                         });
                 }
                 else {
@@ -388,30 +403,38 @@ namespace irc {
                 }
             }
 
-            std::vector<domain::Message> ExtractMessages(net::streambuf& streambuf) {
-                std::vector<domain::Message> read_result;
-                std::string line;
-                std::istream is(&streambuf);
-                while (std::getline(is, line)) {
-                    domain::Message msg = client_->IdentifyMessageType(line);
+            void ExtractMessages() {
+                std::string read_result{ std::istreambuf_iterator<char>(&streambuf_)
+                                       , std::istreambuf_iterator<char>() };
+                size_t start_pos = 0;
+                size_t crlf_pos = 0;
+                while ((crlf_pos = read_result.find("\r\n", start_pos)) != std::string::npos) {
+                    std::string completed_message = client_->last_read_incomplete_message_
+                        + read_result.substr(start_pos, crlf_pos);
+                    client_->last_read_incomplete_message_.clear();
+                    if (read_result.size() > crlf_pos + "\r\n"s.size()) {
+                        client_->last_read_incomplete_message_ += read_result.substr(crlf_pos + "\r\n"s.size());
+                    }
+                    domain::Message msg = client_->IdentifyMessageType(completed_message);
                     if (msg.GetMessageType() == domain::MessageType::PING) {
                         client_->Pong(msg.GetContent());
                     }
-                    read_result.push_back(msg);
+                    else {
+                        read_result_.push_back(msg);
+                    }
+                    start_pos = crlf_pos + "\r\n"s.size();
                 }
 
-                return read_result;
             }
 
-            void OnRead(const sys::error_code& ec, const std::vector<domain::Message>& read_result) {
+            void OnRead(const sys::error_code& ec) {
                 if (ec) {
                     ReportError(ec, "Reading");
                     return;
                 }
-                for (const auto& message : read_result) {
-                    client_->message_handler_(message, client_->shared_from_this());
-                }
+                client_->message_handler_(read_result_, client_->shared_from_this());
             }
+
         };
 
         class DisconnectVisitor {
@@ -440,60 +463,81 @@ namespace irc {
 
         class JoinVisitor {
         public:
-            explicit JoinVisitor(Client& client, std::string_view channel_name)
+            explicit JoinVisitor(Client& client, const std::vector<std::string_view>& channels_names)
                 : client_(client)
-                , channel_name_(channel_name)
+                , channels_names_(channels_names)
             {
             }
 
             void operator()(tcp::socket& socket) {
-                if (!client_.no_ssl_connected_) {
-                    throw std::runtime_error("Join without connection attempt");
-                }
-                net::write(socket, net::buffer((std::string(domain::Command::JOIN_CHANNEL)
-                    + std::string(channel_name_) + "\r\n"s)), client_.ec_);
+                JoinChannel(socket, client_.no_ssl_connected_);
+
             }
 
             void operator()(ssl::stream<tcp::socket>& socket) {
-                if (!client_.ssl_connected_) {
-                    throw std::runtime_error("Join without connection attempt");
-                }
-                net::write(socket, net::buffer((std::string(domain::Command::JOIN_CHANNEL)
-                    + std::string(channel_name_) + "\r\n"s)), client_.ec_);
+                JoinChannel(socket, client_.ssl_connected_);
             }
 
         private:
             Client& client_;
-            std::string_view channel_name_;
+            std::vector<std::string_view> channels_names_;
+
+            template <typename Socket>
+            void JoinChannel(Socket& socket, bool connected) {
+                if (!connected) {
+                    throw std::runtime_error("Join without connection attempt");
+                }
+                std::string command;
+                bool is_first = true;
+                for (const auto& name : channels_names_) {
+                    if (!is_first) {
+                        command += ",#";
+                    }
+                    command += std::string(name);
+                    is_first = false;
+                }
+                net::write(socket, net::buffer((std::string(domain::Command::JOIN_CHANNEL)
+                    + command + "\r\n"s)), client_.ec_);
+            }
         };
 
         class PartVisitor {
         public:
-            explicit PartVisitor(Client& client, std::string_view channel_name)
+            explicit PartVisitor(Client& client, const std::vector<std::string_view>& channels_names)
                 : client_(client)
-                , channel_name_(channel_name)
+                , channels_names_(channels_names)
             {
             }
 
             void operator()(tcp::socket& socket) {
-                if (!client_.no_ssl_connected_) {
-                    throw std::runtime_error("Part without connection attempt");
-                }
-                net::write(socket, net::buffer((std::string(domain::Command::PART_CHANNEL)
-                    + std::string(channel_name_) + "\r\n"s)), client_.ec_);
+                PartChannels(socket, client_.no_ssl_connected_);
             }
 
             void operator()(ssl::stream<tcp::socket>& socket) {
-                if (!client_.ssl_connected_) {
-                    throw std::runtime_error("Part without connection attempt");
-                }
-                net::write(socket, net::buffer((std::string(domain::Command::PART_CHANNEL)
-                    + std::string(channel_name_) + "\r\n"s)), client_.ec_);
+                PartChannels(socket, client_.ssl_connected_);
             }
 
         private:
             Client& client_;
-            std::string_view channel_name_;
+            std::vector<std::string_view> channels_names_;
+
+            template <typename Socket>
+            void PartChannels(Socket& socket, bool connected) {
+                if (!connected) {
+                    throw std::runtime_error("Part without connection attempt");
+                }
+                std::string command;
+                bool is_first = true;
+                for (const auto& channel_name : channels_names_) {
+                    if (!is_first) {
+                        command += ",#";
+                    }
+                    command += channel_name;
+                    is_first = false;
+                }
+                net::write(socket, net::buffer((std::string(domain::Command::PART_CHANNEL)
+                    + command + "\r\n"s)), client_.ec_);
+            }
         };
 
 
