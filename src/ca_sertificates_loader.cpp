@@ -2,6 +2,7 @@
 
 namespace ssl_domain_utilities{
 
+// AI on
 #ifdef _WIN32
 
     void load_windows_ca_certificates(ssl::context& ctx) {
@@ -32,5 +33,6 @@ void load_windows_ca_certificates(ssl::context& ctx) {
     (void)ctx;
 }
 #endif
+// AI off
 
 }

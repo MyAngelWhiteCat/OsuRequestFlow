@@ -23,47 +23,48 @@ namespace irc {
 
     class MessageProcessor {
     public:
-        std::vector<domain::Message> ProcessMessage(net::streambuf& streambuf) {
+        std::vector<domain::Message> ProcessMessage(std::vector<char>& streambuf) {
             return ExtractMessages(streambuf);
         }
 
     private:
         std::string last_read_incomplete_message_;
 
-        std::vector<domain::Message> ExtractMessages(net::streambuf& streambuf) {
-            std::string raw_read_result{ std::istreambuf_iterator<char>(&streambuf)
-                                   , std::istreambuf_iterator<char>() };
+        std::vector<domain::Message> ExtractMessages(std::vector<char>& raw_read_result) {
             std::vector<domain::Message> read_result;
-            size_t start_pos = 0;
-            size_t crlf_pos = 0;
-            while ((crlf_pos = raw_read_result.find("\r\n", start_pos)) != std::string::npos) {
-                std::string completed_message = last_read_incomplete_message_
-                    + raw_read_result.substr(start_pos, crlf_pos);
+            std::string raw_message;
+            if (!last_read_incomplete_message_.empty()) {
+                raw_message = last_read_incomplete_message_;
                 last_read_incomplete_message_.clear();
-                if (raw_read_result.size() > crlf_pos + "\r\n"s.size()) {
-                    last_read_incomplete_message_ += raw_read_result.substr(crlf_pos + "\r\n"s.size());
-                }
-                domain::Message msg = IdentifyMessageType(completed_message);
-                if (msg.GetMessageType() == domain::MessageType::PING) {
-                    //client_->Pong(msg.GetContent());
+            }
+
+            for (int i = 0; i < raw_read_result.size() - 1; ++i) {
+                if (!IsCRLF(raw_read_result[i], raw_read_result[i + 1])) {
+                    raw_message += raw_read_result[i];
                 }
                 else {
-                    read_result.push_back(msg);
+                    read_result.push_back(IdentifyMessageType(raw_message));
+                    raw_message.clear();
+                    ++i;
                 }
-                start_pos = crlf_pos + "\r\n"s.size();
             }
+            if (!raw_message.empty()) {
+                last_read_incomplete_message_ = raw_message;
+            }
+
             return read_result;
         }
 
         domain::Message IdentifyMessageType(std::string_view raw_message) {
-            const int EMPTY = 0;
-            const int STATUSCODE_TAG_INDEX = 1;
-            const int CAPABILITIES_REQUEST_TAG_INDEX = 1;
-            const int PING_EXPECTED = 2;
-            const int JOIN_PART_EXPECTED = 3;
-            const int ROOMSTATE_OR_STATUSCODE_EXPECTED = 4;
-            const int CORRECT_USER_MESSAGE_MINIMUM_SIZE = 4;
-            const int CORRECT_STATUSCODE_MESSAGE_MINIMUM_SIZE = 3;
+            const size_t EMPTY = 0;
+            const size_t STATUSCODE_TAG_INDEX = 1;
+            const size_t CAPABILITIES_REQUEST_TAG_INDEX = 1;
+            const size_t PING_EXPECTED = 2;
+            const size_t CLEARCHAT_TAG_INDEX = 2;
+            const size_t JOIN_PART_OR_CLEARCHAT_EXPECTED = 3;
+            const size_t CORRECT_STATUSCODE_MESSAGE_MINIMUM_SIZE = 3;
+            const size_t ROOMSTATE_OR_STATUSCODE_EXPECTED = 4;
+            const size_t CORRECT_USER_MESSAGE_MINIMUM_SIZE = 4;
 
             auto split_raw_message = domain::Split(raw_message);
 
@@ -75,8 +76,8 @@ namespace irc {
                 return CheckForPing(split_raw_message, raw_message);
                 break;
 
-            case (JOIN_PART_EXPECTED):
-                return CheckForJoinPart(split_raw_message, raw_message);
+            case (JOIN_PART_OR_CLEARCHAT_EXPECTED):
+                return CheckForJoinPartOrClearChat(split_raw_message, raw_message);
                 break;
 
             case (ROOMSTATE_OR_STATUSCODE_EXPECTED):
@@ -117,10 +118,11 @@ namespace irc {
                 , std::string(raw_message));
         }
 
-        domain::Message CheckForJoinPart(const std::vector<std::string_view>& split_raw_message
+        domain::Message CheckForJoinPartOrClearChat(const std::vector<std::string_view>& split_raw_message
             , std::string_view raw_message) {
             const int ACTION_TAG_INDEX = 1;
             const int CHANNEL_NAME_INDEX = 2;
+            const int CLEARCHAT_TAG_INDEX = 2;
 
             if (split_raw_message[ACTION_TAG_INDEX] == domain::Command::JOIN) {
                 return domain::Message(domain::MessageType::JOIN
@@ -130,8 +132,10 @@ namespace irc {
                 return domain::Message(domain::MessageType::PART
                     , std::string(split_raw_message[CHANNEL_NAME_INDEX]));
             }
-            return domain::Message(domain::MessageType::UNKNOWN
-                , std::string(raw_message));
+            if (split_raw_message[CLEARCHAT_TAG_INDEX] == domain::Command::CLEARCHAT) {
+                return domain::Message(domain::MessageType::CLEARCHAT, std::string(raw_message)); // TODO?
+            }
+            return domain::Message(domain::MessageType::UNKNOWN, std::string(raw_message));
         }
 
         domain::Message CheckForRoomstateOrStatusCode(const std::vector<std::string_view>& split_raw_message
@@ -142,14 +146,13 @@ namespace irc {
 
             if (split_raw_message[ROOMSTATE_TAG_INDEX] == domain::Command::ROOMSTATE) {
                 return domain::Message(domain::MessageType::ROOMSTATE
-                                     , std::string(split_raw_message[ROOMSTATE_CONTENT_INDEX]));
+                    , std::string(split_raw_message[ROOMSTATE_CONTENT_INDEX]));
             }
             if (domain::IsNumber(split_raw_message[STATUSCODE_INDEX])) {
                 return domain::Message(domain::MessageType::STATUSCODE
-                                     , std::string(split_raw_message[STATUSCODE_INDEX]));
+                    , std::string(split_raw_message[STATUSCODE_INDEX]));
             }
-            return domain::Message(domain::MessageType::UNKNOWN
-                , std::string(raw_message));
+            return domain::Message(domain::MessageType::UNKNOWN, std::string(raw_message));
         }
 
         domain::Message CheckForUserMessage(const std::vector<std::string_view>& split_raw_message
@@ -161,10 +164,11 @@ namespace irc {
                 std::string user_content = GetUserMessageFromSplitRawMessage(split_raw_message);
 
                 return domain::Message(domain::MessageType::PRIVMSG
-                                     , std::move(user_content)
-                                     , std::string(split_raw_message[BADGES_INDEX]));
+                    , std::string(raw_message)
+                    , std::move(user_content)
+                    , std::string(split_raw_message[BADGES_INDEX]));
             }
-            return domain::Message(domain::MessageType::EMPTY, std::string(raw_message));
+            return domain::Message(domain::MessageType::UNKNOWN, std::string(raw_message));
         }
 
         std::string GetUserMessageFromSplitRawMessage(const std::vector<std::string_view>& split_raw_message) {
@@ -180,6 +184,10 @@ namespace irc {
                 is_first = false;
             }
             return content;
+        }
+
+        bool IsCRLF(char lhs, char rhs) {
+            return (lhs == '\r' && rhs == '\n');
         }
     };
 

@@ -25,8 +25,11 @@ static void ConnectAndReadMultichat(const std::vector<std::string_view>& channel
     try {
         client->Read();
     }
-    catch (...) { // TODO: Error logging
-        LOG_ERROR("Ooops... Something wrong here");
+    catch (const std::exception& e) {
+        LOG_ERROR(e.what());
+    }
+    catch (...) { 
+        LOG_FUCKEDUP("call the exorcist! NOW!!!");
     }
 
     //client->Part(channels_names);
@@ -34,22 +37,22 @@ static void ConnectAndReadMultichat(const std::vector<std::string_view>& channel
 
 int main() {
     logging::Logger::Init();
-
-    setlocale(LC_ALL, "Russian_Russia.1251"); // Chtobi oshibki pisalis' ponytno
-    net::io_context ioc; // input-output context.
-    ssl::context ctx{ ssl::context::tlsv12_client }; // ssl context
+    setlocale(LC_ALL, "Russian_Russia.1251");
+    net::io_context ioc;
+    ssl::context ctx{ ssl::context::tlsv12_client };
     auto irc_strand = net::make_strand(ioc);
 
-    ctx.set_verify_mode(ssl::verify_peer); // ustanovka urovnya verifikatsyi. Dlya SSl.
-
+    ctx.set_verify_mode(ssl::verify_peer); 
+    
+    // AI on
     try {
-        ctx.set_default_verify_paths(); // eto dlya linux u macos
+        ctx.set_default_verify_paths(); 
     }
     catch (...) {}
+    ssl_domain_utilities::load_windows_ca_certificates(ctx); 
+    // AI off
 
-    ssl_domain_utilities::load_windows_ca_certificates(ctx); // downloading ssl serts dlya windy
-
-    domain::AuthorizeData a_data; // Auth data. For connection to twitch
+    domain::AuthorizeData a_data; 
 
     auto client = std::make_shared<Client<handler::MessageHandler>>(ioc, irc_strand);
     auto ssl_client = std::make_shared<Client<handler::MessageHandler>>(ioc, ctx, irc_strand); // ponatno po nazvaniyam

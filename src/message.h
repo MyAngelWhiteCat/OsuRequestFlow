@@ -27,13 +27,17 @@ namespace irc {
 
             }
 
-            Message(domain::MessageType message_type, std::string&& content, std::string&& badges);
+            Message(domain::MessageType message_type, std::string raw_part, std::string&& content, std::string&& badges);
 
             MessageType GetMessageType() const;
             std::string_view GetContent() const;
             std::string_view GetNick() const;
             Badges GetBadges() const;
+            std::string GetRawPart() const {
+                return raw_part_;
+            }
         private:
+            std::string raw_part_; // for debug only;
             MessageType message_type_;
             std::string content_;
             Badges badges_;

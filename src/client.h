@@ -264,14 +264,15 @@ namespace irc {
 
         private:
             std::shared_ptr<Client> client_;
-            net::streambuf streambuf_;
             std::vector<domain::Message> read_result_;
+            std::shared_ptr<std::vector<char>> buffer_ = std::make_shared<std::vector<char>>(512);
 
             template <typename Socket>
             void ReadMessages(bool is_connected, Socket& socket) {
                 if (is_connected) {
-                    net::async_read_until(socket, streambuf_, "\r\n"s, [self = this->shared_from_this()](const sys::error_code& ec, std::size_t bytes_readed) {
-                        self->read_result_ = self->client_->message_processor_.ProcessMessage(self->streambuf_);
+                    net::async_read(socket, net::buffer(*buffer_), [self = this->shared_from_this()]
+                    (const sys::error_code& ec, std::size_t bytes_readed) mutable {
+                        self->read_result_ = self->client_->message_processor_.ProcessMessage(*self->buffer_);
                         self->OnRead(ec);
                         });
                 }

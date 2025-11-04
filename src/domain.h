@@ -25,7 +25,8 @@ namespace irc {
             STATUSCODE,
             CAPRES,
             UNKNOWN,
-            EMPTY
+            EMPTY,
+            CLEARCHAT
         };
 
         struct Command {
@@ -45,6 +46,7 @@ namespace irc {
             static constexpr std::string_view ROOMSTATE = "ROOMSTATE"sv;
             static constexpr std::string_view PRIVMSG = "PRIVMSG"sv;
             static constexpr std::string_view STATUSCODE = "STATUSCODE"sv;
+            static constexpr std::string_view CLEARCHAT = "CLEARCHAT"sv;
         };
 
         struct Capabilityes {

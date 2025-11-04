@@ -4,6 +4,7 @@
 namespace logging{
 
     void Logger::Init() {
+        // AI on
         try {
             auto console_sink = std::make_shared<spdlog::sinks::stdout_color_sink_mt>();
             console_sink->set_pattern("[%Y-%m-%d %H:%M:%S.%e] [%^%l%$] %v");
@@ -17,6 +18,7 @@ namespace logging{
         catch (const spdlog::spdlog_ex& ex) {
             std::cerr << "Log initialization failed: " << ex.what() << std::endl;
         }
+        // AI off
     }
 
 }

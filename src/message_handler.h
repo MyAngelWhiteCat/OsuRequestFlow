@@ -7,6 +7,7 @@
 #include "domain.h"
 #include "message.h"
 
+#include <fstream>
 
 namespace irc {
 
@@ -19,11 +20,24 @@ namespace irc {
             template <typename Owner>
             void operator()(const std::vector<domain::Message>& messages, std::shared_ptr<Owner> owner) {
                 for (const auto& message : messages) {
-                    if (message.GetMessageType() == irc::domain::MessageType::PRIVMSG) {
-                        LOG_DEBUG(std::string(message.GetNick()).append(": "s).append(message.GetContent()));
+                    try {
+                        if (message.GetMessageType() == irc::domain::MessageType::PRIVMSG) {
+                            LOG_DEBUG(std::string(message.GetNick()).append(": "s).append(message.GetContent()));
+                        }
+                        else if (message.GetMessageType() == irc::domain::MessageType::UNKNOWN) {
+                            std::ofstream fuckedup("FUCKED_UP.txt", std::ios::app);
+                            fuckedup << message.GetContent() << std::endl;
+                            LOG_ERROR("Unknow message type reseiced. Writed on log file");
+                        }
                     }
-                    else if (message.GetMessageType() == irc::domain::MessageType::UNKNOWN){
-                        LOG_ERROR("Unknow message type reseiced: "s.append(message.GetContent()));
+                    catch (const std::exception& e) {
+                        std::ofstream fuckedup("FUCKED_UP.txt", std::ios::app);
+                        fuckedup << "[Thats fucked up] ";
+                        if (message.GetRawPart()[0] == '\n') {
+                            fuckedup << "[FUCKED UP TWICE!!!]";
+                        }
+                        fuckedup << message.GetRawPart() << "[End of Fucked up]" << std::endl;
+                        LOG_FUCKEDUP("FUCK. But its logged");
                     }
                 }
                 owner->Read();
