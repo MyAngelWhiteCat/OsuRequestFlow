@@ -3,6 +3,7 @@
 #include "message_handler.h"
 #include "message.h"
 #include "auth_data.h"
+#include "logging.h"
 
 #include <vector>
 #include <chrono>
@@ -25,13 +26,15 @@ static void ConnectAndReadMultichat(const std::vector<std::string_view>& channel
         client->Read();
     }
     catch (...) { // TODO: Error logging
-        std::cout << "Ooops... Something wrong here" << std::endl;
+        LOG_ERROR("Ooops... Something wrong here");
     }
 
     //client->Part(channels_names);
 }
 
 int main() {
+    logging::Logger::Init();
+
     setlocale(LC_ALL, "Russian_Russia.1251"); // Chtobi oshibki pisalis' ponytno
     net::io_context ioc; // input-output context.
     ssl::context ctx{ ssl::context::tlsv12_client }; // ssl context
@@ -48,11 +51,12 @@ int main() {
 
     domain::AuthorizeData a_data; // Auth data. For connection to twitch
 
-
     auto client = std::make_shared<Client<handler::MessageHandler>>(ioc, irc_strand);
     auto ssl_client = std::make_shared<Client<handler::MessageHandler>>(ioc, ctx, irc_strand); // ponatno po nazvaniyam
 
-    std::vector<std::string_view> streamers{ "ohnePixel", "rafis0", "enri", "RiotGames", "jasontheween", "yourragegaming" };
+    std::vector<std::string_view> streamers{ "CohhCarnage", "FlorryWorry", "forsen" };
+
+    LOG_INFO("System start...");
     net::post(irc_strand, [&streamers, &a_data, &ssl_client]() {
         ConnectAndReadMultichat(streamers, a_data, ssl_client);
         });

@@ -12,17 +12,18 @@ namespace irc {
 
     namespace handler {
 
+        using namespace std::literals;
+
         class MessageHandler {
         public:
             template <typename Owner>
             void operator()(const std::vector<domain::Message>& messages, std::shared_ptr<Owner> owner) {
                 for (const auto& message : messages) {
                     if (message.GetMessageType() == irc::domain::MessageType::PRIVMSG) {
-                        std::cout << message.GetNick() << ": "
-                            << message.GetContent() << std::endl;
+                        LOG_DEBUG(std::string(message.GetNick()).append(": "s).append(message.GetContent()));
                     }
-                    else {
-                        std::cout << message.GetContent() << std::endl;
+                    else if (message.GetMessageType() == irc::domain::MessageType::UNKNOWN){
+                        LOG_ERROR("Unknow message type reseiced: "s.append(message.GetContent()));
                     }
                 }
                 owner->Read();
