@@ -81,6 +81,11 @@ namespace irc {
             }
         }
 
+        bool Message::operator==(const Message& other) const {
+            return this->badges_ == other.badges_
+                && this->content_ == other.content_;
+        }
+
     }
 
 }
