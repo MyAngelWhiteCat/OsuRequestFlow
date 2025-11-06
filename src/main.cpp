@@ -57,7 +57,7 @@ int main() {
     auto client = std::make_shared<Client<handler::MessageHandler>>(ioc, irc_strand);
     auto ssl_client = std::make_shared<Client<handler::MessageHandler>>(ioc, ctx, irc_strand); // ponatno po nazvaniyam
 
-    std::vector<std::string_view> streamers{ "CohhCarnage", "FlorryWorry", "forsen" };
+    std::vector<std::string_view> streamers{ "Topson", "shroud", "summit1g" };
 
     LOG_INFO("System start...");
     net::post(irc_strand, [&streamers, &a_data, &ssl_client]() {
