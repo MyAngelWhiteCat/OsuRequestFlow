@@ -39,12 +39,14 @@ add_executable(OsuRequestFlow
 add_executable(TestMessageProcessor
     tests/main.cpp 
     tests/test_message_processor.h 
+    tests/utils.h 
     src/message_processor.h 
     src/message_processor.cpp
     src/logging.h
     src/logging.cpp
     src/message.h
     src/message.cpp
+    
 )
 
 target_include_directories(OsuRequestFlow PRIVATE 
