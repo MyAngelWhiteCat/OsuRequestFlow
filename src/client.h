@@ -172,7 +172,7 @@ namespace irc {
         std::variant<tcp::socket, ssl::stream<tcp::socket>> socket_;
         std::unordered_map<std::string, bool> channel_name_to_connect_status_;
 
-        MessageProcessor message_processor_;
+        message_processor::MessageProcessor message_processor_;
 
         class ConnectionVisitor {
         public:
