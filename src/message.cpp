@@ -5,6 +5,20 @@ namespace irc {
 
     namespace domain {
 
+        Message Message::TakeTypeAndMegre(Message&& other) {
+            if (other.message_type_ == MessageType::PRIVMSG) {
+                for (auto& [badge, value] : other.badges_) {
+                    for (auto& v : value) {
+                        this->badges_[badge].push_back(std::move(v));
+                    };
+                }
+            }
+
+            this->message_type_ = other.message_type_;
+            content_.append(other.content_);
+            return *this;
+        }
+
         domain::MessageType Message::GetMessageType() const {
             return message_type_;
         }
