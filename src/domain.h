@@ -26,7 +26,8 @@ namespace irc {
             CAPRES,
             UNKNOWN,
             EMPTY,
-            CLEARCHAT
+            CLEARCHAT,
+            USERNOTICE
         };
 
         struct Command {
@@ -47,6 +48,7 @@ namespace irc {
             static constexpr std::string_view PRIVMSG = "PRIVMSG"sv;
             static constexpr std::string_view STATUSCODE = "STATUSCODE"sv;
             static constexpr std::string_view CLEARCHAT = "CLEARCHAT"sv;
+            static constexpr std::string_view USERNOTICE = "USERNOTICE"sv;
         };
 
         struct Capabilityes {
@@ -55,6 +57,13 @@ namespace irc {
             static constexpr std::string_view MEMBERSHIP = "twitch.tv/membership"sv;
             static constexpr std::string_view TAGS = "twitch.tv/tags"sv;
         };
+
+        static bool IsCRLF(const std::vector<char>& buff, size_t index) {
+            if (index < buff.size() - 1) {
+                return (buff[index] == '\r' && buff[index + 1] == '\n');
+            }
+            return false;
+        }
 
         static std::vector<std::string_view> Split(std::string_view str) {
             std::vector<std::string_view> result;
