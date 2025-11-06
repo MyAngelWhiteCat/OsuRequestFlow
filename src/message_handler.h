@@ -32,11 +32,8 @@ namespace irc {
                     }
                     catch (const std::exception& e) {
                         std::ofstream fuckedup("FUCKED_UP.txt", std::ios::app);
-                        fuckedup << "[Thats fucked up] ";
-                        if (message.GetRawPart()[0] == '\n') {
-                            fuckedup << "[FUCKED UP TWICE!!!]";
-                        }
-                        fuckedup << message.GetRawPart() << "[End of Fucked up]" << std::endl;
+                        fuckedup << "[Thats fucked up] " << "\nReason: " << e.what() 
+                            << "\n|" << message.GetRawPart() << "\n[End of Fucked up]" << std::endl;
                         LOG_FUCKEDUP("FUCK. But its logged");
                     }
                 }
