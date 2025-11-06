@@ -35,8 +35,8 @@ namespace irc {
             static constexpr std::string_view PASS = "PASS oauth:"sv;
             static constexpr std::string_view CREQ = "CAP REQ :"sv;
             static constexpr std::string_view CRES = "CAP"sv;
-            static constexpr std::string_view ACK = "CAP"sv;
-            static constexpr std::string_view NAK = "CAP"sv;
+            static constexpr std::string_view ACK = "ACK"sv;
+            static constexpr std::string_view NAK = "NAK"sv;
             static constexpr std::string_view JOIN = "JOIN"sv;
             static constexpr std::string_view JOIN_CHANNEL = "JOIN #"sv;
             static constexpr std::string_view PART = "PART"sv;
