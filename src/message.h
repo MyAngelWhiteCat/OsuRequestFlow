@@ -29,6 +29,7 @@ namespace irc {
 
             Message(domain::MessageType message_type, std::string raw_part, std::string&& content, std::string&& badges);
             bool operator==(const Message& other) const;
+
             Message TakeTypeAndMegre(Message&& other);
             MessageType GetMessageType() const;
             std::string_view GetContent() const;
@@ -43,6 +44,12 @@ namespace irc {
             std::string content_;
             Badges badges_;
         };
+
+        static std::ostream& operator<<(std::ostream& out, const Message& msg) { // TODO: TEST ONLY! Remove in prod!!!
+            bool is_first = false;
+            out << msg.GetContent();
+            return out;
+        }
 
     }
 
