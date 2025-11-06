@@ -36,10 +36,27 @@ add_executable(OsuRequestFlow
     src/logging.cpp
 )
 
+add_executable(TestMessageProcessor
+    tests/main.cpp 
+    tests/test_message_processor.h 
+    src/message_processor.h 
+    src/message_processor.cpp
+    src/logging.h
+    src/logging.cpp
+    src/message.h
+    src/message.cpp
+)
+
 target_include_directories(OsuRequestFlow PRIVATE 
     ${Boost_INCLUDE_DIRS}
     ${OPENSSL_INCLUDE_DIR}
 )
+
+target_include_directories(TestMessageProcessor PRIVATE 
+    ${Boost_INCLUDE_DIRS}
+    ${OPENSSL_INCLUDE_DIR}
+)
+
 
 target_link_libraries(OsuRequestFlow PRIVATE 
     spdlog::spdlog
@@ -51,6 +68,17 @@ target_link_libraries(OsuRequestFlow PRIVATE
     ZLIB::ZLIB
 )
 
+target_link_libraries(TestMessageProcessor PRIVATE 
+    spdlog::spdlog
+    nlohmann_json::nlohmann_json
+    Boost::system
+    Boost::thread
+    OpenSSL::SSL
+    OpenSSL::Crypto
+    ZLIB::ZLIB
+)
+
 if(WIN32)
     target_link_libraries(OsuRequestFlow PRIVATE ws2_32 crypt32 user32)
+    target_link_libraries(TestMessageProcessor PRIVATE ws2_32 crypt32 user32)
 endif()
