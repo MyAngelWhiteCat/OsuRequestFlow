@@ -6,11 +6,14 @@
 #include <string_view>
 #include <iostream>
 #include <memory>
+#include <fstream>
 #include <stdexcept>
 
 #include "domain.h"
 #include "message.h"
 #include "auth_data.h"
+#include "logging.h"
+
 
 namespace irc {
 
@@ -134,15 +137,24 @@ namespace irc {
                 , std::string_view raw_message) {
                 const int PING_COMMAND_INDEX = 0;
                 const int PING_CONTENT_INDEX = 1;
+                LOG_INFO("PING message found");
+                std::string debug_info = "Hello from MessageProcessor::CheckForPing: "s.append(std::to_string(split_raw_message.size()));
 
+                for (const auto& msg : split_raw_message) {
+                    debug_info += "PART)"s.append(std::string(msg)).append(" \n");
+                }
+                std::ofstream out("FUCK_UP.txt");
+                out << debug_info;
                 if (split_raw_message[PING_COMMAND_INDEX] == domain::Command::PING) {
+                    LOG_INFO("PING message created");
                     return domain::Message(domain::MessageType::PING
                         , std::string(split_raw_message[PING_CONTENT_INDEX]));
                 }
+                LOG_CRITICAL("PING message ignored");
+
                 return domain::Message(domain::MessageType::UNKNOWN
                     , std::string(raw_message));
             }
-
 
             std::optional<domain::Message> CheckForClearChat(const std::vector<std::string_view>& split_raw_message) {
                 return CheckForClearChat(split_raw_message, "");
