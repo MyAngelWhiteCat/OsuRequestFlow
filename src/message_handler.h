@@ -34,7 +34,7 @@ namespace irc {
                         std::ofstream fuckedup("FUCKED_UP.txt", std::ios::app);
                         fuckedup << "[Thats fucked up] " << "\nReason: " << e.what() 
                             << "\n|" << message.GetRawPart() << "\n[End of Fucked up]" << std::endl;
-                        LOG_FUCKEDUP("FUCK. But its logged");
+                        LOG_FUCKUP("FUCK. But its logged");
                     }
                 }
                 owner->Read();
