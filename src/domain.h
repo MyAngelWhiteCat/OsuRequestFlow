@@ -43,7 +43,7 @@ namespace irc {
             static constexpr std::string_view PART = "PART"sv;
             static constexpr std::string_view PART_CHANNEL = "PART #"sv;
             static constexpr std::string_view PONG = "PONG"sv;
-            static constexpr std::string_view PING = "PING "sv;
+            static constexpr std::string_view PING = "PING"sv;
             static constexpr std::string_view ROOMSTATE = "ROOMSTATE"sv;
             static constexpr std::string_view PRIVMSG = "PRIVMSG"sv;
             static constexpr std::string_view STATUSCODE = "STATUSCODE"sv;
