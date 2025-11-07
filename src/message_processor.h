@@ -28,7 +28,7 @@ namespace irc {
         const size_t EMPTY = 0;
         const size_t STATUSCODE_TAG_INDEX = 1;
         const size_t CAPABILITIES_REQUEST_TAG_INDEX = 1;
-        const size_t PING_EXPECTED = 2;
+        const size_t PING_MESSAGE_MINIMUM_SIZE = 2;
         const size_t CLEARCHAT_TAG_INDEX = 2;
         const size_t ROOMSTATE_MINIMUM_SIZE = 2;
         const size_t JOIN_PART_EXPECTED = 3;
@@ -67,7 +67,6 @@ namespace irc {
                 if (!raw_message.empty()) {
                     last_read_incomplete_message_ = raw_message;
                 }
-
                 return read_result;
             }
 
@@ -86,13 +85,15 @@ namespace irc {
                 case (EMPTY):
                     return domain::Message(domain::MessageType::EMPTY, "");
 
-                case (PING_EXPECTED):
-                    return CheckForPing(split_raw_message, raw_message);
-
                 case (JOIN_PART_EXPECTED):
                     return CheckForJoinPart(split_raw_message, raw_message); // TODO: split to 2 methods
 
                 default:
+                    if (split_raw_message.size() >= PING_MESSAGE_MINIMUM_SIZE) {
+                        if (auto msg = CheckForPing(split_raw_message, raw_message)) {
+                            return *msg;
+                        }
+                    }
                     if (split_raw_message.size() >= ROOMSTATE_MINIMUM_SIZE) {
                         if (auto msg = CheckForRoomstate(split_raw_message)) {
                             return message.TakeTypeAndMegre(std::move(*msg));
@@ -133,27 +134,17 @@ namespace irc {
                 return std::nullopt;
             }
 
-            domain::Message CheckForPing(const std::vector<std::string_view>& split_raw_message
-                , std::string_view raw_message) {
+            std::optional<domain::Message> CheckForPing(const std::vector<std::string_view>& split_raw_message
+                , std::string_view raw_content) {
                 const int PING_COMMAND_INDEX = 0;
                 const int PING_CONTENT_INDEX = 1;
-                LOG_INFO("PING message found");
-                std::string debug_info = "Hello from MessageProcessor::CheckForPing: "s.append(std::to_string(split_raw_message.size()));
-
-                for (const auto& msg : split_raw_message) {
-                    debug_info += "PART)"s.append(std::string(msg)).append(" \n");
-                }
-                std::ofstream out("FUCK_UP.txt");
-                out << debug_info;
+                const int PING_COMMAND_SIZE = 4;
+                
                 if (split_raw_message[PING_COMMAND_INDEX] == domain::Command::PING) {
-                    LOG_INFO("PING message created");
                     return domain::Message(domain::MessageType::PING
-                        , std::string(split_raw_message[PING_CONTENT_INDEX]));
+                        , std::string(raw_content.substr(PING_COMMAND_SIZE)));
                 }
-                LOG_CRITICAL("PING message ignored");
-
-                return domain::Message(domain::MessageType::UNKNOWN
-                    , std::string(raw_message));
+                return std::nullopt;
             }
 
             std::optional<domain::Message> CheckForClearChat(const std::vector<std::string_view>& split_raw_message) {
