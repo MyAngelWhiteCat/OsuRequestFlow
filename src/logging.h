@@ -9,7 +9,7 @@
 #define LOG_DEBUG(message) logging::Logger::Debug(message)
 #define LOG_TRACE(message) logging::Logger::Trace(message)
 #define LOG_CRITICAL(message) logging::Logger::Critical(message)
-#define LOG_FUCKEDUP(message) logging::Logger::Critical(message)
+#define LOG_FUCKUP(message) logging::Logger::Critical(message)
 
 namespace logging {
 

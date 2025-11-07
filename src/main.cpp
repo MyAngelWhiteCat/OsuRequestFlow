@@ -29,7 +29,7 @@ static void ConnectAndReadMultichat(const std::vector<std::string_view>& channel
         LOG_ERROR(e.what());
     }
     catch (...) { 
-        LOG_FUCKEDUP("call the exorcist! NOW!!!");
+        LOG_FUCKUP("call the exorcist! NOW!!!");
     }
 
     //client->Part(channels_names);
