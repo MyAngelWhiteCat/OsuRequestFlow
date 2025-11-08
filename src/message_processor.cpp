@@ -26,11 +26,7 @@ namespace irc {
 
             for (int i = 0; i < raw_read_result.size(); ++i) {
                 if (domain::IsCRLF(raw_read_result, i)) {
-                    auto msg = IdentifyMessageType(raw_message);
-                    if (msg.GetMessageType() == domain::MessageType::PRIVMSG) {
-                        std::osyncstream(std::cout) << "Message from " << msg.GetNick() << " extracted in thread: " << std::this_thread::get_id() << "\n";
-                    }
-                    read_result.push_back(std::move(msg));
+                    read_result.push_back(IdentifyMessageType(raw_message));
                     raw_message.clear();
                     ++i;
                     continue;
