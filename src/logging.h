@@ -1,6 +1,8 @@
 #pragma once
+// AI on
 #include <spdlog/spdlog.h>
 #include <spdlog/sinks/stdout_color_sinks.h>
+#include <spdlog/async.h>
 #include <iostream>
 
 #define LOG_INFO(message) logging::Logger::Info(message)
@@ -16,6 +18,7 @@ namespace logging {
     class Logger {
     public:
         static void Init();
+        static void Shutdown();
 
         static void Info(const std::string& message) {
             spdlog::info(message);
@@ -42,4 +45,13 @@ namespace logging {
         }
     };
 
+    template <typename ErrorCode>
+    static void ReportError(const ErrorCode& ec, std::string_view where) {
+        std::string message = fmt::format("Error in {}: {} (code: {})",
+            where, ec.message(), ec.value());
+        LOG_ERROR(message);
+    }
+
 } // namespace logging
+
+// AI off
