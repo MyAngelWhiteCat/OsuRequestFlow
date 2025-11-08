@@ -11,14 +11,14 @@ namespace irc {
 
     namespace message_processor {
 
-        std::vector<domain::Message> MessageProcessor::ProcessMessage(std::vector<char>& streambuf) {
+        std::vector<domain::Message> MessageProcessor::GetMessagesFromRawBytes(const std::vector<char>& streambuf) {
             return ExtractMessages(streambuf);
         }
 
-
-        std::vector<domain::Message> MessageProcessor::ExtractMessages(std::vector<char>& raw_read_result) {
+        std::vector<domain::Message> MessageProcessor::ExtractMessages(const std::vector<char>& raw_read_result) {
             std::vector<domain::Message> read_result;
             std::string raw_message;
+
             if (!last_read_incomplete_message_.empty()) {
                 raw_message = last_read_incomplete_message_;
                 last_read_incomplete_message_.clear();
@@ -26,17 +26,21 @@ namespace irc {
 
             for (int i = 0; i < raw_read_result.size(); ++i) {
                 if (domain::IsCRLF(raw_read_result, i)) {
-                    read_result.push_back(IdentifyMessageType(raw_message));
+                    auto msg = IdentifyMessageType(raw_message);
+                    if (msg.GetMessageType() == domain::MessageType::PRIVMSG) {
+                        std::osyncstream(std::cout) << "Message from " << msg.GetNick() << " extracted in thread: " << std::this_thread::get_id() << "\n";
+                    }
+                    read_result.push_back(std::move(msg));
                     raw_message.clear();
                     ++i;
                     continue;
                 }
                 raw_message += raw_read_result[i];
             }
-
             if (!raw_message.empty()) {
                 last_read_incomplete_message_ = raw_message;
             }
+
             return read_result;
         }
 
