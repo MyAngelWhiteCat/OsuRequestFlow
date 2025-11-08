@@ -21,7 +21,6 @@ add_executable(OsuRequestFlow
     src/main.cpp
     src/client.h
     src/client.cpp
-    src/connection.cpp
     src/connection.h
     src/message.h
     src/message.cpp
