@@ -26,7 +26,7 @@ namespace test_message_processor {
     void TestExpected(std::string_view test_name, Processor& processor
         , std::string_view test_case, std::vector<irc::domain::Message> expected_output) {
         auto input = MakeVectorFromString(test_case);
-        auto output = processor.ProcessMessage(input);
+        auto output = processor.GetMessagesFromRawBytes(input);
         
         std::cout << test_name;
         if (output == expected_output) {
