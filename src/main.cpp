@@ -13,10 +13,9 @@
 using namespace irc;
 namespace fs = std::filesystem;
 
-
 static void ConnectAndReadMultichat(const std::vector<std::string_view>& channels_names
     , const domain::AuthorizeData& a_data
-    , std::shared_ptr<Client<handler::MessageHandler>> client) {
+    , std::shared_ptr<Client> client) {
     client->Connect();
     client->CapRequest();
     client->Authorize(a_data);
@@ -35,10 +34,21 @@ static void ConnectAndReadMultichat(const std::vector<std::string_view>& channel
     //client->Part(channels_names);
 }
 
+template <typename Fn>
+void RunWorkers(unsigned num_workers, Fn&& func) {
+    std::vector<std::jthread> threads;
+    for (unsigned i = 0; i < num_workers - 1; ++i) {
+        threads.emplace_back(func);
+    }
+    func();
+}
+
 int main() {
     logging::Logger::Init();
+
     setlocale(LC_ALL, "Russian_Russia.1251");
-    net::io_context ioc;
+    net::io_context ioc(2);
+    auto work = net::make_work_guard(ioc);
     ssl::context ctx{ ssl::context::tlsv12_client };
     auto irc_strand = net::make_strand(ioc);
 
@@ -54,16 +64,18 @@ int main() {
 
     domain::AuthorizeData a_data; 
 
-    auto client = std::make_shared<Client<handler::MessageHandler>>(ioc, irc_strand);
-    auto ssl_client = std::make_shared<Client<handler::MessageHandler>>(ioc, ctx, irc_strand); // ponatno po nazvaniyam
+    //auto client = std::make_shared<Client>(ioc);
+    auto ssl_client = std::make_shared<Client>(ioc, ctx); 
 
-    std::vector<std::string_view> streamers{ "Topson", "shroud", "summit1g" };
+    std::vector<std::string_view> streamers{ "summit1g", "xQc", "CDawg" };
 
-    LOG_INFO("System start...");
+    LOG_DEBUG("System start...");
     net::post(irc_strand, [&streamers, &a_data, &ssl_client]() {
         ConnectAndReadMultichat(streamers, a_data, ssl_client);
         });
-
-    ioc.run();
+    RunWorkers(2, [&ioc]() {
+        ioc.run();
+        });
+    logging::Logger::Shutdown();
 }
 
