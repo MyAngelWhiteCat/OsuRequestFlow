@@ -102,11 +102,12 @@ namespace irc {
             {
                 self->message_handler_(messages);
             });
+        Read();
+
         if (connection_->IsReconnected()) {
             Authorize();
             Join();
         }
-        Read();
     }
 
     std::string Client::GetChannelNamesInStringCommand(std::vector<std::string_view> channels_names) {
