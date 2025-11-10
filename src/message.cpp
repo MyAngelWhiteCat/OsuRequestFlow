@@ -49,6 +49,14 @@ namespace irc {
             return badges_;
         }
 
+        std::string Message::GetColor() const {
+            auto it = badges_.find("color");
+            if (it != badges_.end() && !it->second.empty() && !it->second[0].empty()) {
+                return it->second[0].substr(1);
+            }
+            return "";
+        }
+
         Message::Message(domain::MessageType message_type, std::string&& content, std::string&& badges)
             : message_type_(message_type)
             , content_(std::move(content))

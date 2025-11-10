@@ -35,11 +35,8 @@ namespace irc {
             std::string_view GetContent() const;
             std::string_view GetNick() const;
             Badges GetBadges() const;
-            std::string GetRawPart() const {
-                return raw_part_;
-            }
+            std::string GetColor() const;
         private:
-            std::string raw_part_; // for debug only;
             MessageType message_type_;
             std::string content_;
             Badges badges_;
