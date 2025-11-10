@@ -58,6 +58,12 @@ add_executable(TestBadgeParser
     src/domain.h
 )
 
+target_include_directories(TestBadgeParser PRIVATE 
+    ${Boost_INCLUDE_DIRS}
+    ${OPENSSL_INCLUDE_DIR}
+)
+
+
 target_include_directories(OsuRequestFlow PRIVATE 
     ${Boost_INCLUDE_DIRS}
     ${OPENSSL_INCLUDE_DIR}
@@ -68,6 +74,15 @@ target_include_directories(TestMessageProcessor PRIVATE
     ${OPENSSL_INCLUDE_DIR}
 )
 
+target_link_libraries(TestBadgeParser PRIVATE 
+    spdlog::spdlog
+    nlohmann_json::nlohmann_json
+    Boost::system
+    Boost::thread
+    OpenSSL::SSL
+    OpenSSL::Crypto
+    ZLIB::ZLIB
+)
 
 target_link_libraries(OsuRequestFlow PRIVATE 
     spdlog::spdlog
