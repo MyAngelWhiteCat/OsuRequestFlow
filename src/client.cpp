@@ -5,23 +5,22 @@ namespace irc {
     Client::Client(net::io_context& ioc, ssl::context& ctx)
         : read_strand_(net::make_strand(ioc))
         , write_strand_(net::make_strand(ioc))
+        , connection_strand_(net::make_strand(ioc))
         , connection_(std::make_shared<connection::Connection>(ioc, ctx, write_strand_, read_strand_))
-        , fake_activity_timer_(ioc)
     {
     }
 
     Client::Client(net::io_context& ioc)
         : read_strand_(net::make_strand(ioc))
         , write_strand_(net::make_strand(ioc))
+        , connection_strand_(net::make_strand(ioc))
         , connection_(std::make_shared<connection::Connection>(ioc, write_strand_, read_strand_))
-        , fake_activity_timer_(ioc)
     {
 
     }
 
     void Client::Connect() {
         connection_->Connect(domain::IRC_EPS::HOST, domain::IRC_EPS::SSL_PORT);
-        //RunFakeActivity();
     }
 
     void Client::Disconnect() {
@@ -66,10 +65,12 @@ namespace irc {
     }
 
     void Client::Read() {
-        auto process_message = net::bind_executor(read_strand_, [self = this->shared_from_this()](std::vector<char>&& bytes) {
-            self->OnRead(std::move(bytes));
+        net::dispatch(connection_strand_, [self = shared_from_this()] (){
+            auto process_message = net::bind_executor(self->read_strand_, [self](std::vector<char>&& bytes) {
+                self->OnRead(std::move(bytes));
+                });
+            self->connection_->Read(process_message);
             });
-        connection_->Read(process_message);
     }
 
     //TODO
@@ -77,37 +78,39 @@ namespace irc {
         return connection_->IsConnected();
     }
 
-    void Client::RunFakeActivity() {
-        fake_activity_timer_.expires_after(std::chrono::minutes(5));
-        fake_activity_timer_.async_wait([self = shared_from_this()](const sys::error_code& ec) {
-            if (ec) {
-                LOG_ERROR("Error wile faking activity. Disconnect expected after 10 min");
-            }
-            else {
-                if (self->CheckConnect()) {
-                    self->connection_->Write("TIME");
-                    self->RunFakeActivity();
-                }
-                else {
-                    LOG_ERROR("Faking activity without connection");
-                }
-            }
-            });
-    }
-
     void Client::OnRead(std::vector<char>&& bytes) {
         std::vector<char> saved_bytes = std::move(bytes);
         auto messages = message_processor_.GetMessagesFromRawBytes(saved_bytes);
         net::post([self = shared_from_this(), messages = std::move(messages)]()
             {
-                self->message_handler_(messages);
+                (*self->message_handler_)(messages);
             });
-        Read();
 
-        if (connection_->IsReconnected()) {
-            Authorize();
-            Join();
+        if (connection_->IsReconnectRequired()) {
+            net::dispatch(connection_strand_, [self = shared_from_this()]() {
+                self->Reconnect();
+                });
         }
+        Read();
+    }
+
+    void Client::Reconnect(bool secured) {
+        ssl::context* ctx = nullptr;
+        net::io_context* ioc = nullptr;
+        if (connection_->IsSecured()) {
+            ctx = connection_->GetSSLContext();
+        }
+        ioc = connection_->GetContext();
+
+        connection_.reset();
+        if (secured) {
+            connection_ = std::make_shared<connection::Connection>(*ioc, *ctx, write_strand_, read_strand_);
+        }
+        else {
+            connection_ = std::make_shared<connection::Connection>(*ioc, write_strand_, read_strand_);
+        }
+        Authorize();
+        Join();
     }
 
     std::string Client::GetChannelNamesInStringCommand(std::vector<std::string_view> channels_names) {

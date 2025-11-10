@@ -10,6 +10,7 @@
 #include <stdexcept>
 #include <optional>
 #include <chrono>
+#include <mutex>
 
 #include "domain.h"
 #include "message.h"
@@ -49,20 +50,21 @@ namespace irc {
     private:
         Strand write_strand_;
         Strand read_strand_;
+        Strand connection_strand_;
 
         message_processor::MessageProcessor message_processor_;
         std::shared_ptr<connection::Connection> connection_;
-        handler::MessageHandler message_handler_{connection_};
-        net::steady_timer fake_activity_timer_;
+        std::shared_ptr<handler::MessageHandler> message_handler_ =
+            std::make_shared<handler::MessageHandler>(connection_, connection_strand_);
 
         bool authorized_ = false;
         std::unordered_map<std::string, bool> channel_name_to_connect_status_;
-        void RunFakeActivity();
 
         std::optional<std::string> join_command_buffer_;
         std::optional<std::string> auth_data_buffer_;
 
         void OnRead(std::vector<char>&& bytes);
+        void Reconnect(bool secured = true);
         std::string GetChannelNamesInStringCommand(std::vector<std::string_view> channels_names);
     };
 
