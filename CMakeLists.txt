@@ -38,8 +38,8 @@ add_executable(OsuRequestFlow
 )
 
 add_executable(TestMessageProcessor
-    tests/main.cpp 
-    tests/test_message_processor.h 
+    tests/message_processor/main.cpp 
+    tests/message_processor/test_message_processor.h 
     tests/utils.h 
     src/message_processor.h 
     src/message_processor.cpp
@@ -47,7 +47,15 @@ add_executable(TestMessageProcessor
     src/logging.cpp
     src/message.h
     src/message.cpp
-    
+    src/domain.h
+)
+
+add_executable(TestBadgeParser
+    tests/badges_parser/main.cpp 
+    tests/badges_parser/test_badges_parser.h
+    src/message.h
+    src/message.cpp
+    src/domain.h
 )
 
 target_include_directories(OsuRequestFlow PRIVATE 
