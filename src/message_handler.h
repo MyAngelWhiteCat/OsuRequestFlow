@@ -3,6 +3,8 @@
 #include <iostream>
 #include <memory>
 #include <vector>
+#include <chrono>
+#include <iomanip>
 
 #include "domain.h"
 #include "message.h"
@@ -17,7 +19,8 @@ namespace irc {
         using namespace std::literals;
         using Strand = net::strand<net::io_context::executor_type>;
 
-        class MessageHandler {
+        class MessageHandler : public std::enable_shared_from_this<MessageHandler> {
+
         public:
             MessageHandler(std::shared_ptr<connection::Connection> connection, Strand& connection_strand)
                 : connection_(connection)
@@ -32,7 +35,9 @@ namespace irc {
             std::shared_ptr<connection::Connection> connection_;
 
             void SendPong(const std::string_view content);
-
+            std::string GetColor(const std::string& hexColor);
+            const std::string RESET = "\033[0m";
+            void PrintTime(std::ostream& out);
         };
 
     }
