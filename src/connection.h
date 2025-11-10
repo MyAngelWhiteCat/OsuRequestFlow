@@ -33,6 +33,8 @@ namespace connection {
             : write_strand_(read_strand)
             , read_strand_(read_strand)
             , socket_(tcp::socket(ioc))
+            , ioc_(&ioc)
+            , secured_(false)
         {
 
         }
@@ -41,8 +43,11 @@ namespace connection {
             : write_strand_(read_strand)
             , read_strand_(read_strand)
             , socket_(ssl::stream<tcp::socket>(ioc, ctx))
+            , ioc_(&ioc)
+            , ctx_(&ctx)
+            , secured_(true)
         {
-
+            
         }
 
         void Connect(std::string_view host, std::string_view port) {
@@ -69,23 +74,9 @@ namespace connection {
             LOG_INFO("Disconnected");
         }
 
-        void Reconnect() {
-            if (!address_buffer_) {
-                throw std::runtime_error("Reconnect buffer empty");
-            }
-            try {
-                Connect(address_buffer_->first, address_buffer_->second);
-            }
-            catch (const std::exception& e) {
-                LOG_CRITICAL(e.what());
-                return;
-            }
-            reconnected_ = true;
-        }
-
-        bool IsReconnected() {
-            if (reconnected_) {
-                reconnected_ = false;
+        bool IsReconnectRequired() {
+            if (reconnect_required_) {
+                reconnect_required_ = false;
                 return true;
             }
             return false;
@@ -114,6 +105,21 @@ namespace connection {
             return ssl_connected_ || connected_;
         }
 
+        net::io_context* GetContext() {
+            return ioc_;
+        }
+
+        ssl::context* GetSSLContext() {
+            if (!secured_) {
+                throw std::logic_error("Only secured connection can have SSL context");
+            }
+            return ctx_;
+        }
+
+        bool IsSecured() const {
+            return secured_;
+        }
+
     private:
         Strand& write_strand_;
         Strand& read_strand_;
@@ -122,8 +128,12 @@ namespace connection {
         std::variant<tcp::socket, ssl::stream<tcp::socket>> socket_;
 
         bool ssl_connected_ = false;
+        bool secured_ = false;
         bool connected_ = false;
-        bool reconnected_ = false;
+        bool reconnect_required_ = false;
+
+        ssl::context* ctx_ = nullptr;
+        net::io_context* ioc_ = nullptr;
 
         class ConnectionVisitor {
         public:
@@ -137,6 +147,15 @@ namespace connection {
             void operator()(tcp::socket& socket) {
                 tcp::resolver resolver(socket.get_executor()); // :(
                 auto endpoints = resolver.resolve(host_, port_);
+                if (connection_.ec_) {
+                    logging::ReportError(connection_.ec_, "Resolving");
+                }
+                else {
+                    LOG_INFO("Resolved "s.append(host_).append(":"s).append(port_));
+                    for (const auto& ep : endpoints) {
+                        LOG_INFO(endpoints.begin()->endpoint().address().to_string().append(":"s).append(port_));
+                    }
+                }
                 net::connect(socket, endpoints, connection_.ec_);
                 if (connection_.ec_) {
                     logging::ReportError(connection_.ec_, "Connection"sv);
@@ -146,14 +165,16 @@ namespace connection {
             }
 
             void operator()(ssl::stream<tcp::socket>& socket) {
-                sys::error_code ec;
                 tcp::resolver resolver(socket.get_executor()); // :(
-                auto endpoints = resolver.resolve(host_, port_, ec);
-                if (ec) {
-                    logging::ReportError(ec, "Resolving");
+                auto endpoints = resolver.resolve(host_, port_, connection_.ec_);
+                if (connection_.ec_) {
+                    logging::ReportError(connection_.ec_, "Resolving");
                 }
                 else {
                     LOG_INFO("Resolved "s.append(host_).append(":"s).append(port_));
+                    for (const auto& ep : endpoints) {
+                        LOG_INFO(endpoints.begin()->endpoint().address().to_string().append(":"s).append(port_));
+                    }
                 }
                 net::connect(socket.lowest_layer(), endpoints, connection_.ec_);
                 if (connection_.ec_) {
@@ -282,9 +303,8 @@ namespace connection {
             void OnRead(const sys::error_code& ec, std::vector<char>&& bytes) {
                 if (ec) {
                     logging::ReportError(ec, "Reading");
-                    LOG_INFO("Reconnecting...");
                     if (auto con = connection_.lock()) {
-                        con->Reconnect();
+                        con->reconnect_required_ = true;
                     }
                 }
                 handler_(std::move(bytes));
@@ -359,6 +379,7 @@ namespace connection {
                     }));
             }
         };
+
     };
 
 }
