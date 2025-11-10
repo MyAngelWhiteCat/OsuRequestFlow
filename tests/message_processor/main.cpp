@@ -1,7 +1,7 @@
 #include <iostream>
 
 #include "test_message_processor.h"
-#include "../src/logging.h"
+#include "../../src/logging.h"
 
 
 

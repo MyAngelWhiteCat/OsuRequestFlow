@@ -1,8 +1,8 @@
 #pragma once 
 
-#include "../src/message_processor.h"
-#include "../src/message.h"
-#include "utils.h"
+#include "../../src/message_processor.h"
+#include "../../src/message.h"
+#include "../utils.h"
 
 
 namespace test_message_processor {
