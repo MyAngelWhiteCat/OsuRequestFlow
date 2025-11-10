@@ -6,7 +6,7 @@ namespace irc {
         : read_strand_(net::make_strand(ioc))
         , write_strand_(net::make_strand(ioc))
         , connection_(std::make_shared<connection::Connection>(ioc, ctx, write_strand_, read_strand_))
-
+        , fake_activity_timer_(ioc)
     {
     }
 
@@ -14,12 +14,14 @@ namespace irc {
         : read_strand_(net::make_strand(ioc))
         , write_strand_(net::make_strand(ioc))
         , connection_(std::make_shared<connection::Connection>(ioc, write_strand_, read_strand_))
+        , fake_activity_timer_(ioc)
     {
 
     }
 
     void Client::Connect() {
         connection_->Connect(domain::IRC_EPS::HOST, domain::IRC_EPS::SSL_PORT);
+        //RunFakeActivity();
     }
 
     void Client::Disconnect() {
@@ -27,8 +29,15 @@ namespace irc {
     }
 
     void Client::Join(const std::vector<std::string_view>& channels_names) {
-        std::string command = GetChannelNamesInStringCommand(channels_names);
-        connection_->Write(std::string(domain::Command::JOIN_CHANNEL) + command + "\r\n"s);
+        join_command_buffer_ = GetChannelNamesInStringCommand(channels_names);
+        connection_->Write(std::string(domain::Command::JOIN_CHANNEL) + *join_command_buffer_ + "\r\n"s);
+    }
+
+    void Client::Join() {
+        if (!join_command_buffer_) {
+            throw std::runtime_error("Empty reconnect buffer");
+        }
+        connection_->Write(std::string(domain::Command::JOIN_CHANNEL) + *join_command_buffer_ + "\r\n"s);
     }
 
     void Client::Part(const std::vector<std::string_view>& channels_names) {
@@ -36,9 +45,17 @@ namespace irc {
         connection_->Write(std::string(domain::Command::PART_CHANNEL) + command + "\r\n"s);
     }
 
+    void Client::Authorize() {
+        if (!auth_data_buffer_) {
+            throw std::runtime_error("Empty reconnect buffer");
+        }
+        connection_->Write(*auth_data_buffer_);
+    }
+
 
     void Client::Authorize(const domain::AuthorizeData& auth_data) {
-        connection_->Write(auth_data.GetAuthMessage());
+        auth_data_buffer_ = auth_data.GetAuthMessage();
+        connection_->Write(*auth_data_buffer_);
     }
 
     void Client::CapRequest() {
@@ -60,6 +77,24 @@ namespace irc {
         return connection_->IsConnected();
     }
 
+    void Client::RunFakeActivity() {
+        fake_activity_timer_.expires_after(std::chrono::minutes(5));
+        fake_activity_timer_.async_wait([self = shared_from_this()](const sys::error_code& ec) {
+            if (ec) {
+                LOG_ERROR("Error wile faking activity. Disconnect expected after 10 min");
+            }
+            else {
+                if (self->CheckConnect()) {
+                    self->connection_->Write("TIME");
+                    self->RunFakeActivity();
+                }
+                else {
+                    LOG_ERROR("Faking activity without connection");
+                }
+            }
+            });
+    }
+
     void Client::OnRead(std::vector<char>&& bytes) {
         std::vector<char> saved_bytes = std::move(bytes);
         auto messages = message_processor_.GetMessagesFromRawBytes(saved_bytes);
@@ -67,6 +102,10 @@ namespace irc {
             {
                 self->message_handler_(messages);
             });
+        if (connection_->IsReconnected()) {
+            Authorize();
+            Join();
+        }
         Read();
     }
 

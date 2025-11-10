@@ -9,6 +9,7 @@
 #include <memory>
 #include <stdexcept>
 #include <optional>
+#include <chrono>
 
 #include "domain.h"
 #include "message.h"
@@ -37,7 +38,9 @@ namespace irc {
         void Connect();
         void Disconnect();
         void Join(const std::vector<std::string_view>& channels_names);
+        void Join();
         void Part(const std::vector<std::string_view>& channels_names);
+        void Authorize();
         void Authorize(const domain::AuthorizeData& auth_data);
         void CapRequest();
         void Read();
@@ -47,12 +50,17 @@ namespace irc {
         Strand write_strand_;
         Strand read_strand_;
 
-        handler::MessageHandler message_handler_;
         message_processor::MessageProcessor message_processor_;
         std::shared_ptr<connection::Connection> connection_;
+        handler::MessageHandler message_handler_{connection_};
+        net::steady_timer fake_activity_timer_;
 
         bool authorized_ = false;
         std::unordered_map<std::string, bool> channel_name_to_connect_status_;
+        void RunFakeActivity();
+
+        std::optional<std::string> join_command_buffer_;
+        std::optional<std::string> auth_data_buffer_;
 
         void OnRead(std::vector<char>&& bytes);
         std::string GetChannelNamesInStringCommand(std::vector<std::string_view> channels_names);
