@@ -82,7 +82,7 @@ namespace irc {
             if (str.empty()) {
                 return false;
             }
-            
+
             for (int i = 0; i < str.size(); ++i) {
                 if (!isdigit(str[i])) {
                     return false;
@@ -116,7 +116,11 @@ namespace irc {
             case MessageType::CAPRES:
                 out << Command::CRES;
                 break;
+            case MessageType::CLEARCHAT:
+                out << Command::CLEARCHAT;
+                break;
             }
+
         }
 
     } // namespace domain
