@@ -190,13 +190,11 @@ namespace irc {
 
                 if (split_raw_message[MSG_TAG_INDEX] == domain::Command::PRIVMSG) {
                     return domain::Message(domain::MessageType::PRIVMSG
-                        , std::string(raw_message) // Debug only - delete in prod
                         , std::move(user_content)
                         , std::string(split_raw_message[BADGES_INDEX]));
                 }
                 else {
                     return domain::Message(domain::MessageType::USERNOTICE // TODO: process usernotice
-                        , std::string(raw_message) // Debug only - delete in prod
                         , std::move(user_content)
                         , std::string(split_raw_message[BADGES_INDEX]));
                 }
