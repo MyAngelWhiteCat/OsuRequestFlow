@@ -6,6 +6,7 @@
 
 #include "domain.h"
 #include "message.h"
+#include "connection.h"
 
 #include <fstream>
 
@@ -17,7 +18,17 @@ namespace irc {
 
         class MessageHandler {
         public:
+            MessageHandler(std::shared_ptr<connection::Connection> connection)
+                : connection_(connection)
+            {
+            }
+
             void operator()(const std::vector<domain::Message>& messages);
+
+        private:
+            std::shared_ptr<connection::Connection> connection_;
+
+            void SendPong(const std::string_view content);
 
         };
 
