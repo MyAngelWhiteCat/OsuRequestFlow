@@ -27,7 +27,7 @@ namespace irc {
 
             }
 
-            Message(domain::MessageType message_type, std::string raw_part, std::string&& content, std::string&& badges);
+            Message(domain::MessageType message_type, std::string&& content, std::string&& badges);
             bool operator==(const Message& other) const;
 
             Message TakeTypeAndMegre(Message&& other);

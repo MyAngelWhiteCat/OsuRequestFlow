@@ -49,9 +49,8 @@ namespace irc {
             return badges_;
         }
 
-        Message::Message(domain::MessageType message_type, std::string raw_part, std::string&& content, std::string&& badges)
+        Message::Message(domain::MessageType message_type, std::string&& content, std::string&& badges)
             : message_type_(message_type)
-            , raw_part_(raw_part)
             , content_(std::move(content))
         {
             std::string badge;
