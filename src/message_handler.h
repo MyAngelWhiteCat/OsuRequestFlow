@@ -15,19 +15,20 @@ namespace irc {
     namespace handler {
 
         using namespace std::literals;
+        using Strand = net::strand<net::io_context::executor_type>;
 
         class MessageHandler {
         public:
-            MessageHandler(std::shared_ptr<connection::Connection> connection, std::mutex& connection_mutex)
+            MessageHandler(std::shared_ptr<connection::Connection> connection, Strand& connection_strand)
                 : connection_(connection)
-                , connection_mutex_(connection_mutex)
+                , connection_strand_(connection_strand)
             {
             }
 
             void operator()(const std::vector<domain::Message>& messages);
 
         private:
-            std::mutex& connection_mutex_;
+            Strand& connection_strand_;
             std::shared_ptr<connection::Connection> connection_;
 
             void SendPong(const std::string_view content);
