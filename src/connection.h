@@ -74,7 +74,6 @@ namespace connection {
                 throw std::runtime_error("Reconnect buffer empty");
             }
             try {
-                Disconnect(false);
                 Connect(address_buffer_->first, address_buffer_->second);
             }
             catch (const std::exception& e) {
