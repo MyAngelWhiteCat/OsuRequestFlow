@@ -53,16 +53,43 @@ namespace connection {
             if (ec_) {
                 logging::ReportError(ec_, "Connection");
             }
+            else {
+                address_buffer_ = std::make_pair(std::string(host), std::string(port));
+            }
         }
 
-        void Disconnect() {
+        void Disconnect(bool is_need_to_close_socket = true) {
             ec_.clear();
 
-            DisconnectVisitor visitor(*this);
+            DisconnectVisitor visitor(*this, is_need_to_close_socket);
             std::visit(visitor, socket_);
             if (ec_) {
                 logging::ReportError(ec_, "Disconnecting");
             }
+            LOG_INFO("Disconnected");
+        }
+
+        void Reconnect() {
+            if (!address_buffer_) {
+                throw std::runtime_error("Reconnect buffer empty");
+            }
+            try {
+                Disconnect(false);
+                Connect(address_buffer_->first, address_buffer_->second);
+            }
+            catch (const std::exception& e) {
+                LOG_CRITICAL(e.what());
+                return;
+            }
+            reconnected_ = true;
+        }
+
+        bool IsReconnected() {
+            if (reconnected_) {
+                reconnected_ = false;
+                return true;
+            }
+            return false;
         }
 
         template <typename Handler>
@@ -92,11 +119,12 @@ namespace connection {
         Strand& write_strand_;
         Strand& read_strand_;
         sys::error_code ec_;
-
+        std::optional<std::pair<std::string, std::string>> address_buffer_;
         std::variant<tcp::socket, ssl::stream<tcp::socket>> socket_;
 
         bool ssl_connected_ = false;
         bool connected_ = false;
+        bool reconnected_ = false;
 
         class ConnectionVisitor {
         public:
@@ -119,12 +147,22 @@ namespace connection {
             }
 
             void operator()(ssl::stream<tcp::socket>& socket) {
+                sys::error_code ec;
                 tcp::resolver resolver(socket.get_executor()); // :(
-                auto endpoints = resolver.resolve(host_, port_);
+                auto endpoints = resolver.resolve(host_, port_, ec);
+                if (ec) {
+                    logging::ReportError(ec, "Resolving");
+                }
+                else {
+                    LOG_INFO("Resolved "s.append(host_).append(":"s).append(port_));
+                }
                 net::connect(socket.lowest_layer(), endpoints, connection_.ec_);
                 if (connection_.ec_) {
                     logging::ReportError(connection_.ec_, "SSL Connection"sv);
                     return;
+                }
+                else {
+                    LOG_INFO("CONNECTED");
                 }
                 socket.lowest_layer().set_option(tcp::no_delay(true));
                 socket.handshake(ssl::stream_base::client, connection_.ec_);
@@ -132,6 +170,9 @@ namespace connection {
                     logging::ReportError(connection_.ec_, "SSL Handshake"sv);
                     socket.lowest_layer().close();
                     return;
+                }
+                else {
+                    LOG_INFO("HANDSHAKE SUCESS");
                 }
                 connection_.ssl_connected_ = true;
             }
@@ -144,26 +185,32 @@ namespace connection {
 
         class DisconnectVisitor {
         public:
-            explicit DisconnectVisitor(Connection& connection)
+            explicit DisconnectVisitor(Connection& connection, bool is_need_to_close_socket)
                 : connection_(connection)
+                , is_need_to_close_socket_(is_need_to_close_socket)
             {
             }
 
             void operator()(tcp::socket& socket) {
                 socket.shutdown(net::socket_base::shutdown_send, ignor_);
-                socket.close(connection_.ec_);
+                if (is_need_to_close_socket_) {
+                    socket.close(connection_.ec_);
+                }
                 connection_.connected_ = false;
             }
 
             void operator()(ssl::stream<tcp::socket>& socket) {
                 socket.shutdown(ignor_);
-                socket.lowest_layer().close(connection_.ec_);
+                if (is_need_to_close_socket_) {
+                    socket.lowest_layer().close(connection_.ec_);
+                }
                 connection_.ssl_connected_ = false;
             }
 
         private:
             Connection& connection_;
             sys::error_code ignor_;
+            bool is_need_to_close_socket_;
         };
 
         template <typename Handler>
@@ -236,7 +283,10 @@ namespace connection {
             void OnRead(const sys::error_code& ec, std::vector<char>&& bytes) {
                 if (ec) {
                     logging::ReportError(ec, "Reading");
-                    return;
+                    LOG_INFO("Reconnecting...");
+                    if (auto con = connection_.lock()) {
+                        con->Reconnect();
+                    }
                 }
                 handler_(std::move(bytes));
             }
@@ -268,14 +318,46 @@ namespace connection {
                 if (!is_connected) {
                     throw std::runtime_error("Writing socket without connection");
                 }
+                LOG_INFO("Sending: "s.append(data_));
+                net::write(socket, net::buffer(data_), connection_->ec_);
+            }
+        };
+
+        class AsyncWriteVisitor : public std::enable_shared_from_this<AsyncWriteVisitor> {
+        public:
+            explicit AsyncWriteVisitor(std::shared_ptr<Connection> connection, std::string_view data)
+                : connection_(connection)
+                , data_(data)
+            {
+
+            }
+
+            void operator()(tcp::socket& socket) {
+                AsyncWriteMessages(connection_->connected_, socket);
+            }
+
+            void operator()(ssl::stream<tcp::socket>& socket) {
+                AsyncWriteMessages(connection_->ssl_connected_, socket);
+            }
+
+        private:
+            std::shared_ptr<Connection> connection_;
+            std::string data_;
+
+            template <typename Socket>
+            void AsyncWriteMessages(bool is_connected, Socket& socket) {
+                if (!is_connected) {
+                    throw std::runtime_error("Writing socket without connection");
+                }
+                LOG_INFO("Sending: "s.append(data_));
                 net::write(socket, net::buffer(data_), connection_->ec_);
 
-                /*net::async_write(socket, net::buffer(data_), net::bind_executor(connection_->write_strand_
-                    , [self = this->shared_from_this()](const sys::error_code& ec, size_t bytes_writes) {
+                net::async_write(socket, net::buffer(data_), net::bind_executor(connection_->write_strand_
+                    , [self = this->shared_from_this()](const sys::error_code& ec, size_t bytes_writen) {
                         if (ec) {
                             logging::ReportError(ec, "Writing");
                         }
-                    }));*/
+                    }));
             }
         };
     };
