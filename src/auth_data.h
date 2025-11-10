@@ -23,7 +23,7 @@ namespace irc {
 
         private:
             std::string nick_ = "justinfan12345"s;
-            std::string token_ = "1234567890abcdef1234567890abcdef"s;
+            std::string token_ = "undefined"s;
         };
 
     }
