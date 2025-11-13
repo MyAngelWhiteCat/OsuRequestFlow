@@ -33,7 +33,7 @@ namespace irc {
     class Client : public std::enable_shared_from_this<Client> {
     public:
         Client() = delete;
-        Client(net::io_context& ioc, ssl::context& ctx);
+        Client(net::io_context& ioc, std::shared_ptr<ssl::context> ctx);
         Client(net::io_context& ioc);
 
         void Connect();
@@ -51,6 +51,7 @@ namespace irc {
         Strand write_strand_;
         Strand read_strand_;
         Strand connection_strand_;
+        std::shared_ptr<ssl::context> ctx_;
 
         message_processor::MessageProcessor message_processor_;
         std::shared_ptr<connection::Connection> connection_;
