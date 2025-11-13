@@ -95,8 +95,8 @@ namespace connection {
         }
 
         template <typename Handler>
-        void Read(Handler&& handler) {
-            auto visitor = std::make_shared<ReadVisitor<Handler>>(
+        void AsyncRead(Handler&& handler) {
+            auto visitor = std::make_shared<AsyncReadVisitor<Handler>>(
                 this->shared_from_this(), std::forward<Handler>(handler));
 
             std::visit(*visitor, socket_);
@@ -111,6 +111,22 @@ namespace connection {
             if (ec_) {
                 logging::ReportError(ec_, "Writing");
             }
+        }
+
+        template <typename Handler>
+        void AsyncWrite(std::string_view data, Handler&& callback) {
+            auto visitor = std::make_shared<AsyncWriteVisitor<Handler>>(
+                this->shared_from_this(), data, std::forward<Handler>(callback));
+
+            std::visit(*visitor, socket_);
+        }
+
+        void AsyncWrite(std::string_view data) {
+            AsyncWrite(data, [](const sys::error_code& ec) {
+                if (ec) {
+                    logging::ReportError(ec, "Writing");
+                    }
+                });
         }
 
         bool IsConnected() const {
@@ -237,15 +253,15 @@ namespace connection {
         };
 
         template <typename Handler>
-        class ReadVisitor : public std::enable_shared_from_this<ReadVisitor<Handler>> {
+        class AsyncReadVisitor : public std::enable_shared_from_this<AsyncReadVisitor<Handler>> {
         public:
 
             using HandlerType = typename std::decay<Handler>::type;
 
-            ReadVisitor(const ReadVisitor&) = delete;
-            ReadVisitor& operator=(const ReadVisitor&) = delete;
+            AsyncReadVisitor(const AsyncReadVisitor&) = delete;
+            AsyncReadVisitor& operator=(const AsyncReadVisitor&) = delete;
 
-            explicit ReadVisitor(std::weak_ptr<Connection> connection
+            explicit AsyncReadVisitor(std::weak_ptr<Connection> connection
                 , Handler&& handler
                 , size_t read_buffer_size = 512)
                 : connection_(connection)
@@ -350,11 +366,13 @@ namespace connection {
             }
         };
 
-        class AsyncWriteVisitor : public std::enable_shared_from_this<AsyncWriteVisitor> {
+        template <typename Handler>
+        class AsyncWriteVisitor : public std::enable_shared_from_this<AsyncWriteVisitor<Handler>> {
         public:
-            explicit AsyncWriteVisitor(std::shared_ptr<Connection> connection, std::string_view data)
+            explicit AsyncWriteVisitor(std::shared_ptr<Connection> connection, std::string_view data, Handler&& handler)
                 : connection_(connection)
                 , data_(data)
+                , handler_(std::forward<Handler>(handler))
             {
 
             }
@@ -370,6 +388,7 @@ namespace connection {
         private:
             std::shared_ptr<Connection> connection_;
             std::string data_;
+            Handler handler_;
 
             template <typename Socket>
             void AsyncWriteMessages(bool is_connected, Socket& socket) {
@@ -386,7 +405,7 @@ namespace connection {
                                 LOG_INFO("Connection closed gracefully by server");
                             }
                             else {
-                                logging::ReportError(ec, "Writing");
+                                self->handler_(ec);
                             }
                         }
                     }));
