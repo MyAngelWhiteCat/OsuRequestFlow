@@ -35,6 +35,10 @@ add_executable(OsuRequestFlow
     src/message_processor.cpp
     src/logging.h
     src/logging.cpp
+    src/command_parser.h 
+    src/command_parser.cpp
+    src/downloader.h
+    src/downloader.cpp 
 )
 
 add_executable(TestMessageProcessor
@@ -56,6 +60,12 @@ add_executable(TestBadgeParser
     src/message.h
     src/message.cpp
     src/domain.h
+)
+
+add_executable(TestCommandParser
+    tests/command_parser/main.cpp 
+    tests/command_parser/test_command_parser.h
+    src/command_parser.h
 )
 
 target_include_directories(TestBadgeParser PRIVATE 
