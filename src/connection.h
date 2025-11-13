@@ -15,6 +15,7 @@
 #include "logging.h"
 #include "auth_data.h"
 #include "message_processor.h"
+#include "ca_sertificates_loader.h"
 
 
 namespace connection {
@@ -26,6 +27,21 @@ namespace connection {
     using namespace std::literals;
 
     using Strand = net::strand<net::io_context::executor_type>;
+
+    static std::shared_ptr<ssl::context> GetSSLContext() {
+        auto ctx = std::make_shared<ssl::context>(ssl::context::tlsv12_client);
+        ctx->set_verify_mode(ssl::verify_peer);
+
+        // AI on
+        try {
+            ctx->set_default_verify_paths();
+        }
+        catch (...) {}
+        ssl_domain_utilities::load_windows_ca_certificates(*ctx);
+        // AI off
+
+        return ctx;
+    }
 
     class Connection : public std::enable_shared_from_this<Connection> {
     public:
@@ -44,7 +60,6 @@ namespace connection {
             , read_strand_(read_strand)
             , socket_(ssl::stream<tcp::socket>(ioc, ctx))
             , ioc_(&ioc)
-            , ctx_(&ctx)
             , secured_(true)
         {
             
@@ -57,9 +72,6 @@ namespace connection {
             std::visit(visitor, socket_);
             if (ec_) {
                 logging::ReportError(ec_, "Connection");
-            }
-            else {
-                address_buffer_ = std::make_pair(std::string(host), std::string(port));
             }
         }
 
@@ -109,13 +121,6 @@ namespace connection {
             return ioc_;
         }
 
-        ssl::context* GetSSLContext() {
-            if (!secured_) {
-                throw std::logic_error("Only secured connection can have SSL context");
-            }
-            return ctx_;
-        }
-
         bool IsSecured() const {
             return secured_;
         }
@@ -124,7 +129,6 @@ namespace connection {
         Strand& write_strand_;
         Strand& read_strand_;
         sys::error_code ec_;
-        std::optional<std::pair<std::string, std::string>> address_buffer_;
         std::variant<tcp::socket, ssl::stream<tcp::socket>> socket_;
 
         bool ssl_connected_ = false;
@@ -132,7 +136,6 @@ namespace connection {
         bool connected_ = false;
         bool reconnect_required_ = false;
 
-        ssl::context* ctx_ = nullptr;
         net::io_context* ioc_ = nullptr;
 
         class ConnectionVisitor {
@@ -307,7 +310,12 @@ namespace connection {
                         con->reconnect_required_ = true;
                     }
                 }
-                handler_(std::move(bytes));
+                if (auto con = connection_.lock()) {
+                    net::post(con->read_strand_,
+                        [handler = handler_, bytes = std::move(bytes)]() mutable {
+                            handler(std::move(bytes));
+                        });
+                }
             }
         };
 
@@ -374,7 +382,12 @@ namespace connection {
                 net::async_write(socket, net::buffer(data_), net::bind_executor(connection_->write_strand_
                     , [self = this->shared_from_this()](const sys::error_code& ec, size_t bytes_writen) {
                         if (ec) {
-                            logging::ReportError(ec, "Writing");
+                            if (ec == boost::asio::error::eof) {
+                                LOG_INFO("Connection closed gracefully by server");
+                            }
+                            else {
+                                logging::ReportError(ec, "Writing");
+                            }
                         }
                     }));
             }
