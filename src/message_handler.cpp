@@ -55,7 +55,7 @@ namespace irc {
 
         void MessageHandler::SendPong(const std::string_view ball) {
             net::dispatch(connection_strand_, [self = shared_from_this(), ball]() {
-                self->connection_->Write(std::string(domain::Command::PONG).append(std::string(ball).append("\r\n")));
+                self->connection_->AsyncWrite(std::string(domain::Command::PONG).append(std::string(ball).append("\r\n")));
                 });
         }
 
