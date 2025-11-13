@@ -61,6 +61,7 @@ namespace irc {
             : message_type_(message_type)
             , content_(std::move(content))
         {
+            if (badges.empty()) return;
             std::string badge;
             bool badge_seted = false;
             std::string value;
