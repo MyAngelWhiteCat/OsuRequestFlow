@@ -46,12 +46,15 @@ namespace irc {
         void CapRequest();
         void Read();
         bool CheckConnect();
+        void SetReconnectTimeout(int timeout);
 
     private:
         Strand write_strand_;
         Strand read_strand_;
         Strand connection_strand_;
         std::shared_ptr<ssl::context> ctx_;
+        net::steady_timer reconnect_timer_;
+        int reconnect_timeout_ = 30;
 
         message_processor::MessageProcessor message_processor_;
         std::shared_ptr<connection::Connection> connection_;
