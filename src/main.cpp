@@ -36,38 +36,37 @@ static void ConnectAndReadMultichat(const std::vector<std::string_view>& channel
 
 template <typename Fn>
 void RunWorkers(unsigned num_workers, Fn&& func) {
-    std::vector<std::jthread> threads;
-    for (unsigned i = 0; i < num_workers - 1; ++i) {
-        threads.emplace_back(func);
+    try {
+        std::vector<std::jthread> threads;
+        for (unsigned i = 0; i < num_workers - 1; ++i) {
+            threads.emplace_back(func);
+        }
+        func();
     }
-    func();
+    catch (const std::exception& e) {
+        LOG_INFO("Catch exception in RunWorkers");
+        LOG_CRITICAL(e.what());
+    }
 }
 
 int main() {
     logging::Logger::Init();
 
     setlocale(LC_ALL, "Russian_Russia.1251");
-    net::io_context ioc(2);
-    auto work = net::make_work_guard(ioc);
-    ssl::context ctx{ ssl::context::tlsv12_client };
-    auto irc_strand = net::make_strand(ioc);
 
-    ctx.set_verify_mode(ssl::verify_peer); 
-    
-    // AI on
-    try {
-        ctx.set_default_verify_paths(); 
-    }
-    catch (...) {}
-    ssl_domain_utilities::load_windows_ca_certificates(ctx); 
-    // AI off
+    net::io_context ioc(2);
+    auto ctx = connection::GetSSLContext();
+
+    auto work = net::make_work_guard(ioc);
+
+    auto irc_strand = net::make_strand(ioc);
 
     domain::AuthorizeData a_data; 
 
     //auto client = std::make_shared<Client>(ioc);
     auto ssl_client = std::make_shared<Client>(ioc, ctx); 
 
-    std::vector<std::string_view> streamers{ "ironmouse" };
+    std::vector<std::string_view> streamers{ "TheBurntPeanut", "Cinna"};
 
     LOG_DEBUG("System start...");
     net::post(irc_strand, [&streamers, &a_data, &ssl_client]() {
