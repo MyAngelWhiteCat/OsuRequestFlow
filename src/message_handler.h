@@ -30,13 +30,16 @@ namespace irc {
 
             void operator()(const std::vector<domain::Message>& messages);
 
+            void UpdateConnection(std::shared_ptr<connection::Connection>);
+
         private:
+            const std::string RESET = "\033[0m";
+
             Strand& connection_strand_;
             std::shared_ptr<connection::Connection> connection_;
 
             void SendPong(const std::string_view content);
-            std::string GetColor(const std::string& hexColor);
-            const std::string RESET = "\033[0m";
+            std::string GetColorFromHex(const std::string& hexColor);
             void PrintTime(std::ostream& out);
         };
 
