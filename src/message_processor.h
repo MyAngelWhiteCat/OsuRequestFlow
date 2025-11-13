@@ -42,6 +42,7 @@ namespace irc {
         class MessageProcessor {
         public:
             std::vector<domain::Message> GetMessagesFromRawBytes(const std::vector<char>& streambuf);
+            void FlushBuffer();
 
         private:
             std::string last_read_incomplete_message_;

@@ -12,7 +12,18 @@ namespace irc {
     namespace message_processor {
 
         std::vector<domain::Message> MessageProcessor::GetMessagesFromRawBytes(const std::vector<char>& streambuf) {
-            return ExtractMessages(streambuf);
+            try {
+                return ExtractMessages(streambuf);
+            }
+            catch (const std::exception& e) {
+                std::cout << e.what() << std::endl;
+            }
+        }
+
+        void MessageProcessor::FlushBuffer() {
+            if (!last_read_incomplete_message_.empty()) {
+                last_read_incomplete_message_.clear();
+            }
         }
 
         std::vector<domain::Message> MessageProcessor::ExtractMessages(const std::vector<char>& raw_read_result) {
