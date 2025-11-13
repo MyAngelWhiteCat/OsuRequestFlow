@@ -29,6 +29,7 @@ namespace irc {
                     case MessageType::PRIVMSG: // debug only
                         PrintTime(out);
                         out << GetColorFromHex(message.GetColorFromHex()) << message.GetNick() << RESET << message.GetContent() << "\n";
+                        
                         break;
                     case MessageType::UNKNOWN: // Debug only. In prod there is huge error if we get unknown message
                         fuckedup << message.GetContent() << std::endl;
@@ -82,6 +83,14 @@ namespace irc {
             std::tm tm_buf;
             localtime_s(&tm_buf, &time);
             out << '[' << std::put_time(&tm_buf, "%H:%M:%S") << "] ";
+        }
+
+        void MessageHandler::ProcessCommand(const commands::Command& command) {
+            switch (command.type_) {
+            case (commands::CommandType::OsuRequest):
+                break;
+            }
+            // TODO:
         }
 
 

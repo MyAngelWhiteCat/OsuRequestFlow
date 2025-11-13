@@ -9,6 +9,8 @@
 #include "domain.h"
 #include "message.h"
 #include "connection.h"
+#include "command_parser.h"
+#include "downloader.h"
 
 #include <fstream>
 
@@ -26,6 +28,7 @@ namespace irc {
                 : connection_(connection)
                 , connection_strand_(connection_strand)
             {
+
             }
 
             void operator()(const std::vector<domain::Message>& messages);
@@ -37,10 +40,12 @@ namespace irc {
 
             Strand& connection_strand_;
             std::shared_ptr<connection::Connection> connection_;
+            commands::CommandParser command_parser_;
 
             void SendPong(const std::string_view content);
             std::string GetColorFromHex(const std::string& hexColor);
             void PrintTime(std::ostream& out);
+            void ProcessCommand(const commands::Command& command);
         };
 
     }
