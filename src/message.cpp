@@ -49,7 +49,7 @@ namespace irc {
             return badges_;
         }
 
-        std::string Message::GetColor() const {
+        std::string Message::GetColorFromHex() const {
             auto it = badges_.find("color");
             if (it != badges_.end() && !it->second.empty() && !it->second[0].empty()) {
                 return it->second[0].substr(1);
