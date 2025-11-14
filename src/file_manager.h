@@ -40,15 +40,13 @@ namespace file_manager {
 
         }
 
-        void WriteInRoot(const std::vector<char>& bytes, std::string_view file_name, std::string_view format) {
+        void WriteInRoot(const std::string_view bytes, std::string_view file_name, std::string_view format) {
             std::ofstream new_file(root_directory_.string() + std::string(file_name) + std::string(format));
-            for (const char ch : bytes) {
-                new_file << ch;
-            }
+            new_file.write(bytes.data(), bytes.size());
             AddAction(ActionType::Write, file_name, format, root_directory_);
         }
 
-        void DeleteFile(const fs::path& path) {
+        void RemoveFile(const fs::path& path) {
             try {
                 fs::remove(path);
             }

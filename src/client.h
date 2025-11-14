@@ -1,7 +1,8 @@
 #pragma once
 
-#include <boost/asio.hpp>
+#include <boost/asio/strand.hpp>
 #include <boost/asio/ssl.hpp>
+
 #include <string>
 #include <string_view>
 #include <iostream>

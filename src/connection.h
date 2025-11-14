@@ -1,7 +1,13 @@
 #pragma once
 
-#include <boost/asio.hpp>
+#include <boost/asio/ip/tcp.hpp>
+#include <boost/asio/write.hpp>
+#include <boost/asio/read.hpp>
+#include <boost/asio/strand.hpp>
+#include <boost/asio/bind_executor.hpp>
+#include <boost/asio/connect.hpp>
 #include <boost/asio/ssl.hpp>
+
 #include <string>
 #include <string_view>
 #include <iostream>

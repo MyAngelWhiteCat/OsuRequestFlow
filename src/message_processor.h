@@ -1,7 +1,5 @@
 #pragma once
 
-#include <boost/asio.hpp>
-#include <boost/asio/ssl.hpp>
 #include <string>
 #include <string_view>
 #include <iostream>
@@ -19,10 +17,6 @@
 
 namespace irc {
 
-    namespace net = boost::asio;
-    namespace sys = boost::system;
-    namespace ssl = net::ssl;
-    using net::ip::tcp;
     using namespace std::literals;
 
     namespace message_processor {

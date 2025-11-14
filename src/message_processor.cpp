@@ -3,11 +3,6 @@
 
 namespace irc {
 
-    namespace net = boost::asio;
-    namespace sys = boost::system;
-    namespace ssl = net::ssl;
-    using net::ip::tcp;
-    using namespace std::literals;
 
     namespace message_processor {
 
