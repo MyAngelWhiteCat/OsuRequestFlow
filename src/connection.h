@@ -1,26 +1,30 @@
 #pragma once
 
+#ifdef WIN32
+#include <sdkddkver.h>
+#endif
+
+
 #include <boost/asio/ip/tcp.hpp>
-#include <boost/asio/write.hpp>
-#include <boost/asio/read.hpp>
 #include <boost/asio/strand.hpp>
-#include <boost/asio/bind_executor.hpp>
+#include <boost/asio/ssl/context.hpp>
 #include <boost/asio/connect.hpp>
-#include <boost/asio/ssl.hpp>
+#include <boost/asio/read.hpp>
+#include <boost/asio/write.hpp>
+#include <boost/asio/bind_executor.hpp>
+#include <boost/asio/ssl/context_base.hpp>
+#include <boost/asio/ssl/impl/context.ipp>
+#include <boost/asio/ssl/stream.hpp>
+#include <boost/asio/ssl/stream_base.hpp>
+#include <boost/asio/ssl/verify_mode.hpp>
 
 #include <string>
 #include <string_view>
-#include <iostream>
 #include <variant>
 #include <memory>
 #include <stdexcept>
-#include <optional>
 
-#include "domain.h"
-#include "message.h"
 #include "logging.h"
-#include "auth_data.h"
-#include "message_processor.h"
 #include "ca_sertificates_loader.h"
 
 

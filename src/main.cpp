@@ -1,14 +1,16 @@
-#include "client.h"
-#include "ca_sertificates_loader.h"
-#include "message_handler.h"
-#include "message.h"
 #include "auth_data.h"
+#include "client.h"
 #include "logging.h"
+#include <boost/asio/executor_work_guard.hpp>
+#include <boost/asio/impl/io_context.ipp>
+#include <boost/asio/io_context.hpp>
+#include <clocale>
 
+#include <boost/asio/post.hpp>
+
+#include <memory>
+#include <thread>
 #include <vector>
-#include <chrono>
-#include <filesystem>
-#include <fstream>
 
 using namespace irc;
 namespace fs = std::filesystem;
@@ -66,7 +68,7 @@ int main() {
     //auto client = std::make_shared<Client>(ioc);
     auto ssl_client = std::make_shared<Client>(ioc, ctx); 
 
-    std::vector<std::string_view> streamers{ "TheBurntPeanut", "Cinna"};
+    std::vector<std::string_view> streamers{"Cinna"};
 
     LOG_DEBUG("System start...");
     net::post(irc_strand, [&streamers, &a_data, &ssl_client]() {

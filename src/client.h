@@ -1,25 +1,16 @@
 #pragma once
 
 #include <boost/asio/strand.hpp>
-#include <boost/asio/ssl.hpp>
 
+#include <memory>
+#include <optional>
 #include <string>
 #include <string_view>
-#include <iostream>
-#include <variant>
-#include <memory>
-#include <stdexcept>
-#include <optional>
-#include <chrono>
-#include <mutex>
 
-#include "domain.h"
-#include "message.h"
-#include "logging.h"
 #include "auth_data.h"
-#include "message_processor.h"
-#include "message_handler.h"
 #include "connection.h"
+#include "message_handler.h"
+#include "message_processor.h"
 
 namespace irc {
 

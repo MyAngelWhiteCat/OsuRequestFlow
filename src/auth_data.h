@@ -3,8 +3,6 @@
 #include <string>
 #include <string_view>
 
-#include "domain.h"
-
 namespace irc {
 
     namespace domain {

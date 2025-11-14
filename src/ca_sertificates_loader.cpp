@@ -1,5 +1,18 @@
 #include "ca_sertificates_loader.h"
 
+#include <boost/asio/ssl/context.hpp>
+#include <boost/asio/ssl/impl/context.ipp>
+#include <openssl/ossl_typ.h>
+#include <openssl/ssl.h>
+#include <openssl/x509_vfy.h>
+
+
+#ifdef _WIN32
+#include <windows.h>
+#include <wincrypt.h>
+#include <openssl/x509.h>
+#endif
+
 namespace ssl_domain_utilities{
 
 // AI on

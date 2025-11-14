@@ -1,24 +1,27 @@
 #pragma once
 
+#include <boost/asio/io_context.hpp>
+#include <boost/asio/strand.hpp>
+#include <string>
+#include <string_view>
+
 #include <iostream>
 #include <memory>
 #include <vector>
-#include <chrono>
-#include <iomanip>
 
-#include "domain.h"
-#include "message.h"
-#include "connection.h"
 #include "command_parser.h"
-#include "downloader.h"
+#include "connection.h"
+#include "message.h"
 
-#include <fstream>
 
 namespace irc {
 
     namespace handler {
 
         using namespace std::literals;
+
+        namespace net = boost::asio;
+        namespace sys = boost::system;
         using Strand = net::strand<net::io_context::executor_type>;
 
         class MessageHandler : public std::enable_shared_from_this<MessageHandler> {

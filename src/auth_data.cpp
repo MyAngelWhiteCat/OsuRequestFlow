@@ -1,4 +1,5 @@
 #include "auth_data.h"
+#include "domain.h"
 
 
 namespace irc {

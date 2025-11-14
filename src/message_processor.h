@@ -1,18 +1,18 @@
 #pragma once
 
-#include <string>
-#include <string_view>
+#include <fstream>
 #include <iostream>
 #include <memory>
-#include <fstream>
-#include <stdexcept>
-#include <syncstream>
 #include <mutex>
+#include <stdexcept>
+#include <string>
+#include <string_view>
+#include <syncstream>
 
-#include "domain.h"
-#include "message.h"
 #include "auth_data.h"
+#include "domain.h"
 #include "logging.h"
+#include "message.h"
 
 
 namespace irc {

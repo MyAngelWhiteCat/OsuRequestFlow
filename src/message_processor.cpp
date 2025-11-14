@@ -1,4 +1,14 @@
 #include "message_processor.h"
+#include "message.h"
+#include "domain.h"
+
+#include <vector>
+#include <iostream>
+#include <exception>
+#include <string>
+#include <string_view>
+#include <utility>
+#include <optional>
 
 
 namespace irc {

@@ -1,5 +1,23 @@
 #include "client.h"
 
+#include <boost/asio/ssl/context.hpp>
+#include <boost/asio/strand.hpp>
+
+#include <chrono>
+#include <memory>
+#include <optional>
+#include <stdexcept>
+#include <string>
+#include <string_view>
+
+#include "auth_data.h"
+#include "connection.h"
+#include "domain.h"
+#include "logging.h"
+#include "message_handler.h"
+#include "message_processor.h"
+
+
 namespace irc {
 
     Client::Client(net::io_context& ioc, std::shared_ptr<ssl::context> ctx)
