@@ -43,6 +43,7 @@ add_executable(OsuRequestFlow
     src/file_manager.cpp
     src/http_client.h 
     src/http_client.cpp 
+    src/random_user_agent.h
 )
 
 add_executable(TestMessageProcessor
@@ -58,34 +59,27 @@ add_executable(TestMessageProcessor
     src/domain.h
 )
 
+target_include_directories(TestMessageProcessor PRIVATE 
+    ${Boost_INCLUDE_DIRS}
+    ${OPENSSL_INCLUDE_DIR}
+)
+
+target_link_libraries(TestMessageProcessor PRIVATE 
+    spdlog::spdlog
+    nlohmann_json::nlohmann_json
+    Boost::system
+    Boost::thread
+    OpenSSL::SSL
+    OpenSSL::Crypto
+    ZLIB::ZLIB
+)
+
 add_executable(TestBadgeParser
     tests/badges_parser/main.cpp 
     tests/badges_parser/test_badges_parser.h
     src/message.h
     src/message.cpp
     src/domain.h
-)
-
-add_executable(TestCommandParser
-    tests/command_parser/main.cpp 
-    tests/command_parser/test_command_parser.h
-    src/command_parser.h
-)
-
-target_include_directories(TestBadgeParser PRIVATE 
-    ${Boost_INCLUDE_DIRS}
-    ${OPENSSL_INCLUDE_DIR}
-)
-
-
-target_include_directories(OsuRequestFlow PRIVATE 
-    ${Boost_INCLUDE_DIRS}
-    ${OPENSSL_INCLUDE_DIR}
-)
-
-target_include_directories(TestMessageProcessor PRIVATE 
-    ${Boost_INCLUDE_DIRS}
-    ${OPENSSL_INCLUDE_DIR}
 )
 
 target_link_libraries(TestBadgeParser PRIVATE 
@@ -98,7 +92,28 @@ target_link_libraries(TestBadgeParser PRIVATE
     ZLIB::ZLIB
 )
 
-target_link_libraries(OsuRequestFlow PRIVATE 
+target_include_directories(TestBadgeParser PRIVATE 
+    ${Boost_INCLUDE_DIRS}
+    ${OPENSSL_INCLUDE_DIR}
+)
+
+add_executable(TestCommandParser
+    tests/command_parser/main.cpp 
+    tests/command_parser/test_command_parser.h
+    src/command_parser.h
+)
+
+add_executable(TestHttpClient
+    tests/http_client/main.cpp 
+    tests/http_client/test_http_client.h
+    src/http_client.h 
+    src/random_user_agent.h
+    src/ca_sertificates_loader.h 
+    src/ca_sertificates_loader.cpp
+    src/connection.h
+)
+
+target_link_libraries(TestHttpClient PRIVATE 
     spdlog::spdlog
     nlohmann_json::nlohmann_json
     Boost::system
@@ -108,7 +123,18 @@ target_link_libraries(OsuRequestFlow PRIVATE
     ZLIB::ZLIB
 )
 
-target_link_libraries(TestMessageProcessor PRIVATE 
+target_include_directories(TestHttpClient PRIVATE 
+    ${Boost_INCLUDE_DIRS}
+    ${OPENSSL_INCLUDE_DIR}
+)
+
+target_include_directories(OsuRequestFlow PRIVATE 
+    ${Boost_INCLUDE_DIRS}
+    ${OPENSSL_INCLUDE_DIR}
+)
+
+
+target_link_libraries(OsuRequestFlow PRIVATE 
     spdlog::spdlog
     nlohmann_json::nlohmann_json
     Boost::system
