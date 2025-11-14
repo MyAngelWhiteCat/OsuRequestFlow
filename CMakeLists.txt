@@ -41,6 +41,8 @@ add_executable(OsuRequestFlow
     src/downloader.cpp 
     src/file_manager.h 
     src/file_manager.cpp
+    src/http_client.h 
+    src/http_client.cpp 
 )
 
 add_executable(TestMessageProcessor
