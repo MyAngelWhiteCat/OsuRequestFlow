@@ -134,9 +134,11 @@ Downloader
 
 ### Downloader
 - Проектирование класса загрузчика. вспомогательные классы не нужны.
-  - Какой тип запросов делать? GET
   - Как передавать полученный результат в файловую систему? Класс FileManager
-  - Какие хосты будут использоваться? https://catboy.best/d/ | https://osu.direct/d/ | api.osucollector.com - API для получения метаданных
+  - Какие хосты будут использоваться?
+      https://osu.direct/d/{beatmapset_id}
+      https://chimu.moe/d/{beatmapset_id}
+      https://nerina.pw/d/{beatmapset_id}
 
 ### HTTP-loopback server
 *Пока нет выполненных задач*
