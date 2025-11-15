@@ -140,6 +140,21 @@ add_executable(TestDownloader
     src/connection.h
 )
 
+target_link_libraries(TestHttpClient PRIVATE 
+    spdlog::spdlog
+    nlohmann_json::nlohmann_json
+    Boost::system
+    Boost::thread
+    OpenSSL::SSL
+    OpenSSL::Crypto
+    ZLIB::ZLIB
+)
+
+target_include_directories(TestHttpClient PRIVATE 
+    ${Boost_INCLUDE_DIRS}
+    ${OPENSSL_INCLUDE_DIR}
+)
+
 target_include_directories(OsuRequestFlow PRIVATE 
     ${Boost_INCLUDE_DIRS}
     ${OPENSSL_INCLUDE_DIR}
