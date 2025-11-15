@@ -1,32 +1,48 @@
 [Общая архитектура модулей системы](Design.png)
 
 # TODO
+- HTTP-loopback server
+- FileManager
+- Core
+- GUI
 
-1. IRC Client
-2. Downloader
-3. HTTP-loopback server
-4. FileManager
-5. Core
-6. GUI
+# In work
+- Downloader
+
+# Pre tested
+- HTTP Client
+
+# Ready
+- IRC Client
+
+# Tested
+
+# Prod ver
+
 
 ---
 
 ## Current Progress
 
-60-65%
+75-80%
 
 ---
 
 ## Current Task 
 Downloader
 - Нужно ли держать подключение открытым после загрузки? (Проверить, требуется ли переподключение к ресурсу по другому эндпоинту одного и того же хоста
-- реализовать метод отправки запроса.
+- сделать тестовую цель для загрузчика
+- реализовать логику отправки запроса на карту через клиента
+- реализовать получение и обработку ответа.
+
 
 ---
 
 
 ## Task Board
 
+### Main
+- Разбить цели в CMakeLists на отдельные библиотеки
 
 ### IRC Client
  - [Always] Рефакторинг. Анализ багов. Написать тесты.
@@ -89,6 +105,14 @@ Downloader
 
 ## Выполненные задачи
 
+### Main
+- Сбор и анализ требований к системе
+- Собрать видиние системы
+- Продумать внешние зависимости
+- Проектирование модулей системы
+- Создание таргетов для тестов в CMakeLists
+
+
 ### IRC Client
 - Проектирование
 - Считать сообщение с сокета
@@ -139,6 +163,8 @@ Downloader
       https://osu.direct/d/{beatmapset_id}
       https://chimu.moe/d/{beatmapset_id}
       https://nerina.pw/d/{beatmapset_id}
+- Сделать базу класс http клиента
+- протестировать клиента
 
 ### HTTP-loopback server
 *Пока нет выполненных задач*
