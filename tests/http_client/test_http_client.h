@@ -31,69 +31,86 @@ namespace test_http_client {
         client->Connect("httpbin.org", "80");
     }
 
-    void TestGet(std::shared_ptr<http_domain::Client> client) {
+    void TestSendRequest(std::shared_ptr<http_domain::Client> client) {
         RandomUserAgent u_agent(100);
         auto req = http_domain::MakeRequest(boost::beast::http::verb::get
-            , "/get"
+            , "/d/1886002"
             , 11
-            , "httpbin.org"
+            , "catboy.best"
             , u_agent.GetUserAgent()
             , "*/*"
             , "close");
 
-        auto handler = [](DynamicResponse&& response) mutable {
-            for (const auto& title : response) {
-                LOG_INFO(title.name_string());
+        auto handler = [](DynamicResponse&& response) {
+            LOG_INFO("Get response: ");
+            for (const auto& header : response) {
+                std::cout << header.name_string() << ' ' << header.value() << "\n";
             }
+
             std::string body = beast::buffers_to_string(response.body().data());
+            LOG_INFO(body);
             };
 
-        client->Connect("httpbin.org", "80");
+
+        client->Connect("catboy.best", "80");
+        client->SendRequest(std::move(req), handler);
+    }
+
+    void TestSSLSendRequest(std::shared_ptr<http_domain::Client> client) {
+        RandomUserAgent u_agent(100);
+        auto req = http_domain::MakeRequest(boost::beast::http::verb::get
+            , "/d/1886002"
+            , 11
+            , "catboy.best"
+            , u_agent.GetUserAgent()
+            , "*/*"
+            , "close");
+
+        auto handler = [](DynamicResponse&& response) {
+            LOG_INFO("Get response: ");
+            for (const auto& header : response) {
+                std::cout << header.name_string() << ' ' << header.value() << "\n";
+            }
+            
+            std::string body = beast::buffers_to_string(response.body().data());
+            LOG_INFO(body);
+            };
+            
+
+        client->Connect("catboy.best", "443");
         client->SendRequest(std::move(req), handler);
     }
 
     void TestSSLGet(std::shared_ptr<http_domain::Client> client) {
         RandomUserAgent u_agent(100);
         auto req = http_domain::MakeRequest(boost::beast::http::verb::get
-            , "/get"
+            , "/d/1886002"
             , 11
-            , "httpbin.org"
+            , "catboy.best"
             , u_agent.GetUserAgent()
             , "*/*"
             , "close");
 
         auto handler = [](DynamicResponse&& response) {
-            for (const auto& title : response) {
-                LOG_INFO(title.name_string());
+            LOG_INFO("Get response: ");
+            for (const auto& header : response) {
+                std::cout << header.name_string() << ' ' << header.value() << "\n";
             }
+
+            std::string body = beast::buffers_to_string(response.body().data());
+            LOG_INFO(body);
             };
 
-        client->Connect("httpbin.org", "443");
-        client->SendRequest(std::move(req), handler);
+        client->Connect("catboy.best", "443");
+        client->Get("/d/1886002", u_agent.GetUserAgent(), handler);
     }
 
     void RunTests(net::io_context& ioc) {
         auto ctx = connection::GetSSLContext();
-        auto read_strand = boost::asio::make_strand(ioc);
-        auto write_strand = boost::asio::make_strand(ioc);
 
-        auto client = std::make_shared<http_domain::Client>(ioc, write_strand, read_strand);
-        auto ssl_client = std::make_shared<http_domain::Client>(ioc, *ctx, write_strand, read_strand);
+        auto client = std::make_shared<http_domain::Client>(ioc);
+        auto ssl_client = std::make_shared<http_domain::Client>(ioc, *ctx);
 
-        try
-        {
-            TestGet(client);
-        }
-        catch (const std::exception& e) {
-            LOG_CRITICAL(e.what());
-        }
-
-        try 
-        {
-            TestSSLGet(ssl_client);
-        }
-        catch (const std::exception& e) {
-            LOG_CRITICAL(e.what());
-        }
+        TestSSLGet(ssl_client);
     }
 }
