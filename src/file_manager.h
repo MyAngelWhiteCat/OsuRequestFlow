@@ -2,10 +2,13 @@
 
 #include <filesystem>
 #include <fstream>
-#include <vector>
 #include <list>
 
 #include "logging.h"
+#include <utility>
+#include <exception>
+#include <string_view>
+#include <string>
 
 namespace file_manager {
 
@@ -20,15 +23,23 @@ namespace file_manager {
         Action(ActionType type, std::string_view file_name, std::string_view file_format, fs::path path)
             : type_(type)
             , file_name_(file_name)
-            , file_format_(file_format)
             , path_(path)
         {
 
         }
 
+        Action(ActionType type, std::string&& file_name, fs::path path)
+            : type_(type)
+            , file_name_(file_name)
+            , path_(path)
+        {
+
+        }
+
+        Action() = default;
+
         ActionType type_;
         std::string file_name_;
-        std::string file_format_;
         fs::path path_;
     };
 
@@ -40,18 +51,34 @@ namespace file_manager {
 
         }
 
-        void WriteInRoot(const std::string_view bytes, std::string_view file_name, std::string_view format) {
-            std::ofstream new_file(root_directory_.string() + std::string(file_name) + std::string(format));
+        void WriteInRoot(std::string&& bytes, std::string&& file_name) {
+            Action act(ActionType::Write, std::move(file_name), root_directory_);
+            std::ofstream new_file(root_directory_.string() + '/' + act.file_name_);
             new_file.write(bytes.data(), bytes.size());
-            AddAction(ActionType::Write, file_name, format, root_directory_);
+            AddAction(std::move(act));
         }
 
         void RemoveFile(const fs::path& path) {
-            try {
-                fs::remove(path);
+            if (fs::remove(path)) {
+                LOG_INFO("Deleted " + path.string());
             }
-            catch (const std::exception& e) {
-                LOG_ERROR(e.what());
+            else {
+                LOG_ERROR("Cant delete " + path.string());
+            }
+        }
+
+        void DeleteAllWritedFilesFromHistory() {
+            auto elem = actions_history_.begin();
+            while (elem != actions_history_.end()) {
+                Action& act = *elem;
+                if (act.type_ == ActionType::Write) {
+                    RemoveFile(fs::path(act.path_.string() + '/' + act.file_name_));
+                    elem = actions_history_.erase(elem);
+                }
+                else {
+                    ++elem;
+                }
+                
             }
         }
 
@@ -59,8 +86,12 @@ namespace file_manager {
         fs::path root_directory_;
         std::list<Action> actions_history_;
 
-        void AddAction(ActionType type, std::string_view file_name_, std::string_view file_format, const fs::path& path) {
-            actions_history_.emplace_back(type, file_name_, file_format, path);
+        void AddAction(ActionType type, std::string&& file_name, const fs::path& path) {
+            actions_history_.emplace_back(type, std::move(file_name), path);
+        }
+
+        void AddAction(Action&& act) {
+            actions_history_.push_back(std::move(act));
         }
     };
 
