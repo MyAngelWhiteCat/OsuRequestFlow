@@ -1,5 +1,4 @@
 #pragma once
-#define BOOST_BEAST_USE_STD_STRING_VIEW
 
 #include <boost/asio/io_context.hpp>
 #include <boost/asio/ip/tcp.hpp>
@@ -23,7 +22,7 @@
 #include <utility>
 
 
-namespace http {
+namespace http_domain {
 
     namespace net = boost::asio;
     namespace sys = boost::system;
@@ -38,6 +37,22 @@ namespace http {
     using StringResponse = http::response<http::string_body>;
     using StringRequest = http::request<http::string_body>;
     using DynamicResponse = http::response<http::dynamic_body>;
+
+    static StringRequest MakeRequest(http::verb method, std::string_view target, int version
+        , std::string_view host, std::string_view user_agent, std::string_view accept
+        , std::string_view connection) {
+        StringRequest req;
+        req.method(method);
+        req.target(target);
+        req.version(version);
+
+        req.set(http::field::host, host);
+        req.set(http::field::user_agent, user_agent);
+        req.set(http::field::accept, accept);
+        req.set(http::field::connection, connection);
+
+        return req;
+    }
 
     class Client : public std::enable_shared_from_this<Client> {
     public:
@@ -58,6 +73,10 @@ namespace http {
 
         }
 
+        ~Client() {
+            LOG_INFO("HTTP Client destructed");
+        }
+
         void Connect(std::string_view host, std::string_view port) {
             ec_.clear();
 
@@ -68,36 +87,28 @@ namespace http {
             }
         }
 
-        void SendRequest(StringRequest&& request) {
-
+        template <typename ResponseHandler>
+        void SendRequest(StringRequest&& request, ResponseHandler&& response_handler) {
+            auto visitor = std::make_shared<SendVisitor<ResponseHandler>>
+                (std::move(request), this->shared_from_this(), std::forward<ResponseHandler>(response_handler));
+            std::visit((*visitor), stream_);
         }
 
-        
+        template <typename ResponseHandler>
+        void ReadResponse(ResponseHandler&& response_handler) {
+            auto visitor = std::make_shared<ReadVisitor<ResponseHandler>>
+                (this->shared_from_this(), std::forward<ResponseHandler>(response_handler));
+            std::visit((*visitor), stream_);
+        }
 
     private:
         std::variant<beast::tcp_stream, ssl::stream<beast::tcp_stream>> stream_;
-        beast::flat_buffer buffer_;
         Strand write_strand_;
         Strand read_strand_;
         beast::error_code ec_;
         bool ssl_connected_ = false;
         bool connected_ = false;
 
-        StringRequest MakeRequest(http::verb method, std::string_view target, int version
-            , std::string_view host, std::string_view user_agent, std::string_view accept
-            , std::string_view connection) {
-            StringRequest req;
-            req.method(method);
-            req.target(target);
-            req.version(version);
-            
-            req.set(http::field::host, host);
-            req.set(http::field::user_agent, user_agent);
-            req.set(http::field::accept, accept);
-            req.set(http::field::connection, connection);
-
-            return req;
-        }
 
         template <typename Handler>
         class ReadVisitor : public std::enable_shared_from_this<ReadVisitor<Handler>> {
@@ -107,6 +118,10 @@ namespace http {
                 , handler_(std::forward<Handler>(handler))
             {
 
+            }
+
+            ~ReadVisitor() {
+                LOG_INFO("ReadVisitor destructed");
             }
 
             void operator()(beast::tcp_stream& stream) {
@@ -120,31 +135,36 @@ namespace http {
         private:
             Handler&& handler_;
             std::shared_ptr<Client> client_;
+            beast::flat_buffer buffer_;
             DynamicResponse dynamic_response_;
 
             template <typename Stream>
             void Read(Stream& stream) {
-                http::async_read(stream, client_->buffer_, dynamic_response_
-                    , net::bind_executor(client_->read_strand_, [self = shared_from_this()]
-                    (const beast::error_code& ec, size_t bytes_writen)
+                LOG_INFO("Start reading response");
+                http::async_read(stream, buffer_, dynamic_response_
+                    , net::bind_executor(client_->read_strand_
+                    , [self = this->shared_from_this()]
+                    (const beast::error_code& ec, size_t bytes_readed) mutable
                         {
+                            LOG_INFO("Read "s.append(std::to_string(bytes_readed).append(" bytes")));
                             self->OnRead(ec);
                         }));
             }
 
-            void OnRead(const beast::error_code& ec) { 
+            void OnRead(const beast::error_code& ec) {
                 if (ec) {
                     logging::ReportError(ec, "Reading http response");
+                    return;
                 }
-                handler_();
+                handler_(std::move(dynamic_response_));
             }
 
         };
 
         template <typename Handler>
-        class WriteVisitor : public std::enable_shared_from_this<WriteVisitor<Handler>> {
+        class SendVisitor : public std::enable_shared_from_this<SendVisitor<Handler>> {
         public:
-            WriteVisitor(StringRequest&& request, std::shared_ptr<Client> client, Handler&& handler)
+            SendVisitor(StringRequest&& request, std::shared_ptr<Client> client, Handler&& handler)
                 : client_(client)
                 , handler_(std::forward<Handler>(handler))
                 , request_(std::move(request))
@@ -153,11 +173,11 @@ namespace http {
             }
 
             void operator()(beast::tcp_stream& stream) {
-                Write(stream);
+                Send(stream);
             }
 
-            void operator()(ssl::stream<beast::tcp_stream> stream) {
-                Write(stream);
+            void operator()(ssl::stream<beast::tcp_stream>& stream) {
+                Send(stream);
             }
         
         private:
@@ -166,13 +186,22 @@ namespace http {
             StringRequest request_;
 
             template <typename Stream>
-            void Write(Stream& stream) {
+            void Send(Stream& stream) {
                 http::async_write(stream, request_
-                    , net::bind_executor(client_->write_strand_, [self = shared_from_this()]
-                    (const beast::error_code& ec) 
+                    , net::bind_executor(client_->write_strand_, [self = this->shared_from_this()]
+                    (const beast::error_code& ec, size_t bytes_writen)
                     {
-                        self->client_->handler_();
+                        LOG_INFO("Send "s.append(std::to_string(bytes_writen).append(" bytes")));
+                        self->OnSend(ec);
                     }));
+            }
+
+            void OnSend(const beast::error_code& ec) {
+                if (ec) {
+                    logging::ReportError(ec, "Send request");
+                    return;
+                }
+                client_->ReadResponse(std::forward<Handler>(handler_));
             }
 
         };
