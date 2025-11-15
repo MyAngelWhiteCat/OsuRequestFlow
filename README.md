@@ -43,6 +43,7 @@ Downloader
 
 ### Main
 - Разбить цели в CMakeLists на отдельные библиотеки
+- Разбить все файлы на заголовки и реализации
 
 ### IRC Client
  - [Always] Рефакторинг. Анализ багов. Написать тесты.
@@ -160,9 +161,8 @@ Downloader
 - Проектирование класса загрузчика. вспомогательные классы не нужны.
   - Как передавать полученный результат в файловую систему? Класс FileManager
   - Какие хосты будут использоваться?
-      https://osu.direct/d/{beatmapset_id}
-      https://chimu.moe/d/{beatmapset_id}
-      https://nerina.pw/d/{beatmapset_id}
+      - https://chimu.moe/d/
+      - https://catboy.best/d/
 - Сделать базу класс http клиента
 - протестировать клиента
 
