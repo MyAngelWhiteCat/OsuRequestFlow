@@ -14,12 +14,15 @@
 #include <variant>
 #include <string_view>
 #include <stdexcept>
+#include <unordered_map>
+
 
 #include "logging.h"
 #include <boost/asio/ssl/stream_base.hpp>
 #include <string>
 #include <boost/asio/impl/connect.hpp>
 #include <utility>
+#include <optional>
 
 
 namespace http_domain {
@@ -37,6 +40,11 @@ namespace http_domain {
     using StringResponse = http::response<http::string_body>;
     using StringRequest = http::request<http::string_body>;
     using DynamicResponse = http::response<http::dynamic_body>;
+
+    struct Port {
+        static constexpr std::string_view SECURED = "443"sv;
+        static constexpr std::string_view NON_SECURED = "80"sv;
+    };
 
     static StringRequest MakeRequest(http::verb method, std::string_view target, int version
         , std::string_view host, std::string_view user_agent, std::string_view accept
@@ -57,18 +65,18 @@ namespace http_domain {
     class Client : public std::enable_shared_from_this<Client> {
     public:
 
-        Client(net::io_context& ioc, Strand& write_strand, Strand& read_strand)
+        Client(net::io_context& ioc)
             : stream_(beast::tcp_stream(ioc))
-            , write_strand_(write_strand)
-            , read_strand_(read_strand)
+            , write_strand_(net::make_strand(ioc))
+            , read_strand_(net::make_strand(ioc))
         {
 
         }
 
-        Client(net::io_context& ioc, ssl::context& ctx, Strand& write_strand, Strand& read_strand)
+        Client(net::io_context& ioc, ssl::context& ctx)
             : stream_(ssl::stream<beast::tcp_stream>(ioc, ctx))
-            , write_strand_(write_strand)
-            , read_strand_(read_strand)
+            , write_strand_(net::make_strand(ioc))
+            , read_strand_(net::make_strand(ioc))
         {
 
         }
@@ -84,6 +92,9 @@ namespace http_domain {
             std::visit(visitor, stream_);
             if (ec_) {
                 logging::ReportError(ec_, "Connection");
+            }
+            else {
+                host_ = host;
             }
         }
 
@@ -101,6 +112,19 @@ namespace http_domain {
             std::visit((*visitor), stream_);
         }
 
+        bool IsConnected() const {
+            return ssl_connected_ || connected_;
+        }
+
+        template <typename ResponseHandler>
+        void Get(std::string_view target, std::string_view user_agent, ResponseHandler&& handler) {
+            if (!IsConnected() || !host_) {
+                throw std::logic_error("Trying send request without connection");
+            }
+            auto req = MakeRequest(http::verb::get, target, 11, *host_, user_agent, accept_, connection_);
+            SendRequest(std::move(req), std::forward<ResponseHandler>(handler));
+        }
+
     private:
         std::variant<beast::tcp_stream, ssl::stream<beast::tcp_stream>> stream_;
         Strand write_strand_;
@@ -108,6 +132,9 @@ namespace http_domain {
         beast::error_code ec_;
         bool ssl_connected_ = false;
         bool connected_ = false;
+        std::optional<std::string> host_;
+        std::string accept_ = "*/*";
+        std::string connection_ = "close";
 
 
         template <typename Handler>
@@ -137,6 +164,8 @@ namespace http_domain {
             std::shared_ptr<Client> client_;
             beast::flat_buffer buffer_;
             DynamicResponse dynamic_response_;
+            std::string body_;
+            std::unordered_map<std::string, std::string> header_to_value_;
 
             template <typename Stream>
             void Read(Stream& stream) {
@@ -156,7 +185,15 @@ namespace http_domain {
                     logging::ReportError(ec, "Reading http response");
                     return;
                 }
-                handler_(std::move(dynamic_response_));
+                handler_(std::move(header_to_value_), std::move(body));
+            }
+
+            void ParseResponse() {
+                for (const auto& header : dynamic_response_) {
+                    header_to_value_[header.name_string()] = header.value();
+                }
+
+                body_ = beast::buffers_to_string(response.body().data());
             }
 
         };
