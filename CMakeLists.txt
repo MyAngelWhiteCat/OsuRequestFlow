@@ -4,6 +4,10 @@ project(OsuRequestFlow CXX)
 set(CMAKE_CXX_STANDARD 20)
 add_compile_definitions(_WIN32_WINNT=0x0601)
 
+if(MSVC)
+    add_compile_options(/bigobj)
+endif()
+
 include(${CMAKE_BINARY_DIR}/conan_toolchain.cmake)
 
 set(CMAKE_MSVC_RUNTIME_LIBRARY "MultiThreaded$<$<CONFIG:Debug>:Debug>")
@@ -126,6 +130,14 @@ target_link_libraries(TestHttpClient PRIVATE
 target_include_directories(TestHttpClient PRIVATE 
     ${Boost_INCLUDE_DIRS}
     ${OPENSSL_INCLUDE_DIR}
+)
+
+add_executable(TestDownloader
+    src/http_client.h 
+    src/random_user_agent.h
+    src/ca_sertificates_loader.h 
+    src/ca_sertificates_loader.cpp
+    src/connection.h
 )
 
 target_include_directories(OsuRequestFlow PRIVATE 
