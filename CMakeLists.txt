@@ -140,7 +140,7 @@ add_executable(TestDownloader
     src/connection.h
 )
 
-target_link_libraries(TestHttpClient PRIVATE 
+target_link_libraries(TestDownloader PRIVATE 
     spdlog::spdlog
     nlohmann_json::nlohmann_json
     Boost::system
@@ -150,7 +150,7 @@ target_link_libraries(TestHttpClient PRIVATE
     ZLIB::ZLIB
 )
 
-target_include_directories(TestHttpClient PRIVATE 
+target_include_directories(TestDownloader PRIVATE 
     ${Boost_INCLUDE_DIRS}
     ${OPENSSL_INCLUDE_DIR}
 )
