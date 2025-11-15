@@ -138,6 +138,10 @@ add_executable(TestDownloader
     src/ca_sertificates_loader.h 
     src/ca_sertificates_loader.cpp
     src/connection.h
+    src/downloader.h 
+    src/file_manager.h
+    tests/downloader/test_downloader.h 
+    tests/downloader/main.cpp
 )
 
 target_link_libraries(TestDownloader PRIVATE 
@@ -153,6 +157,17 @@ target_link_libraries(TestDownloader PRIVATE
 target_include_directories(TestDownloader PRIVATE 
     ${Boost_INCLUDE_DIRS}
     ${OPENSSL_INCLUDE_DIR}
+)
+
+add_executable(TestFileManager
+    src/file_manager.h 
+    src/logging.h
+    tests/file_manager/test_file_manager.h 
+    tests/file_manager/main.cpp 
+)
+
+target_link_libraries(TestFileManager PRIVATE 
+    spdlog::spdlog
 )
 
 target_include_directories(OsuRequestFlow PRIVATE 
