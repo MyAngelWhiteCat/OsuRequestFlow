@@ -122,6 +122,16 @@ namespace http_domain {
                 throw std::logic_error("Trying send request without connection");
             }
             auto req = MakeRequest(http::verb::get, target, 11, *host_, user_agent, accept_, connection_);
+            req.set(http::field::accept_encoding, "gzip, deflate, br");
+            SendRequest(std::move(req), std::forward<ResponseHandler>(handler));
+        }
+
+        template <typename ResponseHandler>
+        void Head(std::string_view target, std::string_view user_agent, ResponseHandler&& handler) {
+            if (!IsConnected() || !host_) {
+                throw std::logic_error("Trying send request without connection");
+            }
+            auto req = MakeRequest(http::verb::head, target, 11, *host_, user_agent, accept_, connection_);
             SendRequest(std::move(req), std::forward<ResponseHandler>(handler));
         }
 
@@ -134,7 +144,7 @@ namespace http_domain {
         bool connected_ = false;
         std::optional<std::string> host_;
         std::string accept_ = "*/*";
-        std::string connection_ = "close";
+        std::string connection_ = "keep-alive";
 
 
         template <typename Handler>
@@ -164,19 +174,39 @@ namespace http_domain {
             std::shared_ptr<Client> client_;
             beast::flat_buffer buffer_;
             DynamicResponse dynamic_response_;
-            std::string body_;
+            http::response_parser<http::dynamic_body> parser_;
+            std::vector<char> body_bytes_;
             std::unordered_map<std::string, std::string> header_to_value_;
 
             template <typename Stream>
             void Read(Stream& stream) {
                 LOG_INFO("Start reading response");
-                http::async_read(stream, buffer_, dynamic_response_
+                auto start = std::chrono::steady_clock::now();
+                http::async_read_header(stream, buffer_, parser_
                     , net::bind_executor(client_->read_strand_
-                    , [self = this->shared_from_this()]
-                    (const beast::error_code& ec, size_t bytes_readed) mutable
+                        , [self = this->shared_from_this(), &stream, start]
+                        (const beast::error_code& ec, size_t bytes_readed) mutable
                         {
+                            if (ec) {
+                                return;
+                            }
+                            auto end = std::chrono::steady_clock::now();
+                            auto duration = std::chrono::duration_cast<std::chrono::microseconds>(end - start);
+                            double seconds = duration.count() / 1000000.0;
+
                             LOG_INFO("Read "s.append(std::to_string(bytes_readed).append(" bytes")));
-                            self->OnRead(ec);
+                            LOG_INFO("Speed = "s.append(std::to_string(bytes_readed / seconds)).append(" bytes / second"));
+                            LOG_INFO("Headers readed");
+
+
+                            http::async_read(stream, self->buffer_, self->parser_
+                                , [self](const beast::error_code& ec, size_t bytes_readed) mutable {
+                                    LOG_INFO("Read "s.append(std::to_string(bytes_readed).append(" bytes")));
+                                    LOG_INFO("Body readed");
+                                    self->OnRead(ec);
+                                });
+
+                            
                         }));
             }
 
@@ -185,7 +215,9 @@ namespace http_domain {
                     logging::ReportError(ec, "Reading http response");
                     return;
                 }
-                handler_(std::move(header_to_value_), std::move(body));
+                dynamic_response_ = parser_.release();
+                ParseResponse();
+                handler_(std::move(header_to_value_), std::move(body_bytes_));
             }
 
             void ParseResponse() {
@@ -193,7 +225,13 @@ namespace http_domain {
                     header_to_value_[header.name_string()] = header.value();
                 }
 
-                body_ = beast::buffers_to_string(response.body().data());
+                body_bytes_.clear();
+                auto buffers = dynamic_response_.body().data();
+                for (auto it = buffers.begin(); it != buffers.end(); ++it) {
+                    auto buffer = *it;
+                    const char* data = static_cast<const char*>(buffer.data());
+                    body_bytes_.insert(body_bytes_.end(), data, data + buffer.size());
+                }
             }
 
         };
@@ -216,7 +254,7 @@ namespace http_domain {
             void operator()(ssl::stream<beast::tcp_stream>& stream) {
                 Send(stream);
             }
-        
+
         private:
             Handler&& handler_;
             std::shared_ptr<Client> client_;
@@ -224,13 +262,15 @@ namespace http_domain {
 
             template <typename Stream>
             void Send(Stream& stream) {
+                std::cout << "ACTUAL REQUEST:\n" << request_ << "\n";
+
                 http::async_write(stream, request_
                     , net::bind_executor(client_->write_strand_, [self = this->shared_from_this()]
                     (const beast::error_code& ec, size_t bytes_writen)
-                    {
-                        LOG_INFO("Send "s.append(std::to_string(bytes_writen).append(" bytes")));
-                        self->OnSend(ec);
-                    }));
+                        {
+                            LOG_INFO("Send "s.append(std::to_string(bytes_writen).append(" bytes")));
+                            self->OnSend(ec);
+                        }));
             }
 
             void OnSend(const beast::error_code& ec) {
@@ -277,35 +317,46 @@ namespace http_domain {
             void operator()(ssl::stream<beast::tcp_stream>& socket) {
                 tcp::resolver resolver(socket.get_executor()); // :(
                 auto endpoints = resolver.resolve(host_, port_, client_.ec_);
+
                 if (client_.ec_) {
                     logging::ReportError(client_.ec_, "Resolving");
+                    throw std::runtime_error("cant resolve: "s.append(host_).append(" ").append(port_));
                 }
-                else {
-                    LOG_INFO("Resolved "s.append(host_).append(":"s).append(port_));
-                    for (const auto& ep : endpoints) {
-                        LOG_INFO(endpoints.begin()->endpoint().address().to_string().append(":"s).append(port_));
-                    }
+
+                LOG_INFO("Resolved "s.append(host_).append(":"s).append(port_));
+                for (const auto& ep : endpoints) {
+                    LOG_INFO(endpoints.begin()->endpoint().address().to_string().append(":"s).append(port_));
                 }
+
+                SSL_set_tlsext_host_name(socket.native_handle(), host_.c_str());
                 net::connect(socket.lowest_layer(), endpoints, client_.ec_);
                 if (client_.ec_) {
                     logging::ReportError(client_.ec_, "SSL Connection"sv);
                     return;
                 }
                 else {
-                    LOG_INFO("CONNECTED! HANDSHAKE REQUIRED...");
+                    LOG_INFO("CONNECTED");
                 }
                 socket.lowest_layer().set_option(tcp::no_delay(true));
                 socket.handshake(ssl::stream_base::client, client_.ec_);
                 if (client_.ec_) {
-                    logging::ReportError(client_.ec_, "SSL Handshake"sv);
+                    ERR_print_errors_fp(stderr);
+
+                    logging::ReportError(client_.ec_, "SSL Handshake");
                     socket.lowest_layer().close();
                     return;
                 }
+
                 else {
                     LOG_INFO("HANDSHAKE SUCESS");
                 }
                 client_.ssl_connected_ = true;
-                LOG_INFO("SSL CONNECTED");
+                if (SSL_get_verify_result(socket.native_handle()) != X509_V_OK) {
+                    LOG_INFO("SSL Certificate verification failed");
+                }
+                else {
+                    LOG_INFO("SSL Certificate verified successfully");
+                }
             }
 
         private:
