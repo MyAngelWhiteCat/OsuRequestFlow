@@ -9,6 +9,7 @@
 #include <exception>
 #include <string_view>
 #include <string>
+#include <vector>
 
 namespace file_manager {
 
@@ -51,11 +52,18 @@ namespace file_manager {
 
         }
 
-        void WriteInRoot(std::string&& bytes, std::string&& file_name) {
-            Action act(ActionType::Write, std::move(file_name), root_directory_);
-            std::ofstream new_file(root_directory_.string() + '/' + act.file_name_);
-            new_file.write(bytes.data(), bytes.size());
-            AddAction(std::move(act));
+        void WriteInRoot(std::vector<char>&& bytes, std::string&& file_name) {
+            try {
+                Action act(ActionType::Write, std::move(file_name), root_directory_);
+                std::ofstream new_file(root_directory_.string() + "\\" + act.file_name_);
+                new_file.write(bytes.data(), bytes.size());
+                AddAction(std::move(act));
+
+            }
+            catch (const std::exception& e) {
+                LOG_CRITICAL(e.what());
+            }
+            LOG_INFO("Successfuly write " + std::to_string(bytes.size()) + " to " + root_directory_.string());
         }
 
         void RemoveFile(const fs::path& path) {
@@ -78,7 +86,6 @@ namespace file_manager {
                 else {
                     ++elem;
                 }
-                
             }
         }
 
