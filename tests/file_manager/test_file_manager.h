@@ -6,14 +6,14 @@
 namespace test_file_manager {
 
     void TestWrite(file_manager::FileManager& fm) {
-        fm.WriteInRoot("Qello", "test.txt");
-        fm.WriteInRoot("Hello", "zest.txw");
-        fm.WriteInRoot("Hello", "tzst.txq");
-        fm.WriteInRoot("Hello", "test.trt");
-        fm.WriteInRoot("Hello", "teut.tzt");
-        fm.WriteInRoot("Hello", "tent.tct");
-        fm.WriteInRoot("Hello", "tezt.tbt");
-        fm.WriteInRoot("Hello", "teqt.tyt");
+        fm.WriteInRoot({ 'q', 'w', 'r' }, "test.txt");
+        fm.WriteInRoot({ 'q', 'w', 'r' }, "zest.txw");
+        fm.WriteInRoot({ 'q', 'w', 'r' }, "tzst.txq");
+        fm.WriteInRoot({ 'q', 'w', 'r' }, "test.trt");
+        fm.WriteInRoot({ 'q', 'w', 'r' }, "teut.tzt");
+        fm.WriteInRoot({ 'q', 'w', 'r' }, "tent.tct");
+        fm.WriteInRoot({ 'q', 'w', 'r' }, "tezt.tbt");
+        fm.WriteInRoot({ 'q', 'w', 'r' }, "teqt.tyt");
 
     }
 
