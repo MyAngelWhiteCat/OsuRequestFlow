@@ -4,8 +4,8 @@
 #include "../../src/ca_sertificates_loader.h"
 #include "../../src/random_user_agent.h"
 #include <boost/asio/io_context.hpp>
-#include <boost/asio/strand.hpp>
 #include <memory>
+#include <fstream>
 
 namespace test_http_client {
 
@@ -22,9 +22,28 @@ namespace test_http_client {
     using StringRequest = http::request<http::string_body>;
     using DynamicResponse = http::response<http::dynamic_body>;
 
+
+    auto handler = [](std::unordered_map<std::string, std::string>&& header_to_value, std::vector<char>&& body) {
+        LOG_INFO("Get response: ");
+        for (const auto& [header, value] : header_to_value) {
+            std::cout << header << ' ' << value << "\n";
+        }
+        std::ofstream out("downloads/dl.osz");
+        out.write(body.data(), body.size());
+        };
+
+    RandomUserAgent gu_agent(100);
+
+    auto req = http_domain::MakeRequest(boost::beast::http::verb::get
+        , "/d/1886002"
+        , 11
+        , "catboy.best"
+        , gu_agent.GetUserAgent()
+        , "*/*"
+        , "close");
+
     void TestSSLConnect(std::shared_ptr<http_domain::Client> client) {
         client->Connect("httpbin.org", "443");
-
     }
 
     void TestConnect(std::shared_ptr<http_domain::Client> client) {
@@ -33,24 +52,6 @@ namespace test_http_client {
 
     void TestSendRequest(std::shared_ptr<http_domain::Client> client) {
         RandomUserAgent u_agent(100);
-        auto req = http_domain::MakeRequest(boost::beast::http::verb::get
-            , "/d/1886002"
-            , 11
-            , "catboy.best"
-            , u_agent.GetUserAgent()
-            , "*/*"
-            , "close");
-
-        auto handler = [](DynamicResponse&& response) {
-            LOG_INFO("Get response: ");
-            for (const auto& header : response) {
-                std::cout << header.name_string() << ' ' << header.value() << "\n";
-            }
-
-            std::string body = beast::buffers_to_string(response.body().data());
-            LOG_INFO(body);
-            };
-
 
         client->Connect("catboy.best", "80");
         client->SendRequest(std::move(req), handler);
@@ -58,51 +59,39 @@ namespace test_http_client {
 
     void TestSSLSendRequest(std::shared_ptr<http_domain::Client> client) {
         RandomUserAgent u_agent(100);
-        auto req = http_domain::MakeRequest(boost::beast::http::verb::get
-            , "/d/1886002"
-            , 11
-            , "catboy.best"
-            , u_agent.GetUserAgent()
-            , "*/*"
-            , "close");
-
-        auto handler = [](DynamicResponse&& response) {
-            LOG_INFO("Get response: ");
-            for (const auto& header : response) {
-                std::cout << header.name_string() << ' ' << header.value() << "\n";
-            }
-            
-            std::string body = beast::buffers_to_string(response.body().data());
-            LOG_INFO(body);
-            };
-            
 
         client->Connect("catboy.best", "443");
         client->SendRequest(std::move(req), handler);
     }
+    //http://osu.direct/api/d/1886002 
+
+    void TestGet(std::shared_ptr<http_domain::Client> client) {
+        RandomUserAgent u_agent(100);
+
+        client->Connect("osu.direct", "80");
+        client->Get("/api/d/1886002", u_agent.GetUserAgent(), handler);
+    }
+
 
     void TestSSLGet(std::shared_ptr<http_domain::Client> client) {
         RandomUserAgent u_agent(100);
-        auto req = http_domain::MakeRequest(boost::beast::http::verb::get
-            , "/d/1886002"
-            , 11
-            , "catboy.best"
-            , u_agent.GetUserAgent()
-            , "*/*"
-            , "close");
 
-        auto handler = [](DynamicResponse&& response) {
-            LOG_INFO("Get response: ");
-            for (const auto& header : response) {
-                std::cout << header.name_string() << ' ' << header.value() << "\n";
-            }
+        client->Connect("httpbin.org", "443");
+        client->Get("httpbin.org/bytes/10240", u_agent.GetUserAgent(), handler);
+    }
 
-            std::string body = beast::buffers_to_string(response.body().data());
-            LOG_INFO(body);
-            };
+    void TestHead(std::shared_ptr<http_domain::Client> client) {
+        RandomUserAgent u_agent(100);
 
-        client->Connect("catboy.best", "443");
-        client->Get("/d/1886002", u_agent.GetUserAgent(), handler);
+        client->Connect("osu.direct", "80");
+        client->Head("/api/d/1886002", u_agent.GetUserAgent(), handler);
+    }
+
+    void TestSSLHead(std::shared_ptr<http_domain::Client> client) {
+        RandomUserAgent u_agent(100);
+
+        client->Connect("osu.direct", "443");
+        client->Head("/api/d/1886002", u_agent.GetUserAgent(), handler);
     }
 
     void RunTests(net::io_context& ioc) {
@@ -111,6 +100,7 @@ namespace test_http_client {
         auto client = std::make_shared<http_domain::Client>(ioc);
         auto ssl_client = std::make_shared<http_domain::Client>(ioc, *ctx);
 
+        //TestSSLGet(ssl_client);
         TestSSLGet(ssl_client);
     }
 }
