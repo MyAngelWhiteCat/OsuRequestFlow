@@ -100,6 +100,7 @@ namespace http_domain {
 
         template <typename ResponseHandler>
         void SendRequest(StringRequest&& request, ResponseHandler&& response_handler) {
+            busy = true;
             auto visitor = std::make_shared<SendVisitor<ResponseHandler>>
                 (std::move(request), this->shared_from_this(), std::forward<ResponseHandler>(response_handler));
             std::visit((*visitor), stream_);
@@ -116,8 +117,13 @@ namespace http_domain {
             return ssl_connected_ || connected_;
         }
 
+        bool IsBusy() const {
+            return busy_;
+        }
+
         template <typename ResponseHandler>
         void Get(std::string_view target, std::string_view user_agent, ResponseHandler&& handler) {
+            LOG_INFO("Get");
             if (!IsConnected() || !host_) {
                 throw std::logic_error("Trying send request without connection");
             }
@@ -142,6 +148,7 @@ namespace http_domain {
         beast::error_code ec_;
         bool ssl_connected_ = false;
         bool connected_ = false;
+        bool busy_ = false;
         std::optional<std::string> host_;
         std::string accept_ = "*/*";
         std::string connection_ = "keep-alive";
@@ -170,7 +177,7 @@ namespace http_domain {
             }
 
         private:
-            Handler&& handler_;
+            Handler handler_;
             std::shared_ptr<Client> client_;
             beast::flat_buffer buffer_;
             DynamicResponse dynamic_response_;
@@ -181,23 +188,17 @@ namespace http_domain {
             template <typename Stream>
             void Read(Stream& stream) {
                 LOG_INFO("Start reading response");
-                auto start = std::chrono::steady_clock::now();
                 http::async_read_header(stream, buffer_, parser_
                     , net::bind_executor(client_->read_strand_
-                        , [self = this->shared_from_this(), &stream, start]
+                        , [self = this->shared_from_this(), &stream]
                         (const beast::error_code& ec, size_t bytes_readed) mutable
                         {
                             if (ec) {
                                 return;
                             }
-                            auto end = std::chrono::steady_clock::now();
-                            auto duration = std::chrono::duration_cast<std::chrono::microseconds>(end - start);
-                            double seconds = duration.count() / 1000000.0;
 
                             LOG_INFO("Read "s.append(std::to_string(bytes_readed).append(" bytes")));
-                            LOG_INFO("Speed = "s.append(std::to_string(bytes_readed / seconds)).append(" bytes / second"));
                             LOG_INFO("Headers readed");
-
 
                             http::async_read(stream, self->buffer_, self->parser_
                                 , [self](const beast::error_code& ec, size_t bytes_readed) mutable {
@@ -205,19 +206,24 @@ namespace http_domain {
                                     LOG_INFO("Body readed");
                                     self->OnRead(ec);
                                 });
-
-                            
                         }));
             }
 
             void OnRead(const beast::error_code& ec) {
                 if (ec) {
+                    if (ec == net::error::eof ||
+                        ec == net::error::connection_reset ||
+                        ec == beast::http::error::end_of_stream) {
+                        client_->connected_ = false;
+                        client_->ssl_connected_ = false;
+                    }
                     logging::ReportError(ec, "Reading http response");
                     return;
                 }
                 dynamic_response_ = parser_.release();
                 ParseResponse();
                 handler_(std::move(header_to_value_), std::move(body_bytes_));
+                busy_ = false;
             }
 
             void ParseResponse() {
@@ -256,7 +262,7 @@ namespace http_domain {
             }
 
         private:
-            Handler&& handler_;
+            Handler handler_;
             std::shared_ptr<Client> client_;
             StringRequest request_;
 
@@ -275,6 +281,12 @@ namespace http_domain {
 
             void OnSend(const beast::error_code& ec) {
                 if (ec) {
+                    if (ec == net::error::eof ||
+                        ec == net::error::connection_reset ||
+                        ec == beast::http::error::end_of_stream) {
+                        client_->connected_ = false;
+                        client_->ssl_connected_ = false;
+                    }
                     logging::ReportError(ec, "Send request");
                     return;
                 }
