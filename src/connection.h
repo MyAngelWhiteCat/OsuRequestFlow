@@ -26,6 +26,7 @@
 
 #include "logging.h"
 #include "ca_sertificates_loader.h"
+#include <openssl/ssl.h>
 
 
 namespace connection {
@@ -39,16 +40,47 @@ namespace connection {
     using Strand = net::strand<net::io_context::executor_type>;
 
     static std::shared_ptr<ssl::context> GetSSLContext() {
-        auto ctx = std::make_shared<ssl::context>(ssl::context::tlsv12_client);
+        auto ctx = std::make_shared<ssl::context>(ssl::context::tls_client);
+
+        // AI ON
+        SSL_CTX_set_info_callback(ctx->native_handle(), [](const SSL* ssl, int where, int ret) {
+            if (where & SSL_CB_HANDSHAKE_START) {
+                std::cout << "SSL Handshake starting..." << std::endl;
+            }
+            if (where & SSL_CB_HANDSHAKE_DONE) {
+                std::cout << "SSL Handshake completed!" << std::endl;
+            }
+            });
+
+        ctx->set_options(
+            ssl::context::default_workarounds |
+            ssl::context::no_sslv2 |
+            ssl::context::no_sslv3 |
+            ssl::context::no_tlsv1 |
+            ssl::context::no_tlsv1_1
+        );
+
         ctx->set_verify_mode(ssl::verify_peer);
 
-        // AI on
         try {
             ctx->set_default_verify_paths();
+            std::cout << "Default verify paths set successfully" << std::endl;
         }
-        catch (...) {}
+        catch (const std::exception& e) {
+            std::cerr << "set_default_verify_paths failed: " << e.what() << std::endl;
+        }
+
         ssl_domain_utilities::load_windows_ca_certificates(*ctx);
-        // AI off
+
+        const char* ciphers =
+            "ECDHE+AESGCM:ECDHE+CHACHA20:DHE+AESGCM:DHE+CHACHA20:!aNULL:!MD5:!DSS:!RC4";
+
+        if (SSL_CTX_set_cipher_list(ctx->native_handle(), ciphers) != 1) {
+            std::cerr << "Failed to set cipher list" << std::endl;
+        }
+
+        SSL_CTX_set_min_proto_version(ctx->native_handle(), TLS1_2_VERSION);
+        // AI OFF
 
         return ctx;
     }
@@ -72,7 +104,7 @@ namespace connection {
             , ioc_(&ioc)
             , secured_(true)
         {
-            
+
         }
 
         void Connect(std::string_view host, std::string_view port) {
@@ -135,7 +167,7 @@ namespace connection {
             AsyncWrite(data, [](const sys::error_code& ec) {
                 if (ec) {
                     logging::ReportError(ec, "Writing");
-                    }
+                }
                 });
         }
 
@@ -196,15 +228,18 @@ namespace connection {
             void operator()(ssl::stream<tcp::socket>& socket) {
                 tcp::resolver resolver(socket.get_executor()); // :(
                 auto endpoints = resolver.resolve(host_, port_, connection_.ec_);
+
                 if (connection_.ec_) {
                     logging::ReportError(connection_.ec_, "Resolving");
+                    throw std::runtime_error("cant resolve: "s.append(host_).append(" ").append(port_));
                 }
-                else {
-                    LOG_INFO("Resolved "s.append(host_).append(":"s).append(port_));
-                    for (const auto& ep : endpoints) {
-                        LOG_INFO(endpoints.begin()->endpoint().address().to_string().append(":"s).append(port_));
-                    }
+
+                LOG_INFO("Resolved "s.append(host_).append(":"s).append(port_));
+                for (const auto& ep : endpoints) {
+                    LOG_INFO(endpoints.begin()->endpoint().address().to_string().append(":"s).append(port_));
                 }
+
+                SSL_set_tlsext_host_name(socket.native_handle(), host_.c_str());
                 net::connect(socket.lowest_layer(), endpoints, connection_.ec_);
                 if (connection_.ec_) {
                     logging::ReportError(connection_.ec_, "SSL Connection"sv);
@@ -216,14 +251,23 @@ namespace connection {
                 socket.lowest_layer().set_option(tcp::no_delay(true));
                 socket.handshake(ssl::stream_base::client, connection_.ec_);
                 if (connection_.ec_) {
-                    logging::ReportError(connection_.ec_, "SSL Handshake"sv);
+                    ERR_print_errors_fp(stderr);
+
+                    logging::ReportError(connection_.ec_, "SSL Handshake");
                     socket.lowest_layer().close();
                     return;
                 }
+
                 else {
                     LOG_INFO("HANDSHAKE SUCESS");
                 }
                 connection_.ssl_connected_ = true;
+                if (SSL_get_verify_result(socket.native_handle()) != X509_V_OK) {
+                    LOG_INFO("SSL Certificate verification failed");
+                }
+                else {
+                    LOG_INFO("SSL Certificate verified successfully");
+                }
             }
 
         private:
