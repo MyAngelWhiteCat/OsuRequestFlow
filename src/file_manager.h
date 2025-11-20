@@ -59,7 +59,7 @@ namespace file_manager {
         void WriteInRoot(std::string&& file_name, std::vector<char>&& bytes) {
             try {
                 Action act(ActionType::Write, std::move(file_name), root_directory_);
-                std::ofstream new_file(root_directory_.string() + "\\" + act.file_name_);
+                std::ofstream new_file(root_directory_.string() + "\\" + act.file_name_, std::ios::binary);
                 new_file.write(bytes.data(), bytes.size());
                 AddAction(std::move(act));
             }
