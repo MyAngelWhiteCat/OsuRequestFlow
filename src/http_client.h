@@ -24,6 +24,7 @@
 #include <utility>
 #include <optional>
 #include <fstream>
+#include <thread>
 
 
 namespace http_domain {
@@ -140,7 +141,6 @@ namespace http_domain {
                 throw std::logic_error("Trying send request without connection");
             }
             auto req = MakeRequest(http::verb::get, target, 11, *host_, user_agent, accept_, connection_);
-            req.set(http::field::accept_encoding, "gzip, deflate, br");
             SendRequest(std::move(req), std::forward<ResponseHandler>(handler));
         }
 
@@ -194,6 +194,7 @@ namespace http_domain {
             beast::flat_buffer buffer_;
             DynamicResponse dynamic_response_;
             http::response_parser<http::dynamic_body> parser_;
+            size_t file_size_ = 0;
 
             std::vector<char> body_bytes_;
 
@@ -225,7 +226,7 @@ namespace http_domain {
                 }
                 
                 PrintResponseHeaders();
-                LOG_INFO(GetFileName());
+                //LOG_INFO(GetFileName());
                 if (CheckFileSize()) {
                     ReadBody(stream);
                 }
@@ -233,11 +234,21 @@ namespace http_domain {
 
             template <typename Stream>
             void ReadBody(Stream& stream) {
+                /*std::thread process([self = this->shared_from_this()]() {
+                    while (self->parser_.get().body().size() < self->file_size_) {
+                        std::string progress = std::to_string(self->parser_.get().body().size());
+                        LOG_INFO(progress + " / " + std::to_string(self->file_size_) + " bytes");
+                        std::this_thread::sleep_for(std::chrono::seconds(1));
+                    }
+                    LOG_INFO("Downloaded");
+                    });*/
                 http::async_read(stream, buffer_, parser_
                     , [self = this->shared_from_this(), &stream](const beast::error_code& ec, size_t bytes_readed) mutable {
                         LOG_INFO("Read "s.append(std::to_string(bytes_readed).append(" bytes")));
                         self->OnReadBody(ec, stream);
                     });
+                //process.join();
+
             }
 
             template <typename Stream>
@@ -249,10 +260,11 @@ namespace http_domain {
                         ReadBody(stream);
                     }
                 }
+                std::string file_name = GetFileName();
                 ParseResponseBody();
                 LOG_INFO("Body readed");
                 client_->busy_ = false;
-                handler_(GetFileName(), std::move(body_bytes_));
+                handler_(std::move(file_name), std::move(body_bytes_));
             }
 
             void ParseResponseBody() {
@@ -295,8 +307,9 @@ namespace http_domain {
                 auto& headers = parser_.get();
                 auto it = headers.find(Fields::CONTENT_LENGTH);
                 if (it != headers.end()) {
-                    if (std::stoll(it->value()) < MAX_FILE_SIZE) {
-                        parser_.body_limit(std::stoll(it->value()) + KiB);
+                    file_size_ = std::stoll(it->value());
+                    if (file_size_ < MAX_FILE_SIZE) {
+                        parser_.body_limit(file_size_ + KiB);
                         return true;
                     }
                 }
