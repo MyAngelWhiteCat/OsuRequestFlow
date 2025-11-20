@@ -1,16 +1,21 @@
 #include "auth_data.h"
 #include "client.h"
 #include "logging.h"
+#include "connection.h"
+
 #include <boost/asio/executor_work_guard.hpp>
 #include <boost/asio/impl/io_context.ipp>
 #include <boost/asio/io_context.hpp>
-#include <clocale>
-
 #include <boost/asio/post.hpp>
+#include <boost/asio/strand.hpp>
+
+#include <clocale>
 
 #include <memory>
 #include <thread>
 #include <vector>
+#include <string_view>
+#include <exception>
 
 using namespace irc;
 namespace fs = std::filesystem;
@@ -51,7 +56,9 @@ void RunWorkers(unsigned num_workers, Fn&& func) {
     }
 }
 
+
 int main() {
+
     logging::Logger::Init();
 
     setlocale(LC_ALL, "Russian_Russia.1251");
@@ -68,7 +75,7 @@ int main() {
     //auto client = std::make_shared<Client>(ioc);
     auto ssl_client = std::make_shared<Client>(ioc, ctx); 
 
-    std::vector<std::string_view> streamers{"Cinna"};
+    std::vector<std::string_view> streamers{"ohnePixel"};
 
     LOG_DEBUG("System start...");
     net::post(irc_strand, [&streamers, &a_data, &ssl_client]() {
