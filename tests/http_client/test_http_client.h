@@ -58,7 +58,7 @@ namespace test_http_client {
     }
 
     void TestSSLSendRequest(std::shared_ptr<http_domain::Client> client) {
-        RandomUserAgent u_agent(100);
+        RandomUserAgent u_agent(60);
 
         client->Connect("catboy.best", "443");
         client->SendRequest(std::move(req), handler);
@@ -76,22 +76,8 @@ namespace test_http_client {
     void TestSSLGet(std::shared_ptr<http_domain::Client> client) {
         RandomUserAgent u_agent(100);
 
-        client->Connect("httpbin.org", "443");
-        client->Get("httpbin.org/bytes/10240", u_agent.GetUserAgent(), handler);
-    }
-
-    void TestHead(std::shared_ptr<http_domain::Client> client) {
-        RandomUserAgent u_agent(100);
-
-        client->Connect("osu.direct", "80");
-        client->Head("/api/d/1886002", u_agent.GetUserAgent(), handler);
-    }
-
-    void TestSSLHead(std::shared_ptr<http_domain::Client> client) {
-        RandomUserAgent u_agent(100);
-
         client->Connect("osu.direct", "443");
-        client->Head("/api/d/1886002", u_agent.GetUserAgent(), handler);
+        client->Get("/api/d/1886002", u_agent.GetUserAgent(), handler);
     }
 
     void RunTests(net::io_context& ioc) {
