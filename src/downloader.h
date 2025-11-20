@@ -155,10 +155,10 @@ namespace downloader {
 
         void WriteOnDisk(std::string&& file_name, std::vector<char>&& bytes) {
             LOG_INFO("Start writing "s.append(std::to_string(bytes.size()).append(" bytes")));
-            net::post(file_write_strand_, [self = this->shared_from_this() //does not require consistent execution btw
-                , bytes = std::move(bytes), file_name = std::move(file_name)]() mutable {
-                    self->file_manager_.WriteInRoot(std::move(file_name), std::move(bytes));
-                });
+            //net::post(file_write_strand_, [self = this->shared_from_this() //does not require consistent execution btw
+                //, bytes = std::move(bytes), file_name = std::move(file_name)]() mutable {
+                    /*self->*/file_manager_.WriteInRoot(std::move(file_name), std::move(bytes));
+                //});
         }
 
         void SetupConnection(std::shared_ptr<http_domain::Client> client
