@@ -4,7 +4,7 @@
 int main() {
     try {
         boost::asio::io_context ioc;
-        test_downloader::RunTests(ioc);
+        test_downloader::RunOsuMapDownloadTest(ioc);
         ioc.run();
     }
     catch (const std::exception& e) {
