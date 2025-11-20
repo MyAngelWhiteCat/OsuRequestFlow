@@ -39,6 +39,10 @@ namespace file_manager {
 
         Action() = default;
 
+        fs::path GetFilePath() {
+            return fs::path(path_ / file_name_);
+        }
+
         ActionType type_;
         std::string file_name_;
         fs::path path_;
@@ -63,7 +67,11 @@ namespace file_manager {
             catch (const std::exception& e) {
                 LOG_CRITICAL(e.what());
             }
-            LOG_INFO("Successfuly write " + std::to_string(bytes.size()) + " to " + root_directory_.string());
+
+            size_t bytes_writen = fs::file_size(actions_history_.back().GetFilePath());
+            LOG_INFO("Successfuly write " 
+                + std::to_string(bytes_writen) + " / " + std::to_string(bytes.size())
+                + " bytes to " + root_directory_.string());
         }
 
         void RemoveFile(const fs::path& path) {
