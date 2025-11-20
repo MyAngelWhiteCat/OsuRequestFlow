@@ -117,7 +117,7 @@ namespace downloader {
                         has_broken_connections = true;
                         continue;
                     }
-                    if (!client->IsBusy()){
+                    if (!client->IsBusy()) {
                         client->Get(uri, user_agent_, [self = this->shared_from_this()]
                         (std::string&& file_name, std::vector<char>&& body) {
                                 self->OnDownload(std::move(file_name), std::move(body));
@@ -133,7 +133,7 @@ namespace downloader {
                 }
             }
         }
-    
+
 
     private:
         net::io_context& ioc_;
@@ -147,24 +147,11 @@ namespace downloader {
         bool secured_ = true;
         const size_t MAX_CONNECTIONS = 5;
 
-        void OnDownload(std::string&& file_name, std::vector<char>&& body, bool end_of_file = true) {
+        void OnDownload(std::string&& file_name, std::vector<char>&& body) {
             LOG_INFO("Successfuly download "s.append(std::to_string(body.size())).append(" bytes"));
             LOG_INFO("Headers:");
 
-            if (end_of_file) {
-                WriteOnDisk(std::move(body), std::move(std::to_string(body.size()).append(".txt")));
-            }
-            else {
-                WriteStreamOnDisk(std::move(body), std::move(file_name), end_of_file);
-            }
-        }
-
-        void WriteStreamOnDisk(std::vector<char>&& bytes, std::string&& file_name, bool end_of_file) {
-            LOG_INFO("Start writing "s.append(std::to_string(bytes.size()).append(" bytes")));
-            net::post(stream_strand_, [self = this->shared_from_this(), end_of_file // require consistent execution
-                , bytes = std::move(bytes), file_name = std::move(file_name)]() mutable {
-                    self->file_manager_.WriteStreamInRoot(std::move(bytes), std::move(file_name), end_of_file);
-                });
+            WriteOnDisk(std::move(body), std::move(std::to_string(body.size()).append(".txt")));
         }
 
         void WriteOnDisk(std::vector<char>&& bytes, std::string&& file_name) {

@@ -195,7 +195,6 @@ namespace http_domain {
             DynamicResponse dynamic_response_;
             http::response_parser<http::dynamic_body> parser_;
 
-            std::unordered_map<std::string, std::string> header_to_value_;
             std::vector<char> body_bytes_;
 
             template <typename Stream>
@@ -227,11 +226,62 @@ namespace http_domain {
                 
                 PrintResponseHeaders();
                 LOG_INFO(GetFileName());
-                std::ofstream out(GetFileName());
-                out << "mic check";
                 if (CheckFileSize()) {
                     //ReadBody(stream);
                 }
+            }
+
+            template <typename Stream>
+            void ReadBody(Stream& stream) {
+                http::async_read(stream, buffer_, parser_
+                    , [self = shared_from_this(), &stream](const beast::error_code& ec, size_t bytes_readed) mutable {
+                        LOG_INFO("Read "s.append(std::to_string(bytes_readed).append(" bytes")));
+                        self->OnBodyRead(ec);
+                    });
+            }
+
+            template <typename Stream>
+            void OnReadBody(const beast::error_code& ec, Stream& stream) {
+                if (ec) {
+                    CheckConnectionError(ec);
+                    logging::ReportError(ec, "Reading http response");
+                    if (ec == http::error::need_more) {
+                        ReadBody(stream);
+                    }
+                }
+                ParseResponseBody();
+                LOG_INFO("Body readed");
+                client_->busy_ = false;
+                handler_(std::move(GetFileName()), std::move(body_bytes_));
+            }
+
+            void ParseResponseBody() {
+                dynamic_response_ = parser_.release();
+                body_bytes_.clear();
+                auto buffers = dynamic_response_.body().data();
+                for (auto it = buffers.begin(); it != buffers.end(); ++it) {
+                    auto buffer = *it;
+                    const char* data = static_cast<const char*>(buffer.data());
+                    body_bytes_.insert(body_bytes_.end(), data, data + buffer.size());
+                }
+            }
+
+            void CheckConnectionError(const beast::error_code& ec) {
+                if (ec == net::error::eof ||
+                    ec == net::error::connection_reset ||
+                    ec == beast::http::error::end_of_stream) {
+                    client_->connected_ = false;
+                    client_->ssl_connected_ = false;
+                }
+            }
+
+            std::string ParseFileName(std::string_view content) {
+                size_t start_pos = content.find_first_of('"') + 1;
+                size_t end_pos = content.find_last_of('"');
+                if (start_pos != std::string::npos && end_pos != std::string::npos) {
+                    return std::string(content.substr(start_pos, end_pos - start_pos));
+                }
+                return "JohnDoe";
             }
 
             void PrintResponseHeaders() {
@@ -257,69 +307,6 @@ namespace http_domain {
                     return ParseFileName(it->value());
                 }
                 return "JohnDoe";
-            }
-
-            std::string ParseFileName(std::string_view content) {
-                size_t start_pos = content.find_first_of('"') + 1;
-                size_t end_pos = content.find_last_of('"');
-                if (start_pos != std::string::npos && end_pos != std::string::npos) {
-                    return std::string(content.substr(start_pos, end_pos - start_pos));
-                }
-                return "JohnDoe";
-            }
-
-            template <typename Stream>
-            void ReadBody(Stream& stream) {
-                http::async_read(stream, buffer_, parser_
-                    , [self = shared_from_this(), &stream](const beast::error_code& ec, size_t bytes_readed) mutable {
-                        LOG_INFO("Read "s.append(std::to_string(bytes_readed).append(" bytes")));
-                        self->OnBodyRead(ec);
-                    });
-            }
-
-            template <typename Stream>
-            void OnReadBody(const beast::error_code& ec, Stream& stream) {
-                if (ec) {
-                    CheckConnectionError(ec);
-                    logging::ReportError(ec, "Reading http response");
-                    if (ec == http::error::need_more) {
-                        auto moved_chank(std::make_move_iterator(body_bytes_.begin())
-                                       , std::make_move_iterator(body_bytes_.end()));
-                        handler_(header_to_value_, std::move(moved_chank), false);
-                        ReadFileStream(stream);
-                    }
-                }
-                dynamic_response_ = parser_.release();
-                ParseResponseBody();
-                LOG_INFO("Body readed");
-                client_->busy_ = false;
-                handler_(std::move(header_to_value_), std::move(body_bytes_));
-            }
-
-            template <typename Stream>
-            void ReadFileStream(Stream& stream) {
-                dynamic_response_.clear();
-
-
-            }
-
-            void ParseResponseBody() {
-                body_bytes_.clear();
-                auto buffers = dynamic_response_.body().data();
-                for (auto it = buffers.begin(); it != buffers.end(); ++it) {
-                    auto buffer = *it;
-                    const char* data = static_cast<const char*>(buffer.data());
-                    body_bytes_.insert(body_bytes_.end(), data, data + buffer.size());
-                }
-            }
-
-            void CheckConnectionError(const beast::error_code& ec) {
-                if (ec == net::error::eof ||
-                    ec == net::error::connection_reset ||
-                    ec == beast::http::error::end_of_stream) {
-                    client_->connected_ = false;
-                    client_->ssl_connected_ = false;
-                }
             }
 
         };
