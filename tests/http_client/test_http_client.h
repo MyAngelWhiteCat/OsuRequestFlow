@@ -85,6 +85,6 @@ namespace test_http_client {
         auto ssl_client = std::make_shared<http_domain::Client>(ioc, *ctx);
 
         //TestSSLGet(ssl_client);
-        TestSSLGet(ssl_client);
+        TestSSLSendRequest(ssl_client);
     }
 }
