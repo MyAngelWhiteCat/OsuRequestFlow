@@ -100,7 +100,7 @@ namespace http_domain {
 
         template <typename ResponseHandler>
         void SendRequest(StringRequest&& request, ResponseHandler&& response_handler) {
-            busy = true;
+            busy_ = true;
             auto visitor = std::make_shared<SendVisitor<ResponseHandler>>
                 (std::move(request), this->shared_from_this(), std::forward<ResponseHandler>(response_handler));
             std::visit((*visitor), stream_);
@@ -223,7 +223,7 @@ namespace http_domain {
                 dynamic_response_ = parser_.release();
                 ParseResponse();
                 handler_(std::move(header_to_value_), std::move(body_bytes_));
-                busy_ = false;
+                client_->busy_ = false;
             }
 
             void ParseResponse() {
