@@ -23,9 +23,16 @@
 #include <boost/asio/impl/connect.hpp>
 #include <utility>
 #include <optional>
+#include <fstream>
 
 
 namespace http_domain {
+
+    constexpr size_t KiB = 1024;
+    constexpr size_t MiB = 1024 * KiB;
+    constexpr size_t GiB = 1024 * MiB;
+    constexpr size_t MAX_FILE_SIZE = 20 * MiB;
+
 
     namespace net = boost::asio;
     namespace sys = boost::system;
@@ -44,6 +51,11 @@ namespace http_domain {
     struct Port {
         static constexpr std::string_view SECURED = "443"sv;
         static constexpr std::string_view NON_SECURED = "80"sv;
+    };
+
+    struct Fields {
+        static constexpr std::string_view CONTENT_LENGTH = "Content-Length";
+        static constexpr std::string_view CONTENT_DISPOSITION = "Content-Disposition";
     };
 
     static StringRequest MakeRequest(http::verb method, std::string_view target, int version
@@ -153,7 +165,6 @@ namespace http_domain {
         std::string accept_ = "*/*";
         std::string connection_ = "keep-alive";
 
-
         template <typename Handler>
         class ReadVisitor : public std::enable_shared_from_this<ReadVisitor<Handler>> {
         public:
@@ -177,68 +188,137 @@ namespace http_domain {
             }
 
         private:
-            Handler handler_;
             std::shared_ptr<Client> client_;
+            Handler handler_;
+
             beast::flat_buffer buffer_;
             DynamicResponse dynamic_response_;
             http::response_parser<http::dynamic_body> parser_;
-            std::vector<char> body_bytes_;
+
             std::unordered_map<std::string, std::string> header_to_value_;
+            std::vector<char> body_bytes_;
 
             template <typename Stream>
             void Read(Stream& stream) {
+                ReadHeaders(stream);
+            }
+
+            template <typename Stream>
+            void ReadHeaders(Stream& stream) {
                 LOG_INFO("Start reading response");
                 http::async_read_header(stream, buffer_, parser_
                     , net::bind_executor(client_->read_strand_
                         , [self = this->shared_from_this(), &stream]
                         (const beast::error_code& ec, size_t bytes_readed) mutable
                         {
-                            if (ec) {
-                                return;
-                            }
-
                             LOG_INFO("Read "s.append(std::to_string(bytes_readed).append(" bytes")));
                             LOG_INFO("Headers readed");
-
-                            http::async_read(stream, self->buffer_, self->parser_
-                                , [self](const beast::error_code& ec, size_t bytes_readed) mutable {
-                                    LOG_INFO("Read "s.append(std::to_string(bytes_readed).append(" bytes")));
-                                    LOG_INFO("Body readed");
-                                    self->OnRead(ec);
-                                });
+                            self->OnReadHeaders(ec, stream);
                         }));
             }
 
-            void OnRead(const beast::error_code& ec) {
+            template <typename Stream>
+            void OnReadHeaders(const beast::error_code& ec, Stream& stream) {
                 if (ec) {
-                    LOG_ERROR(ec, "Reading");
-
-                    if (ec == net::error::eof ||
-                        ec == net::error::connection_reset ||
-                        ec == beast::http::error::end_of_stream) {
-                        client_->connected_ = false;
-                        client_->ssl_connected_ = false;
-                    }
+                    CheckConnectionError(ec);
                     logging::ReportError(ec, "Reading http response");
                     return;
                 }
-                dynamic_response_ = parser_.release();
-                ParseResponse();
-                handler_(std::move(header_to_value_), std::move(body_bytes_));
-                client_->busy_ = false;
+                
+                PrintResponseHeaders();
+                LOG_INFO(GetFileName());
+                std::ofstream out(GetFileName());
+                out << "mic check";
+                if (CheckFileSize()) {
+                    //ReadBody(stream);
+                }
             }
 
-            void ParseResponse() {
-                for (const auto& header : dynamic_response_) {
-                    header_to_value_[header.name_string()] = header.value();
+            void PrintResponseHeaders() {
+                auto& headers = parser_.get();
+                for (const auto& header : headers) {
+                    std::cout << header.name_string() << ": " << header.value() << "\n";
                 }
+            }
 
+            bool CheckFileSize() {
+                auto& headers = parser_.get();
+                auto it = headers.find(Fields::CONTENT_LENGTH);
+                if (it != headers.end()) {
+                    return std::stoll(it->value()) < MAX_FILE_SIZE;
+                }
+                return false;
+            }
+
+            std::string GetFileName() {
+                auto& headers = parser_.get();
+                auto it = headers.find(Fields::CONTENT_DISPOSITION);
+                if (it != headers.end()) {
+                    return ParseFileName(it->value());
+                }
+                return "JohnDoe";
+            }
+
+            std::string ParseFileName(std::string_view content) {
+                size_t start_pos = content.find_first_of('"') + 1;
+                size_t end_pos = content.find_last_of('"');
+                if (start_pos != std::string::npos && end_pos != std::string::npos) {
+                    return std::string(content.substr(start_pos, end_pos - start_pos));
+                }
+                return "JohnDoe";
+            }
+
+            template <typename Stream>
+            void ReadBody(Stream& stream) {
+                http::async_read(stream, buffer_, parser_
+                    , [self = shared_from_this(), &stream](const beast::error_code& ec, size_t bytes_readed) mutable {
+                        LOG_INFO("Read "s.append(std::to_string(bytes_readed).append(" bytes")));
+                        self->OnBodyRead(ec);
+                    });
+            }
+
+            template <typename Stream>
+            void OnReadBody(const beast::error_code& ec, Stream& stream) {
+                if (ec) {
+                    CheckConnectionError(ec);
+                    logging::ReportError(ec, "Reading http response");
+                    if (ec == http::error::need_more) {
+                        auto moved_chank(std::make_move_iterator(body_bytes_.begin())
+                                       , std::make_move_iterator(body_bytes_.end()));
+                        handler_(header_to_value_, std::move(moved_chank), false);
+                        ReadFileStream(stream);
+                    }
+                }
+                dynamic_response_ = parser_.release();
+                ParseResponseBody();
+                LOG_INFO("Body readed");
+                client_->busy_ = false;
+                handler_(std::move(header_to_value_), std::move(body_bytes_));
+            }
+
+            template <typename Stream>
+            void ReadFileStream(Stream& stream) {
+                dynamic_response_.clear();
+
+
+            }
+
+            void ParseResponseBody() {
                 body_bytes_.clear();
                 auto buffers = dynamic_response_.body().data();
                 for (auto it = buffers.begin(); it != buffers.end(); ++it) {
                     auto buffer = *it;
                     const char* data = static_cast<const char*>(buffer.data());
                     body_bytes_.insert(body_bytes_.end(), data, data + buffer.size());
+                }
+            }
+
+            void CheckConnectionError(const beast::error_code& ec) {
+                if (ec == net::error::eof ||
+                    ec == net::error::connection_reset ||
+                    ec == beast::http::error::end_of_stream) {
+                    client_->connected_ = false;
+                    client_->ssl_connected_ = false;
                 }
             }
 
