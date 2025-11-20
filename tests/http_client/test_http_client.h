@@ -23,13 +23,11 @@ namespace test_http_client {
     using DynamicResponse = http::response<http::dynamic_body>;
 
 
-    auto handler = [](std::unordered_map<std::string, std::string>&& header_to_value, std::vector<char>&& body) {
-        LOG_INFO("Get response: ");
-        for (const auto& [header, value] : header_to_value) {
-            std::cout << header << ' ' << value << "\n";
-        }
-        std::ofstream out("downloads/dl.osz");
+    auto handler = [](std::string&& file_name, std::vector<char>&& body) {
+        LOG_INFO("Get response");
+        std::ofstream out("downloads/" + file_name);
         out.write(body.data(), body.size());
+        LOG_INFO("File writen");
         };
 
     RandomUserAgent gu_agent(100);
