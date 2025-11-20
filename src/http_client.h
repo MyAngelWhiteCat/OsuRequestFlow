@@ -211,12 +211,13 @@ namespace http_domain {
 
             void OnRead(const beast::error_code& ec) {
                 if (ec) {
+                    LOG_ERROR(ec, "Reading");
+
                     if (ec == net::error::eof ||
                         ec == net::error::connection_reset ||
                         ec == beast::http::error::end_of_stream) {
                         client_->connected_ = false;
                         client_->ssl_connected_ = false;
-                        LOG_ERROR(ec, "Reading");
                     }
                     logging::ReportError(ec, "Reading http response");
                     return;
