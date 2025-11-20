@@ -34,9 +34,9 @@ namespace test_downloader {
         std::vector<std::string> resourses{ "httpbin.org" };
         auto u_agent = std::make_shared<RandomUserAgent>(100);
         auto downloader = std::make_shared<downloader::Downloader>(ioc, ctx, resourses, u_agent, f_manager);
-        TestDownload1024bytes(downloader);
-        TestDownload10240bytes(downloader);
-        //TestDownload102400bytes(downloader);
+        //TestDownload1024bytes(downloader);
+        //TestDownload10240bytes(downloader);
+        TestDownload102400bytes(downloader);
     }
 
 }
