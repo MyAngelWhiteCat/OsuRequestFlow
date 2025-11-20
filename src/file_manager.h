@@ -56,13 +56,27 @@ namespace file_manager {
 
         }
 
+        void WriteStreamInRoot(std::vector<char>&& bytes, std::string&& file_name, bool end) {
+            try {
+                std::ofstream new_file(root_directory_.string() + "\\" + file_name, std::ios::app);
+                new_file.write(bytes.data(), bytes.size());
+                if (end) {
+                    Action act(ActionType::Write, std::move(file_name), root_directory_);
+                    AddAction(std::move(act));
+                }
+            }
+            catch (const std::exception& e) {
+                LOG_CRITICAL(e.what());
+            }
+
+        }
+
         void WriteInRoot(std::vector<char>&& bytes, std::string&& file_name) {
             try {
                 Action act(ActionType::Write, std::move(file_name), root_directory_);
                 std::ofstream new_file(root_directory_.string() + "\\" + act.file_name_);
                 new_file.write(bytes.data(), bytes.size());
                 AddAction(std::move(act));
-
             }
             catch (const std::exception& e) {
                 LOG_CRITICAL(e.what());
