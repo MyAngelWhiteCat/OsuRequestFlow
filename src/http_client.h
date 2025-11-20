@@ -216,6 +216,7 @@ namespace http_domain {
                         ec == beast::http::error::end_of_stream) {
                         client_->connected_ = false;
                         client_->ssl_connected_ = false;
+                        LOG_ERROR(ec, "Reading");
                     }
                     logging::ReportError(ec, "Reading http response");
                     return;
