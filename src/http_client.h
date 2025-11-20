@@ -227,16 +227,16 @@ namespace http_domain {
                 PrintResponseHeaders();
                 LOG_INFO(GetFileName());
                 if (CheckFileSize()) {
-                    //ReadBody(stream);
+                    ReadBody(stream);
                 }
             }
 
             template <typename Stream>
             void ReadBody(Stream& stream) {
                 http::async_read(stream, buffer_, parser_
-                    , [self = shared_from_this(), &stream](const beast::error_code& ec, size_t bytes_readed) mutable {
+                    , [self = this->shared_from_this(), &stream](const beast::error_code& ec, size_t bytes_readed) mutable {
                         LOG_INFO("Read "s.append(std::to_string(bytes_readed).append(" bytes")));
-                        self->OnBodyRead(ec);
+                        self->OnReadBody(ec, stream);
                     });
             }
 
@@ -252,7 +252,7 @@ namespace http_domain {
                 ParseResponseBody();
                 LOG_INFO("Body readed");
                 client_->busy_ = false;
-                handler_(std::move(GetFileName()), std::move(body_bytes_));
+                handler_(GetFileName(), std::move(body_bytes_));
             }
 
             void ParseResponseBody() {
@@ -295,7 +295,10 @@ namespace http_domain {
                 auto& headers = parser_.get();
                 auto it = headers.find(Fields::CONTENT_LENGTH);
                 if (it != headers.end()) {
-                    return std::stoll(it->value()) < MAX_FILE_SIZE;
+                    if (std::stoll(it->value()) < MAX_FILE_SIZE) {
+                        parser_.body_limit(std::stoll(it->value()) + KiB);
+                        return true;
+                    }
                 }
                 return false;
             }

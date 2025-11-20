@@ -39,7 +39,7 @@ namespace downloader {
             , std::string_view user_agent
             , file_manager::FileManager file_manager
             , Strand& stream_strand)
-            : stream_strand_(stream_strand)
+            : file_write_strand_(stream_strand)
             , ioc_(ioc)
             , ctx_(ctx)
             , resourses_(resourses)
@@ -55,7 +55,7 @@ namespace downloader {
             , std::string_view user_agent
             , file_manager::FileManager file_manager
             , Strand& stream_strand)
-            : stream_strand_(stream_strand)
+            : file_write_strand_(stream_strand)
             , ioc_(ioc)
             , resourses_(resourses)
             , user_agent_(user_agent)
@@ -72,7 +72,7 @@ namespace downloader {
             , std::shared_ptr<RandomUserAgent> user_agent
             , file_manager::FileManager file_manager
             , Strand& stream_strand)
-            : stream_strand_(stream_strand)
+            : file_write_strand_(stream_strand)
             , ioc_(ioc)
             , ctx_(ctx)
             , resourses_(resourses)
@@ -88,7 +88,7 @@ namespace downloader {
             , std::shared_ptr<RandomUserAgent> user_agent
             , file_manager::FileManager file_manager
             , Strand& stream_strand)
-            : stream_strand_(stream_strand)
+            : file_write_strand_(stream_strand)
             , ioc_(ioc)
             , resourses_(resourses)
             , user_agent_changer_(user_agent)
@@ -137,7 +137,7 @@ namespace downloader {
 
     private:
         net::io_context& ioc_;
-        Strand& stream_strand_;
+        Strand& file_write_strand_;
         std::shared_ptr<ssl::context> ctx_{ nullptr };
         std::string user_agent_;
         std::shared_ptr<RandomUserAgent> user_agent_changer_{ nullptr };
@@ -150,15 +150,14 @@ namespace downloader {
         void OnDownload(std::string&& file_name, std::vector<char>&& body) {
             LOG_INFO("Successfuly download "s.append(std::to_string(body.size())).append(" bytes"));
             LOG_INFO("Headers:");
-
-            WriteOnDisk(std::move(body), std::move(std::to_string(body.size()).append(".txt")));
+            WriteOnDisk(std::move(file_name), std::move(body));
         }
 
-        void WriteOnDisk(std::vector<char>&& bytes, std::string&& file_name) {
+        void WriteOnDisk(std::string&& file_name, std::vector<char>&& bytes) {
             LOG_INFO("Start writing "s.append(std::to_string(bytes.size()).append(" bytes")));
-            net::post(ioc_, [self = this->shared_from_this() //does not require consistent execution
+            net::post(file_write_strand_, [self = this->shared_from_this() //does not require consistent execution btw
                 , bytes = std::move(bytes), file_name = std::move(file_name)]() mutable {
-                    self->file_manager_.WriteInRoot(std::move(bytes), std::move(file_name));
+                    self->file_manager_.WriteInRoot(std::move(file_name), std::move(bytes));
                 });
         }
 
