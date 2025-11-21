@@ -25,43 +25,69 @@ add_executable(OsuRequestFlow
     src/main.cpp
     src/client.h
     src/client.cpp
+
     src/connection.h
     src/connection.cpp
+
     src/message.h
     src/message.cpp
+
     src/message_handler.h
     src/message_handler.cpp
+
     src/domain.h
+
     src/auth_data.h
     src/auth_data.cpp
+
     src/ca_sertificates_loader.h
     src/ca_sertificates_loader.cpp
+
     src/message_processor.h 
     src/message_processor.cpp
+
     src/logging.h
     src/logging.cpp
+
     src/command_parser.h 
     src/command_parser.cpp
+
     src/downloader.h
     src/downloader.cpp 
+
     src/file_manager.h 
     src/file_manager.cpp
+
     src/http_client.h 
-    src/http_client.cpp 
+    src/http_client.cpp
+    
     src/random_user_agent.h
     src/random_user_agent.cpp
+
+    src/connection_pool.h 
+    src/connection_pool.cpp 
+
+    src/request_builder.h
+    src/request_builder.cpp 
+
+    src/response_parser.h
+    src/response_parser.cpp
 )
 
 add_executable(TestMessageProcessor
     tests/message_processor/main.cpp 
     tests/message_processor/test_message_processor.h 
     tests/utils.h 
+
     src/message_processor.h 
     src/message_processor.cpp
+
     src/logging.h
     src/logging.cpp
+
     src/message.h
     src/message.cpp
+
     src/domain.h
 )
 
@@ -83,8 +109,10 @@ target_link_libraries(TestMessageProcessor PRIVATE
 add_executable(TestBadgeParser
     tests/badges_parser/main.cpp 
     tests/badges_parser/test_badges_parser.h
+
     src/message.h
     src/message.cpp
+
     src/domain.h
 )
 
@@ -112,11 +140,18 @@ add_executable(TestCommandParser
 add_executable(TestHttpClient
     tests/http_client/main.cpp 
     tests/http_client/test_http_client.h
+
     src/http_client.h 
+    src/http_client.cpp
+
     src/random_user_agent.h
+    src/random_user_agent.cpp
+
     src/ca_sertificates_loader.h 
     src/ca_sertificates_loader.cpp
+
     src/connection.h
+    src/connection.cpp
 )
 
 target_link_libraries(TestHttpClient PRIVATE 
@@ -137,22 +172,28 @@ target_include_directories(TestHttpClient PRIVATE
 add_executable(TestDownloader
     src/http_client.h 
     src/http_client.cpp
+
     src/random_user_agent.h
     src/random_user_agent.cpp
+
     src/ca_sertificates_loader.h 
     src/ca_sertificates_loader.cpp
-    src/connection.h
-    src/connection.cpp
+
     src/downloader.h 
     src/downloader.cpp
+
     src/file_manager.h
     src/file_manager.cpp
+
     src/connection_pool.h 
     src/connection_pool.cpp 
+
     src/request_builder.h
     src/request_builder.cpp 
+
     src/response_parser.h
     src/response_parser.cpp
+
     tests/downloader/test_downloader.h 
     tests/downloader/main.cpp
 )
