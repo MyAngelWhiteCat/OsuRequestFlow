@@ -258,6 +258,7 @@ namespace http_domain {
                     CheckConnectionError(ec);
                     logging::ReportError(ec, "Reading http response");
                     if (ec == http::error::need_more) {
+                        LOG_INFO("Get some body bytes. Need more.");
                         ReadBody(stream);
                     }
                 }
@@ -380,16 +381,20 @@ namespace http_domain {
 
             void OnSend(const beast::error_code& ec) {
                 if (ec) {
-                    if (ec == net::error::eof ||
-                        ec == net::error::connection_reset ||
-                        ec == beast::http::error::end_of_stream) {
-                        client_->connected_ = false;
-                        client_->ssl_connected_ = false;
-                    }
+                    CheckConnectionError(ec);
                     logging::ReportError(ec, "Send request");
                     return;
                 }
                 client_->ReadResponse(std::forward<Handler>(handler_));
+            }
+
+            void CheckConnectionError(const beast::error_code& ec) {
+                if (ec == net::error::eof ||
+                    ec == net::error::connection_reset ||
+                    ec == beast::http::error::end_of_stream) {
+                    client_->connected_ = false;
+                    client_->ssl_connected_ = false;
+                }
             }
 
         };
