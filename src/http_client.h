@@ -23,15 +23,10 @@
 
 #include "logging.h"
 #include "request_builder.h"
+#include "response_parser.h"
 
 
 namespace http_domain {
-
-    constexpr size_t KiB = 1024;
-    constexpr size_t MiB = 1024 * KiB;
-    constexpr size_t GiB = 1024 * MiB;
-    constexpr size_t MAX_FILE_SIZE = 20 * MiB;
-
 
     namespace net = boost::asio;
     namespace sys = boost::system;
@@ -50,12 +45,6 @@ namespace http_domain {
     struct Port {
         static constexpr std::string_view SECURED = "443"sv;
         static constexpr std::string_view NON_SECURED = "80"sv;
-    };
-
-    struct Fields {
-        static constexpr std::string_view CONTENT_LENGTH = "Content-Length"sv;
-        static constexpr std::string_view CONTENT_DISPOSITION = "Content-Disposition"sv;
-        static constexpr std::string_view LOCATION = "Location"sv;
     };
 
     class Client : public std::enable_shared_from_this<Client> {
@@ -175,11 +164,7 @@ namespace http_domain {
             Handler handler_;
 
             beast::flat_buffer buffer_;
-            DynamicResponse dynamic_response_;
-            http::response_parser<http::dynamic_body> parser_;
-            size_t file_size_ = 0;
-
-            std::vector<char> body_bytes_;
+            ResponseParser response_parser_;
 
             template <typename Stream>
             void Read(Stream& stream) {
@@ -189,7 +174,7 @@ namespace http_domain {
             template <typename Stream>
             void ReadHeaders(Stream& stream) {
                 LOG_INFO("Start reading response");
-                http::async_read_header(stream, buffer_, parser_
+                http::async_read_header(stream, buffer_, response_parser_.GetParser()
                     , net::bind_executor(client_->read_strand_
                         , [self = this->shared_from_this(), &stream]
                         (const beast::error_code& ec, size_t bytes_readed) mutable
@@ -208,9 +193,9 @@ namespace http_domain {
                     return;
                 }
                 
-                PrintResponseHeaders();
-                CheckRedirect();
-                if (CheckFileSize()) {
+                response_parser_.PrintResponseHeaders();
+                //CheckRedirect();
+                if (response_parser_.CheckFileSize()) {
                     ReadBody(stream);
                 }
             }
@@ -218,14 +203,14 @@ namespace http_domain {
             template <typename Stream>
             void ReadBody(Stream& stream) {
                 std::thread process([self = this->shared_from_this()]() {
-                    while (self->parser_.get().body().size() < self->file_size_) {
-                        std::string progress = std::to_string(self->parser_.get().body().size());
-                        LOG_INFO(progress + " / " + std::to_string(self->file_size_) + " bytes");
+                    while (self->response_parser_.GetBody().size() < self->response_parser_.GetFileSize()) {
+                        std::string progress = std::to_string(self->response_parser_.GetBody().size());
+                        LOG_INFO(progress + " / " + std::to_string(self->response_parser_.GetFileSize()) + " bytes");
                         std::this_thread::sleep_for(std::chrono::seconds(1));
                     }
                     LOG_INFO("Downloaded");
                     });
-                http::async_read(stream, buffer_, parser_
+                http::async_read(stream, buffer_, response_parser_.GetParser()
                     , [self = this->shared_from_this(), &stream](const beast::error_code& ec, size_t bytes_readed) mutable {
                         LOG_INFO("Read "s.append(std::to_string(bytes_readed).append(" bytes")));
                         self->OnReadBody(ec, stream);
@@ -244,31 +229,11 @@ namespace http_domain {
                         ReadBody(stream);
                     }
                 }
-                std::string file_name = GetFileName();
-                ParseResponseBody();
+                std::string file_name = response_parser_.GetFileName();
+                response_parser_.ParseResponseBody();
                 LOG_INFO("Body readed");
                 client_->busy_ = false;
-                handler_(std::move(file_name), std::move(body_bytes_));
-            }
-
-            void ParseResponseBody() {
-                dynamic_response_ = parser_.release();
-                body_bytes_.clear();
-                auto buffers = dynamic_response_.body().data();
-                for (auto it = buffers.begin(); it != buffers.end(); ++it) {
-                    auto buffer = *it;
-                    const char* data = static_cast<const char*>(buffer.data());
-                    body_bytes_.insert(body_bytes_.end(), data, data + buffer.size());
-                }
-            }
-
-            void CheckRedirect() {
-                auto& headers = parser_.get();
-                auto it = headers.find(Fields::LOCATION);
-                if (it != headers.end()) {
-                    // TODO: ProcessRedirect(it->value());
-                    LOG_INFO("Redirect to: " + std::string(it->value()));
-                }
+                handler_(std::move(file_name), std::move(response_parser_.GetBodyBytes()));
             }
 
             void CheckConnectionError(const beast::error_code& ec) {
@@ -278,47 +243,6 @@ namespace http_domain {
                     client_->connected_ = false;
                     client_->ssl_connected_ = false;
                 }
-            }
-
-            std::string ParseFileName(std::string_view content) {
-                size_t start_pos = content.find_first_of('"') + 1;
-                size_t end_pos = content.find_last_of('"');
-                if (start_pos != std::string::npos && end_pos != std::string::npos) {
-                    return std::string(content.substr(start_pos, end_pos - start_pos));
-                }
-                return "JohnDoe";
-            }
-
-            void PrintResponseHeaders() {
-                auto& headers = parser_.get();
-                LOG_INFO(headers.reason());
-                LOG_INFO("HEADERS:");
-                for (const auto& header : headers) {
-                    std::cout << header.name_string() << ": " << header.value() << "\n";
-                }
-                LOG_INFO("HEADERS END");
-            }
-
-            bool CheckFileSize() {
-                auto& headers = parser_.get();
-                auto it = headers.find(Fields::CONTENT_LENGTH);
-                if (it != headers.end()) {
-                    file_size_ = std::stoll(it->value());
-                    if (file_size_ < MAX_FILE_SIZE) {
-                        parser_.body_limit(file_size_ + KiB);
-                        return true;
-                    }
-                }
-                return false;
-            }
-
-            std::string GetFileName() {
-                auto& headers = parser_.get();
-                auto it = headers.find(Fields::CONTENT_DISPOSITION);
-                if (it != headers.end()) {
-                    return ParseFileName(it->value());
-                }
-                return "JohnDoe";
             }
 
         };
