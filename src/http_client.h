@@ -55,8 +55,9 @@ namespace http_domain {
     };
 
     struct Fields {
-        static constexpr std::string_view CONTENT_LENGTH = "Content-Length";
-        static constexpr std::string_view CONTENT_DISPOSITION = "Content-Disposition";
+        static constexpr std::string_view CONTENT_LENGTH = "Content-Length"sv;
+        static constexpr std::string_view CONTENT_DISPOSITION = "Content-Disposition"sv;
+        static constexpr std::string_view LOCATION = "Location"sv;
     };
 
     static StringRequest MakeRequest(http::verb method, std::string_view target, int version
@@ -226,7 +227,7 @@ namespace http_domain {
                 }
                 
                 PrintResponseHeaders();
-                //LOG_INFO(GetFileName());
+                CheckRedirect();
                 if (CheckFileSize()) {
                     ReadBody(stream);
                 }
@@ -234,21 +235,21 @@ namespace http_domain {
 
             template <typename Stream>
             void ReadBody(Stream& stream) {
-                /*std::thread process([self = this->shared_from_this()]() {
+                std::thread process([self = this->shared_from_this()]() {
                     while (self->parser_.get().body().size() < self->file_size_) {
                         std::string progress = std::to_string(self->parser_.get().body().size());
                         LOG_INFO(progress + " / " + std::to_string(self->file_size_) + " bytes");
                         std::this_thread::sleep_for(std::chrono::seconds(1));
                     }
                     LOG_INFO("Downloaded");
-                    });*/
+                    });
                 http::async_read(stream, buffer_, parser_
                     , [self = this->shared_from_this(), &stream](const beast::error_code& ec, size_t bytes_readed) mutable {
                         LOG_INFO("Read "s.append(std::to_string(bytes_readed).append(" bytes")));
                         self->OnReadBody(ec, stream);
                     });
-                //process.join();
-
+                process.detach();
+                LOG_INFO("Start downloading");
             }
 
             template <typename Stream>
@@ -278,6 +279,15 @@ namespace http_domain {
                 }
             }
 
+            void CheckRedirect() {
+                auto& headers = parser_.get();
+                auto it = headers.find(Fields::LOCATION);
+                if (it != headers.end()) {
+                    // TODO: ProcessRedirect(it->value());
+                    LOG_INFO("Redirect to: " + std::string(it->value()));
+                }
+            }
+
             void CheckConnectionError(const beast::error_code& ec) {
                 if (ec == net::error::eof ||
                     ec == net::error::connection_reset ||
@@ -298,9 +308,12 @@ namespace http_domain {
 
             void PrintResponseHeaders() {
                 auto& headers = parser_.get();
+                LOG_INFO(headers.reason());
+                LOG_INFO("HEADERS:");
                 for (const auto& header : headers) {
                     std::cout << header.name_string() << ": " << header.value() << "\n";
                 }
+                LOG_INFO("HEADERS END");
             }
 
             bool CheckFileSize() {
@@ -330,6 +343,7 @@ namespace http_domain {
         template <typename Handler>
         class SendVisitor : public std::enable_shared_from_this<SendVisitor<Handler>> {
         public:
+
             SendVisitor(StringRequest&& request, std::shared_ptr<Client> client, Handler&& handler)
                 : client_(client)
                 , handler_(std::forward<Handler>(handler))
