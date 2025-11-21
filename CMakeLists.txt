@@ -26,6 +26,7 @@ add_executable(OsuRequestFlow
     src/client.h
     src/client.cpp
     src/connection.h
+    src/connection.cpp
     src/message.h
     src/message.cpp
     src/message_handler.h
@@ -48,6 +49,7 @@ add_executable(OsuRequestFlow
     src/http_client.h 
     src/http_client.cpp 
     src/random_user_agent.h
+    src/random_user_agent.cpp
 )
 
 add_executable(TestMessageProcessor
