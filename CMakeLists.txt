@@ -21,8 +21,32 @@ find_package(nlohmann_json REQUIRED)
 find_package(OpenSSL REQUIRED)
 find_package(ZLIB REQUIRED)
 
-add_executable(OsuRequestFlow 
-    src/main.cpp
+set(Network {src/command_parser.h 
+    src/command_parser.cpp
+
+    src/downloader.h
+    src/downloader.cpp 
+
+    src/file_manager.h 
+    src/file_manager.cpp
+
+    src/http_client.h 
+    src/http_client.cpp
+    
+    src/random_user_agent.h
+    src/random_user_agent.cpp
+
+    src/connection_pool.h 
+    src/connection_pool.cpp 
+
+    src/request_builder.h
+    src/request_builder.cpp 
+
+    src/response_parser.h
+    src/response_parser.cpp})
+
+add_executable(TestTwitchIRCClient 
+    tests/twitch_irc_client/main.cpp
     src/client.h
     src/client.cpp
 
@@ -48,30 +72,6 @@ add_executable(OsuRequestFlow
 
     src/logging.h
     src/logging.cpp
-
-    src/command_parser.h 
-    src/command_parser.cpp
-
-    src/downloader.h
-    src/downloader.cpp 
-
-    src/file_manager.h 
-    src/file_manager.cpp
-
-    src/http_client.h 
-    src/http_client.cpp
-    
-    src/random_user_agent.h
-    src/random_user_agent.cpp
-
-    src/connection_pool.h 
-    src/connection_pool.cpp 
-
-    src/request_builder.h
-    src/request_builder.cpp 
-
-    src/response_parser.h
-    src/response_parser.cpp
 )
 
 add_executable(TestMessageProcessor
@@ -224,13 +224,13 @@ target_link_libraries(TestFileManager PRIVATE
     spdlog::spdlog
 )
 
-target_include_directories(OsuRequestFlow PRIVATE 
+target_include_directories(TestTwitchIRCClient PRIVATE 
     ${Boost_INCLUDE_DIRS}
     ${OPENSSL_INCLUDE_DIR}
 )
 
 
-target_link_libraries(OsuRequestFlow PRIVATE 
+target_link_libraries(TestTwitchIRCClient PRIVATE 
     spdlog::spdlog
     nlohmann_json::nlohmann_json
     Boost::system
@@ -241,6 +241,6 @@ target_link_libraries(OsuRequestFlow PRIVATE
 )
 
 if(WIN32)
-    target_link_libraries(OsuRequestFlow PRIVATE ws2_32 crypt32 user32)
+    target_link_libraries(TestTwitchIRCClient PRIVATE ws2_32 crypt32 user32)
     target_link_libraries(TestMessageProcessor PRIVATE ws2_32 crypt32 user32)
 endif()
