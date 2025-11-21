@@ -134,12 +134,23 @@ target_include_directories(TestHttpClient PRIVATE
 
 add_executable(TestDownloader
     src/http_client.h 
+    src/http_client.cpp
     src/random_user_agent.h
+    src/random_user_agent.cpp
     src/ca_sertificates_loader.h 
     src/ca_sertificates_loader.cpp
     src/connection.h
+    src/connection.cpp
     src/downloader.h 
+    src/downloader.cpp
     src/file_manager.h
+    src/file_manager.cpp
+    src/connection_pool.h 
+    src/connection_pool.cpp 
+    src/request_builder.h
+    src/request_builder.cpp 
+    src/response_parser.h
+    src/response_parser.cpp
     tests/downloader/test_downloader.h 
     tests/downloader/main.cpp
 )
