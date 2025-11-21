@@ -4,7 +4,6 @@
 #include <string>
 #include <string_view>
 #include <vector>
-#include <utility>
 #include <unordered_map>
 
 #include "file_manager.h"
@@ -15,7 +14,6 @@
 #include <boost/asio/io_context.hpp>
 #include <boost/asio/strand.hpp>
 #include <boost/asio/ssl/context.hpp>
-#include <stdexcept>
 #include "logging.h"
 
 namespace downloader {
@@ -59,9 +57,7 @@ namespace downloader {
             , file_manager::FileManager file_manager
             , Strand& stream_strand);
 
-        ~Downloader() {
-            LOG_INFO("Downloader destructed");
-        }
+        ~Downloader(); // debug only;
 
         void Download(std::string_view uri);
 
