@@ -34,7 +34,7 @@ namespace commands {
             if (line[0] == command_start_) {
                 // TODO:
             }
-            if (auto id = CheckForLinkToOsuMapAndGetID(line)) {
+            if (auto id = CheckForLOsuMapURLAndGetID(line)) {
                 Command osu_request(CommandType::OsuRequest, std::move(*id));
             }
         }
@@ -42,88 +42,31 @@ namespace commands {
         void SetCommandStart(char ch) {
             command_start_ = ch;
         }
+
+        void SetGameMode(std::string_view mode) {
+            OSU_GAME_MODE = std::string(mode);
+        }
     
     private:
         char command_start_ = '!';
-        const std::string protocol_separator_ = "://";
-        const std::string uri_separator_ = "/";
-        const std::string OSU_DOMAIN = "osu.ppy.sh";
-        const std::string OSUMAP_CATALOGUE = "beatmapsets";
-        const std::string OSU_STD = "osu";
+        const std::string OSU_BEATMAPS_URL = "https://osu.ppy.sh/beatmapsets/";
+        std::string OSU_GAME_MODE = "osu";
 
-
-
-        std::optional<std::string> CheckForLinkToOsuMapAndGetID(std::string_view line) {
-            std::string protocol = GetProtocol(line);
-            if (protocol.empty()) {
+        std::optional<std::string> CheckForLOsuMapURLAndGetID(std::string_view url) {
+            if (url.substr(0, OSU_BEATMAPS_URL.size()) != OSU_BEATMAPS_URL) {
                 return std::nullopt;
             }
-            std::string domain = GetDomain(line, protocol);
-            if (domain.empty()) {
+            if (!CheckGameMode(url)) {
                 return std::nullopt;
             }
-            else if (domain != OSU_DOMAIN) {
-                return std::nullopt;
-            }
-            std::string catalogue = GetCatalogue(line, protocol, domain);
-            if (catalogue.empty()) {
-                return std::nullopt;
-            }
-            else if (catalogue != OSUMAP_CATALOGUE) {
-                return std::nullopt;
-            }
-            std::string game_mode = GetGameMode(line, protocol, domain, catalogue);
-            if (game_mode.empty()) {
-                return std::nullopt;
-            }
-            else if (game_mode != OSU_STD) {
-                return std::nullopt;
-            }
-            std::string map_id = GetOsuMapID(line);
-            if (map_id.empty()) {
-                return std::nullopt;
-            }
-            return map_id;
+            return GetBeatmapSetId(url);
         }
 
-        std::string GetProtocol(std::string_view message) {
-            size_t protocol_pos = message.find_first_of(':');
-            if (protocol_pos != std::string::npos) {
-                return std::string(message.substr(0, protocol_pos));
-            }
-            return "";
-        }
-        
-        std::string GetDomain(std::string_view message, std::string_view protocol) {
-            size_t start_pos = protocol.size() + protocol_separator_.size();
-            size_t domain_pos = message.find_first_of('/', start_pos);
-            if (domain_pos != std::string::npos) {
-                return std::string(message.substr(start_pos, domain_pos - start_pos));
-            }
-            return "";
-        }
-
-        std::string GetCatalogue(std::string_view message, std::string_view protocol, std::string_view domain) {
-            size_t start_pos = protocol.size() + protocol_separator_.size() + domain.size() + uri_separator_.size();
-            size_t catalogue_pos = message.find_first_of('/', start_pos);
-            if (catalogue_pos != std::string::npos) {
-                return std::string(message.substr(start_pos, catalogue_pos - start_pos));
-            }
-            return "";
-        }
-
-        std::string GetGameMode(std::string_view message, std::string_view protocol, std::string_view domain, std::string_view catalogue) {
-            size_t start_pos = protocol.size() + protocol_separator_.size() + domain.size() + uri_separator_.size();
-            size_t game_mode_start_pos = message.find_first_of('#', start_pos);
-            if (game_mode_start_pos == std::string::npos) {
-                return "";
-            }
-            size_t game_mode_end_pos = message.find_first_of('/', game_mode_start_pos);
-            if (game_mode_end_pos == std::string::npos) {
-                return "";
-            }
-
-            return std::string(message.substr(game_mode_start_pos + 1, game_mode_end_pos - game_mode_start_pos - 1));
+        bool CheckGameMode(std::string_view url) {
+            std::string_view cut = url.substr(OSU_BEATMAPS_URL.size());
+            size_t start = cut.find_first_of("#") + 1;
+            size_t end = cut.find_first_of("/");
+            return url.substr(start, end - start) == OSU_GAME_MODE;
         }
 
         std::string GetOsuMapID(std::string_view message) {
@@ -133,6 +76,12 @@ namespace commands {
                 return  "";
             }
             return std::string(message.substr(map_id_pos + 1, message.size()));
+        }
+
+        std::string GetBeatmapSetId(std::string_view url) {
+            std::string_view cut = url.substr(OSU_BEATMAPS_URL.size());
+            size_t end = cut.find_first_of("#");
+            return std::string(cut.substr(0, end));
         }
 
     };
