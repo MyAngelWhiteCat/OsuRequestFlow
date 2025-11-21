@@ -75,7 +75,7 @@ int main() {
     //auto client = std::make_shared<Client>(ioc);
     auto ssl_client = std::make_shared<Client>(ioc, ctx); 
 
-    std::vector<std::string_view> streamers{"ohnePixel"};
+    std::vector<std::string_view> streamers{"fugu_fps"};
 
     LOG_DEBUG("System start...");
     net::post(irc_strand, [&streamers, &a_data, &ssl_client]() {
