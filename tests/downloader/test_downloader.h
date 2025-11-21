@@ -29,7 +29,7 @@ namespace test_downloader {
     }
 
     void TestDownloadIevanPolka(std::shared_ptr<downloader::Downloader> downloader) {
-        downloader->Download("/api/d/1886002");
+        downloader->Download("/d/1886002");
     }
 
     void RunTests(boost::asio::io_context& ioc) {
@@ -47,7 +47,7 @@ namespace test_downloader {
     void RunOsuMapDownloadTest(boost::asio::io_context& ioc) {
         auto ctx = connection::GetSSLContext();
         file_manager::FileManager f_manager(std::filesystem::path(std::filesystem::current_path().string() + "/downloads"));
-        std::vector<std::string> resourses{ /*"catboy.best"*/"osu.direct" };
+        std::vector<std::string> resourses{ "catboy.best", "osu.direct" };
         auto strand = boost::asio::make_strand(ioc);
 
         auto u_agent = std::make_shared<RandomUserAgent>(100);
