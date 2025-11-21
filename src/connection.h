@@ -17,6 +17,7 @@
 #include <boost/asio/ssl/stream.hpp>
 #include <boost/asio/ssl/stream_base.hpp>
 #include <boost/asio/ssl/verify_mode.hpp>
+#include <openssl/ssl.h>
 
 #include <string>
 #include <string_view>
@@ -26,7 +27,6 @@
 
 #include "logging.h"
 #include "ca_sertificates_loader.h"
-#include <openssl/ssl.h>
 
 
 namespace connection {
@@ -39,102 +39,19 @@ namespace connection {
 
     using Strand = net::strand<net::io_context::executor_type>;
 
-    static std::shared_ptr<ssl::context> GetSSLContext() {
-        auto ctx = std::make_shared<ssl::context>(ssl::context::tls_client);
-
-        // AI ON
-        SSL_CTX_set_info_callback(ctx->native_handle(), [](const SSL* ssl, int where, int ret) {
-            if (where & SSL_CB_HANDSHAKE_START) {
-                std::cout << "SSL Handshake starting..." << std::endl;
-            }
-            if (where & SSL_CB_HANDSHAKE_DONE) {
-                std::cout << "SSL Handshake completed!" << std::endl;
-            }
-            });
-
-        ctx->set_options(
-            ssl::context::default_workarounds |
-            ssl::context::no_sslv2 |
-            ssl::context::no_sslv3 |
-            ssl::context::no_tlsv1 |
-            ssl::context::no_tlsv1_1
-        );
-
-        ctx->set_verify_mode(ssl::verify_peer);
-
-        try {
-            ctx->set_default_verify_paths();
-            std::cout << "Default verify paths set successfully" << std::endl;
-        }
-        catch (const std::exception& e) {
-            std::cerr << "set_default_verify_paths failed: " << e.what() << std::endl;
-        }
-
-        ssl_domain_utilities::load_windows_ca_certificates(*ctx);
-
-        const char* ciphers =
-            "ECDHE+AESGCM:ECDHE+CHACHA20:DHE+AESGCM:DHE+CHACHA20:!aNULL:!MD5:!DSS:!RC4";
-
-        if (SSL_CTX_set_cipher_list(ctx->native_handle(), ciphers) != 1) {
-            std::cerr << "Failed to set cipher list" << std::endl;
-        }
-
-        SSL_CTX_set_min_proto_version(ctx->native_handle(), TLS1_2_VERSION);
-        // AI OFF
-
-        return ctx;
-    }
+    static std::shared_ptr<ssl::context> GetSSLContext();
 
     class Connection : public std::enable_shared_from_this<Connection> {
     public:
-        Connection(net::io_context& ioc, Strand& write_strand, Strand& read_strand)
-            : write_strand_(read_strand)
-            , read_strand_(read_strand)
-            , socket_(tcp::socket(ioc))
-            , ioc_(&ioc)
-            , secured_(false)
-        {
+        Connection(net::io_context& ioc, Strand& write_strand, Strand& read_strand);
 
-        }
+        Connection(net::io_context& ioc, ssl::context& ctx, Strand& write_strand, Strand& read_strand);
 
-        Connection(net::io_context& ioc, ssl::context& ctx, Strand& write_strand, Strand& read_strand)
-            : write_strand_(read_strand)
-            , read_strand_(read_strand)
-            , socket_(ssl::stream<tcp::socket>(ioc, ctx))
-            , ioc_(&ioc)
-            , secured_(true)
-        {
+        void Connect(std::string_view host, std::string_view port);
 
-        }
+        void Disconnect(bool is_need_to_close_socket = true);
 
-        void Connect(std::string_view host, std::string_view port) {
-            ec_.clear();
-
-            ConnectionVisitor visitor(*this, host, port);
-            std::visit(visitor, socket_);
-            if (ec_) {
-                logging::ReportError(ec_, "Connection");
-            }
-        }
-
-        void Disconnect(bool is_need_to_close_socket = true) {
-            ec_.clear();
-
-            DisconnectVisitor visitor(*this, is_need_to_close_socket);
-            std::visit(visitor, socket_);
-            if (ec_) {
-                logging::ReportError(ec_, "Disconnecting");
-            }
-            LOG_INFO("Disconnected");
-        }
-
-        bool IsReconnectRequired() {
-            if (reconnect_required_) {
-                reconnect_required_ = false;
-                return true;
-            }
-            return false;
-        }
+        bool IsReconnectRequired();
 
         template <typename Handler>
         void AsyncRead(Handler&& handler) {
@@ -171,17 +88,11 @@ namespace connection {
                 });
         }
 
-        bool IsConnected() const {
-            return ssl_connected_ || connected_;
-        }
+        bool IsConnected() const;
 
-        net::io_context* GetContext() {
-            return ioc_;
-        }
+        net::io_context* GetContext();
 
-        bool IsSecured() const {
-            return secured_;
-        }
+        bool IsSecured() const;
 
     private:
         Strand& write_strand_;
@@ -205,70 +116,9 @@ namespace connection {
             {
             }
 
-            void operator()(tcp::socket& socket) {
-                tcp::resolver resolver(socket.get_executor()); // :(
-                auto endpoints = resolver.resolve(host_, port_);
-                if (connection_.ec_) {
-                    logging::ReportError(connection_.ec_, "Resolving");
-                }
-                else {
-                    LOG_INFO("Resolved "s.append(host_).append(":"s).append(port_));
-                    for (const auto& ep : endpoints) {
-                        LOG_INFO(endpoints.begin()->endpoint().address().to_string().append(":"s).append(port_));
-                    }
-                }
-                net::connect(socket, endpoints, connection_.ec_);
-                if (connection_.ec_) {
-                    logging::ReportError(connection_.ec_, "Connection"sv);
-                    return;
-                }
-                connection_.connected_ = true;
-            }
+            void operator()(tcp::socket& socket);
 
-            void operator()(ssl::stream<tcp::socket>& socket) {
-                tcp::resolver resolver(socket.get_executor()); // :(
-                auto endpoints = resolver.resolve(host_, port_, connection_.ec_);
-
-                if (connection_.ec_) {
-                    logging::ReportError(connection_.ec_, "Resolving");
-                    throw std::runtime_error("cant resolve: "s.append(host_).append(" ").append(port_));
-                }
-
-                LOG_INFO("Resolved "s.append(host_).append(":"s).append(port_));
-                for (const auto& ep : endpoints) {
-                    LOG_INFO(endpoints.begin()->endpoint().address().to_string().append(":"s).append(port_));
-                }
-
-                SSL_set_tlsext_host_name(socket.native_handle(), host_.c_str());
-                net::connect(socket.lowest_layer(), endpoints, connection_.ec_);
-                if (connection_.ec_) {
-                    logging::ReportError(connection_.ec_, "SSL Connection"sv);
-                    return;
-                }
-                else {
-                    LOG_INFO("CONNECTED");
-                }
-                socket.lowest_layer().set_option(tcp::no_delay(true));
-                socket.handshake(ssl::stream_base::client, connection_.ec_);
-                if (connection_.ec_) {
-                    ERR_print_errors_fp(stderr);
-
-                    logging::ReportError(connection_.ec_, "SSL Handshake");
-                    socket.lowest_layer().close();
-                    return;
-                }
-
-                else {
-                    LOG_INFO("HANDSHAKE SUCESS");
-                }
-                connection_.ssl_connected_ = true;
-                if (SSL_get_verify_result(socket.native_handle()) != X509_V_OK) {
-                    LOG_INFO("SSL Certificate verification failed");
-                }
-                else {
-                    LOG_INFO("SSL Certificate verified successfully");
-                }
-            }
+            void operator()(ssl::stream<tcp::socket>& socket);
 
         private:
             Connection& connection_;
@@ -284,21 +134,9 @@ namespace connection {
             {
             }
 
-            void operator()(tcp::socket& socket) {
-                socket.shutdown(net::socket_base::shutdown_send, ignor_);
-                if (is_need_to_close_socket_) {
-                    socket.close(connection_.ec_);
-                }
-                connection_.connected_ = false;
-            }
+            void operator()(tcp::socket& socket);
 
-            void operator()(ssl::stream<tcp::socket>& socket) {
-                socket.shutdown(ignor_);
-                if (is_need_to_close_socket_) {
-                    socket.lowest_layer().close(connection_.ec_);
-                }
-                connection_.ssl_connected_ = false;
-            }
+            void operator()(ssl::stream<tcp::socket>& socket);
 
         private:
             Connection& connection_;
