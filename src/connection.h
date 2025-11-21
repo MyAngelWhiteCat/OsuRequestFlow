@@ -39,7 +39,51 @@ namespace connection {
 
     using Strand = net::strand<net::io_context::executor_type>;
 
-    static std::shared_ptr<ssl::context> GetSSLContext();
+    // AI on
+    static std::shared_ptr<ssl::context> GetSSLContext() {
+        auto ctx = std::make_shared<ssl::context>(ssl::context::tls_client);
+
+        SSL_CTX_set_info_callback(ctx->native_handle(), [](const SSL* ssl, int where, int ret) {
+            if (where & SSL_CB_HANDSHAKE_START) {
+                std::cout << "SSL Handshake starting..." << std::endl;
+            }
+            if (where & SSL_CB_HANDSHAKE_DONE) {
+                std::cout << "SSL Handshake completed!" << std::endl;
+            }
+            });
+
+        ctx->set_options(
+            ssl::context::default_workarounds |
+            ssl::context::no_sslv2 |
+            ssl::context::no_sslv3 |
+            ssl::context::no_tlsv1 |
+            ssl::context::no_tlsv1_1
+        );
+
+        ctx->set_verify_mode(ssl::verify_peer);
+
+        try {
+            ctx->set_default_verify_paths();
+            std::cout << "Default verify paths set successfully" << std::endl;
+        }
+        catch (const std::exception& e) {
+            std::cerr << "set_default_verify_paths failed: " << e.what() << std::endl;
+        }
+
+        ssl_domain_utilities::load_windows_ca_certificates(*ctx);
+
+        const char* ciphers =
+            "ECDHE+AESGCM:ECDHE+CHACHA20:DHE+AESGCM:DHE+CHACHA20:!aNULL:!MD5:!DSS:!RC4";
+
+        if (SSL_CTX_set_cipher_list(ctx->native_handle(), ciphers) != 1) {
+            std::cerr << "Failed to set cipher list" << std::endl;
+        }
+
+        SSL_CTX_set_min_proto_version(ctx->native_handle(), TLS1_2_VERSION);
+
+        return ctx;
+    }
+    // AI OFF
 
     class Connection : public std::enable_shared_from_this<Connection> {
     public:
