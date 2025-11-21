@@ -4,27 +4,25 @@
 #include <boost/asio/ip/tcp.hpp>
 #include <boost/asio/strand.hpp>
 #include <boost/asio/ssl.hpp>
-
-#include <boost/beast.hpp>
 #include <boost/asio/ssl/context.hpp>
 #include <boost/asio/ssl/stream.hpp>
+#include <boost/asio/ssl/stream_base.hpp>
+#include <boost/asio/connect.hpp>
 
+#include <boost/beast.hpp>
 
 #include <memory>
 #include <variant>
 #include <string_view>
 #include <stdexcept>
-#include <unordered_map>
-
-
-#include "logging.h"
-#include <boost/asio/ssl/stream_base.hpp>
 #include <string>
-#include <boost/asio/impl/connect.hpp>
 #include <utility>
 #include <optional>
 #include <fstream>
 #include <thread>
+
+#include "logging.h"
+#include "request_builder.h"
 
 
 namespace http_domain {
@@ -59,22 +57,6 @@ namespace http_domain {
         static constexpr std::string_view CONTENT_DISPOSITION = "Content-Disposition"sv;
         static constexpr std::string_view LOCATION = "Location"sv;
     };
-
-    static StringRequest MakeRequest(http::verb method, std::string_view target, int version
-        , std::string_view host, std::string_view user_agent, std::string_view accept
-        , std::string_view connection) {
-        StringRequest req;
-        req.method(method);
-        req.target(target);
-        req.version(version);
-
-        req.set(http::field::host, host);
-        req.set(http::field::user_agent, user_agent);
-        req.set(http::field::accept, accept);
-        req.set(http::field::connection, connection);
-
-        return req;
-    }
 
     class Client : public std::enable_shared_from_this<Client> {
     public:
@@ -141,7 +123,7 @@ namespace http_domain {
             if (!IsConnected() || !host_) {
                 throw std::logic_error("Trying send request without connection");
             }
-            auto req = MakeRequest(http::verb::get, target, 11, *host_, user_agent, accept_, connection_);
+            auto req = request_builder_.Get(target, user_agent, *host_);
             SendRequest(std::move(req), std::forward<ResponseHandler>(handler));
         }
 
@@ -150,7 +132,7 @@ namespace http_domain {
             if (!IsConnected() || !host_) {
                 throw std::logic_error("Trying send request without connection");
             }
-            auto req = MakeRequest(http::verb::head, target, 11, *host_, user_agent, accept_, connection_);
+            auto req = request_builder_.Head(target, user_agent, *host_);
             SendRequest(std::move(req), std::forward<ResponseHandler>(handler));
         }
 
@@ -163,8 +145,8 @@ namespace http_domain {
         bool connected_ = false;
         bool busy_ = false;
         std::optional<std::string> host_;
-        std::string accept_ = "*/*";
-        std::string connection_ = "keep-alive";
+        RequestBuilder request_builder_;
+
 
         template <typename Handler>
         class ReadVisitor : public std::enable_shared_from_this<ReadVisitor<Handler>> {
