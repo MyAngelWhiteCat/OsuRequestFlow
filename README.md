@@ -1,4 +1,4 @@
-[Общая архитектура модулей системы](Design.png)
+[Общая архитектура модулей системы](Design.drawio.png)
 
 # TODO
 - HTTP-loopback server
