@@ -205,10 +205,10 @@ namespace http_domain {
                 std::thread process([self = this->shared_from_this()]() {
                     while (self->response_parser_.GetBody().size() < self->response_parser_.GetFileSize()) {
                         std::string progress = std::to_string(self->response_parser_.GetBody().size());
-                        LOG_INFO(progress + " / " + std::to_string(self->response_parser_.GetFileSize()) + " bytes");
-                        std::this_thread::sleep_for(std::chrono::seconds(1));
+                        std::osyncstream{ std::cout } << progress + " / " + std::to_string(self->response_parser_.GetFileSize()) + " bytes" << "\n";
+                        std::this_thread::sleep_for(std::chrono::milliseconds(50));
                     }
-                    LOG_INFO("Downloaded");
+                    std::osyncstream{ std::cout } << "Downloaded" << std::endl;
                     });
                 http::async_read(stream, buffer_, response_parser_.GetParser()
                     , [self = this->shared_from_this(), &stream](const beast::error_code& ec, size_t bytes_readed) mutable {
