@@ -3,39 +3,27 @@
 #include <optional>
 #include <string>
 #include <utility>
+#include <string_view>
 
+#include "message.h"
+#include "command.h"
 
 namespace commands {
 
-    enum class CommandType {
-        OsuRequest
-    };
-
-    struct Command {
-    public:
-        Command(CommandType type, std::string&& content)
-            : type_(type)
-            , content_(std::move(content))
-        {
-
-        }
-
-        CommandType type_;
-        std::string content_;
-    };
-
     class CommandParser {
     public:
-        std::optional<Command> GetCommand(std::string line) {
+        void Parse(irc::domain::Message&& message) {
+            auto line = message.GetContent();
             if (line.empty()) {
-                return std::nullopt;
+                return;
             }
 
             if (line[0] == command_start_) {
                 // TODO:
             }
             if (auto id = CheckForLOsuMapURLAndGetID(line)) {
-                Command osu_request(CommandType::OsuRequest, std::move(*id));
+                Command osu_request(CommandType::OsuRequest, std::string(message.GetNick()), std::move(*id));
+
             }
         }
 
