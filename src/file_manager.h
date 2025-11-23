@@ -6,6 +6,8 @@
 #include <string_view>
 #include <string>
 #include <vector>
+#include <fstream>
+#include <optional>
 
 namespace file_manager {
 
@@ -49,10 +51,19 @@ namespace file_manager {
         FileManager(const fs::path& root_directory)
             : root_directory_(root_directory)
         {
-
+            if (!fs::exists(root_directory)) {
+                fs::create_directory(root_directory);
+            }
         }
 
-        void WriteInRoot(std::string&& file_name, std::vector<char>&& bytes);
+        void WriteBinaryInRoot(std::string&& file_name, std::vector<char>&& bytes, bool save_history = true);
+
+        void WriteCharsInRoot(std::string&& file_name, std::vector<char>&& bytes, bool save_history = true);
+
+        std::optional<std::vector<char>> ReadBinaryFromRoot(std::string_view file_name);
+
+        std::optional<std::vector<char>> ReadCharsFromRoot(std::string_view file_name);
+
 
         void RemoveFile(const fs::path& path);
 
@@ -62,10 +73,15 @@ namespace file_manager {
         fs::path root_directory_;
         std::list<Action> actions_history_;
 
+        std::vector<char> ReadFromRoot(std::ifstream& in, std::string_view file_name);
+
+        void WriteInRoot(std::ofstream& out, std::string&& file_name, std::vector<char>&& bytes, bool save_history);
+
         void AddAction(ActionType type, std::string&& file_name, const fs::path& path);
 
         void AddAction(Action&& act);
 
+        fs::path GetPathToFileInRoot(std::string_view file_name) const;
     };
 
 }
