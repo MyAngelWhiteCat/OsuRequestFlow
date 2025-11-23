@@ -126,7 +126,7 @@ namespace downloader {
                 CleanUpInactiveConnections();
             }
             if (resourse_to_clients_.at(resourse).size() < MAX_CONNECTIONS) {
-
+                // TODO:
             }
         }
     }
