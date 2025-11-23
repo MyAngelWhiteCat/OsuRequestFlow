@@ -6,14 +6,14 @@
 namespace test_file_manager {
 
     void TestWrite(file_manager::FileManager& fm) {
-        fm.WriteInRoot({ 'q', 'w', 'r' }, "test.txt");
-        fm.WriteInRoot({ 'q', 'w', 'r' }, "zest.txw");
-        fm.WriteInRoot({ 'q', 'w', 'r' }, "tzst.txq");
-        fm.WriteInRoot({ 'q', 'w', 'r' }, "test.trt");
-        fm.WriteInRoot({ 'q', 'w', 'r' }, "teut.tzt");
-        fm.WriteInRoot({ 'q', 'w', 'r' }, "tent.tct");
-        fm.WriteInRoot({ 'q', 'w', 'r' }, "tezt.tbt");
-        fm.WriteInRoot({ 'q', 'w', 'r' }, "teqt.tyt");
+        fm.WriteBinaryInRoot({ 'q', 'w', 'r' }, "test.txt");
+        fm.WriteBinaryInRoot({ 'q', 'w', 'r' }, "zest.txw");
+        fm.WriteBinaryInRoot({ 'q', 'w', 'r' }, "tzst.txq");
+        fm.WriteBinaryInRoot({ 'q', 'w', 'r' }, "test.trt");
+        fm.WriteBinaryInRoot({ 'q', 'w', 'r' }, "teut.tzt");
+        fm.WriteBinaryInRoot({ 'q', 'w', 'r' }, "tent.tct");
+        fm.WriteBinaryInRoot({ 'q', 'w', 'r' }, "tezt.tbt");
+        fm.WriteBinaryInRoot({ 'q', 'w', 'r' }, "teqt.tyt");
 
     }
 

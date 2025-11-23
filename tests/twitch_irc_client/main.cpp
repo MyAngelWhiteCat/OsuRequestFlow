@@ -1,5 +1,5 @@
 #include "auth_data.h"
-#include "client.h"
+#include "irc_client.h"
 #include "logging.h"
 #include "connection.h"
 
@@ -75,7 +75,7 @@ int main() {
     //auto client = std::make_shared<Client>(ioc);
     auto ssl_client = std::make_shared<Client>(ioc, ctx); 
 
-    std::vector<std::string_view> streamers{"fugu_fps"};
+    std::vector<std::string_view> streamers{"myangelwhitecat"};
 
     LOG_DEBUG("System start...");
     net::post(irc_strand, [&streamers, &a_data, &ssl_client]() {

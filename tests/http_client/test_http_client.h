@@ -31,8 +31,8 @@ namespace test_http_client {
         };
 
     RandomUserAgent gu_agent(100);
-
-    auto req = http_domain::MakeRequest(boost::beast::http::verb::get
+    http_domain::RequestBuilder req_builder;
+    auto req = req_builder.MakeRequest(boost::beast::http::verb::get
         , "/d/1886002"
         , 11
         , "catboy.best"
@@ -61,13 +61,14 @@ namespace test_http_client {
         client->Connect("catboy.best", "443");
         client->SendRequest(std::move(req), handler);
     }
-    //http://osu.direct/api/d/1886002 
+    //https://osu.direct/api/d/1886002 
+    //https://catboy.best/d/1886002 
 
     void TestGet(std::shared_ptr<http_domain::Client> client) {
         RandomUserAgent u_agent(100);
 
-        client->Connect("osu.direct", "80");
-        client->Get("/api/d/1886002", u_agent.GetUserAgent(), handler);
+        client->Connect("catboy.best", "443");
+        client->Get("/d/1886002", u_agent.GetUserAgent(), handler);
     }
 
 
@@ -84,7 +85,7 @@ namespace test_http_client {
         auto client = std::make_shared<http_domain::Client>(ioc);
         auto ssl_client = std::make_shared<http_domain::Client>(ioc, *ctx);
 
-        //TestSSLGet(ssl_client);
-        TestSSLSendRequest(ssl_client);
+        TestSSLGet(ssl_client);
+        //TestSSLSendRequest(ssl_client);
     }
 }
