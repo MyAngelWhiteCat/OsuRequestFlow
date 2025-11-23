@@ -49,6 +49,11 @@ namespace irc {
             return badges_;
         }
 
+        Role Message::GetMainBadge() const {
+            // TODO;
+            return Role::EMPTY;
+        }
+
         std::string Message::GetColorFromHex() const {
             auto it = badges_.find("color");
             if (it != badges_.end() && !it->second.empty() && !it->second[0].empty()) {

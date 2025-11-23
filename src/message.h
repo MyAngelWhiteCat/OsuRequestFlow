@@ -13,6 +13,14 @@ namespace irc {
 
         using Badges = std::unordered_map<std::string, std::vector<std::string>>;
 
+        enum class Role {
+            EMPTY = 0,
+            FOLLOWER = 1,
+            SUBSCRIBER = 2,
+            VIP = 3,
+            MODERATOR = 4
+        };
+
         class Message {
         public:
             Message() = delete;
@@ -31,6 +39,7 @@ namespace irc {
             std::string_view GetContent() const;
             std::string_view GetNick() const;
             Badges GetBadges() const;
+            Role GetMainBadge() const;
             std::string GetColorFromHex() const;
         private:
             MessageType message_type_;
