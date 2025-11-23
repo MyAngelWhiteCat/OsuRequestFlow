@@ -245,3 +245,15 @@ target_link_libraries(TestUserVerificator PUBLIC
     TwitchIRCClient 
     FileManager
 )
+
+###########################################
+
+add_executable(Core 
+    src/core.h 
+    src/core.cpp 
+)
+
+target_link_libraries(Core PRIVATE 
+    TwitchIRCCLient 
+    # ... TODO
+)
