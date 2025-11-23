@@ -72,7 +72,6 @@ namespace irc {
         connection_->Write(*auth_data_buffer_);
     }
 
-
     void Client::Authorize(const domain::AuthorizeData& auth_data) {
         auth_data_buffer_ = auth_data.GetAuthMessage();
         connection_->Write(*auth_data_buffer_);
@@ -139,16 +138,13 @@ namespace irc {
         }
 
         try {
-            connection_->Connect(domain::IRC_EPS::HOST, domain::IRC_EPS::SSL_PORT);
-        }
-        catch (const std::exception& e) {
-            LOG_ERROR("Reconnecting error: "s.append(e.what()));
-            LOG_INFO("Retry after "s.append(std::to_string(reconnect_timeout_)).append(" sec"));
             reconnect_timer_.expires_after(std::chrono::seconds(reconnect_timeout_));
-            reconnect_timer_.async_wait([self = shared_from_this()](const sys::error_code& ec) { 
+            reconnect_timer_.async_wait([self = shared_from_this(), secured](const sys::error_code& ec) {
                 if (ec) {
                     logging::ReportError(ec, "Waiting reconnect timer");
                 }
+                std::string_view port = secured ? domain::IRC_EPS::SSL_PORT : domain::IRC_EPS::PORT;
+                self->connection_->Connect(domain::IRC_EPS::HOST, port);
                 self->message_handler_->UpdateConnection(self->connection_);
                 self->message_processor_.FlushBuffer();
                 self->Authorize();
@@ -157,6 +153,12 @@ namespace irc {
                 self->Read();
                 });
         }
+        catch (const std::exception& e) {
+            LOG_ERROR("Reconnecting error: "s.append(e.what()));
+            LOG_INFO("Retry after "s.append(std::to_string(reconnect_timeout_)).append(" sec"));
+            Reconnect(secured);
+        }
+
     }
 
     std::string Client::GetChannelNamesInStringCommand(std::vector<std::string_view> channels_names) {
