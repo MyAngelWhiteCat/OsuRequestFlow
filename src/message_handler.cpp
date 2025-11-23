@@ -12,6 +12,8 @@
 #include <iostream>
 #include <sstream>
 #include <syncstream>
+#include <utility>
+#include <vector>
 
 
 namespace irc {
@@ -21,12 +23,12 @@ namespace irc {
         using namespace std::literals;
         using MessageType = irc::domain::MessageType;
 
-        void MessageHandler::operator()(const std::vector<domain::Message>& messages) {
+        void MessageHandler::operator()(std::vector<domain::Message>&& messages) {
             std::ofstream fuckedup("FUCKED_UP.txt", std::ios::app);
             std::osyncstream out(std::cout);
 
             try {
-                for (const auto& message : messages) {
+                for (auto& message : messages) {
                     switch (message.GetMessageType()) {
                     case MessageType::PING:
                         LOG_INFO("Get ping message!");
@@ -41,7 +43,10 @@ namespace irc {
                     case MessageType::PRIVMSG: // debug only
                         PrintTime(out);
                         out << GetColorFromHex(message.GetColorFromHex()) << message.GetNick() << RESET << message.GetContent() << "\n";
-                        
+                        net::post([self = shared_from_this(), message = std::move(message)]() mutable
+                            {
+                                self->command_parser_.Parse(std::move(message));
+                            });
                         break;
                     case MessageType::UNKNOWN: // Debug only. In prod there is huge error if we get unknown message
                         fuckedup << message.GetContent() << std::endl;
@@ -95,14 +100,6 @@ namespace irc {
             std::tm tm_buf;
             localtime_s(&tm_buf, &time);
             out << '[' << std::put_time(&tm_buf, "%H:%M:%S") << "] ";
-        }
-
-        void MessageHandler::ProcessCommand(const commands::Command& command) {
-            switch (command.type_) {
-            case (commands::CommandType::OsuRequest):
-                break;
-            }
-            // TODO:
         }
 
     }

@@ -34,7 +34,7 @@ namespace irc {
 
             }
 
-            void operator()(const std::vector<domain::Message>& messages);
+            void operator()(std::vector<domain::Message>&& messages);
 
             void UpdateConnection(std::shared_ptr<connection::Connection>);
 
@@ -48,7 +48,6 @@ namespace irc {
             void SendPong(const std::string_view content);
             std::string GetColorFromHex(const std::string& hexColor);
             void PrintTime(std::ostream& out);
-            void ProcessCommand(const commands::Command& command);
         };
 
     }
