@@ -1,4 +1,4 @@
-#include "client.h"
+#include "irc_client.h"
 
 #include <boost/asio/ssl/context.hpp>
 #include <boost/asio/strand.hpp>
@@ -105,9 +105,9 @@ namespace irc {
         try {
             std::vector<char> saved_bytes = std::move(bytes);
             auto messages = message_processor_.GetMessagesFromRawBytes(saved_bytes);
-            net::post([self = shared_from_this(), messages = std::move(messages)]()
+            net::post([self = shared_from_this(), messages = std::move(messages)]() mutable
                 {
-                    (*self->message_handler_)(messages);
+                    (*self->message_handler_)(std::move(messages));
                 });
 
             if (connection_->IsReconnectRequired()) {
