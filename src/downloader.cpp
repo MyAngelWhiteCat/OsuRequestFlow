@@ -100,8 +100,8 @@ namespace downloader {
         client_->Connect(resourse_, http_domain::Port::SECURED);
     }
 
-    std::string_view Downloader::GetEndpoint(std::string_view file) {
-        return uri_prefix_.append(file);
+    std::string Downloader::GetEndpoint(std::string_view file) {
+        return uri_prefix_ + std::string(file);
     }
 
 } // namespace downloader

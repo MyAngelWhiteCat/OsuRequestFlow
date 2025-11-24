@@ -48,7 +48,7 @@ namespace downloader {
     private:
         net::io_context& ioc_;
         std::shared_ptr<ssl::context> ctx_{ nullptr };
-        std::string user_agent_ = "OsuRequestFlow v0.1";
+        std::string user_agent_ = "Mozilla/5.0 (X11; Ubuntu; Linux x86_64; rv:121.0) Gecko/20100101 Firefox/121.0";
         std::shared_ptr<http_domain::Client> client_{ nullptr };
         std::shared_ptr<file_manager::FileManager> file_manager_{ nullptr };
         std::string resourse_;
@@ -58,7 +58,7 @@ namespace downloader {
 
         void WriteOnDisk(std::string&& file_name, std::vector<char>&& bytes);
 
-        std::string_view GetEndpoint(std::string_view file);
+        std::string GetEndpoint(std::string_view file);
 
     };
 
