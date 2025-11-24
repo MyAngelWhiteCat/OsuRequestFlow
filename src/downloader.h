@@ -25,70 +25,40 @@ namespace downloader {
     using namespace std::literals;
 
     using Strand = net::strand<net::io_context::executor_type>;
-    using ResoursesAccess = std::unordered_map<std::string, std::vector<std::shared_ptr<http_domain::Client>>>;
 
     class Downloader : public std::enable_shared_from_this<Downloader> {
 
     public:
 
         Downloader(net::io_context& ioc
-            , std::shared_ptr<ssl::context> ctx
-            , std::vector<std::string> resourses
-            , std::string_view user_agent
-            , file_manager::FileManager file_manager
-            , Strand& stream_strand);
+            , std::shared_ptr<ssl::context> ctx);
 
-        Downloader(net::io_context& ioc
-            , std::vector<std::string> resourses
-            , std::string_view user_agent
-            , file_manager::FileManager file_manager
-            , Strand& stream_strand);
-
-        Downloader(net::io_context& ioc
-            , std::shared_ptr<ssl::context> ctx
-            , std::vector<std::string> resourses
-            , std::shared_ptr<RandomUserAgent> user_agent
-            , file_manager::FileManager file_manager
-            , Strand& stream_strand);
-
-        Downloader(net::io_context& ioc
-            , std::vector<std::string> resourses
-            , std::shared_ptr<RandomUserAgent> user_agent
-            , file_manager::FileManager file_manager
-            , Strand& stream_strand);
+        Downloader(net::io_context& ioc);
 
         ~Downloader(); // debug only;
 
         void Download(std::string_view uri);
+        void SetUserAgent(std::string_view user_agent);
+        void SetUriPrefix(std::string_view uri_prefix);
+        void SetResourse(std::string_view resourse);
+        void SetDownloadsFolder(std::string_view path);
+        void SetupNonSecuredConnection();
+        void SetupSecuredConnection();
 
     private:
         net::io_context& ioc_;
-        Strand& file_write_strand_;
         std::shared_ptr<ssl::context> ctx_{ nullptr };
-        std::string user_agent_;
-        std::shared_ptr<RandomUserAgent> user_agent_changer_{ nullptr };
-        std::vector<std::string> resourses_;
-        ResoursesAccess resourse_to_clients_;
-        file_manager::FileManager file_manager_;
-        bool secured_ = true;
-        const size_t MAX_CONNECTIONS = 5;
+        std::string user_agent_ = "OsuRequestFlow v0.1";
+        std::shared_ptr<http_domain::Client> client_{ nullptr };
+        std::shared_ptr<file_manager::FileManager> file_manager_{ nullptr };
+        std::string resourse_;
+        std::string uri_prefix_ = "/d/";
 
         void OnDownload(std::string&& file_name, std::vector<char>&& body);
 
         void WriteOnDisk(std::string&& file_name, std::vector<char>&& bytes);
 
-        void SetupConnection(std::shared_ptr<http_domain::Client> client, std::string_view port);
-
-        bool ConnectToResourse(std::shared_ptr<http_domain::Client> client
-            , std::string_view resourse, std::string_view port);
-
-        void SetupNonSecuredConnection();
-
-        void SetupSecuredConnection();
-
-        void CheckResoursesForEmpty();
-
-        void CleanUpInactiveConnections();
+        std::string_view GetEndpoint(std::string_view file);
 
     };
 
