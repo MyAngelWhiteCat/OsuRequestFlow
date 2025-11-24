@@ -6,24 +6,13 @@
 
 #include <boost/asio/io_context.hpp>
 #include <boost/asio/ip/tcp.hpp>
-#include <boost/asio/strand.hpp>
-#include <boost/asio/ssl.hpp>
-#include <boost/asio/ssl/context.hpp>
-#include <boost/asio/ssl/stream.hpp>
-#include <boost/asio/ssl/stream_base.hpp>
-#include <boost/asio/connect.hpp>
 
 #include <boost/beast.hpp>
 
-#include <memory>
-#include <variant>
 #include <string_view>
-#include <stdexcept>
 #include <string>
 #include <utility>
-#include <optional>
 #include <fstream>
-#include <thread>
 #include "logging.h"
 
 namespace http_domain {
@@ -45,6 +34,14 @@ namespace http_domain {
     class ResponseParser {
     public:
 
+        ResponseParser() {
+            response_parser_.body_limit(max_file_size_);
+        }
+
+        ~ResponseParser() {
+            LOG_INFO("Response Parser Destructed");
+        }
+
         bool IsOK() {
             auto& response = response_parser_.get();
             return response.reason() == Status::OK;
@@ -53,11 +50,12 @@ namespace http_domain {
         void PrintResponseHeaders() {
             auto& response = response_parser_.get();
             LOG_INFO(response.reason());
-            LOG_INFO("HEADERS:");
+            std::ofstream log_request("LogRequest.txt", std::ios::app);
+            log_request << "RESPONSE" << "\n";
             for (const auto& header : response) {
-                std::cout << header.name_string() << ": " << header.value() << "\n";
+                log_request << header.name_string() << ": " << header.value() << "\n";
             }
-            LOG_INFO("HEADERS END");
+            log_request << "\n\n";
         }
 
         std::string GetFileName() {
@@ -84,7 +82,7 @@ namespace http_domain {
             if (it != response.end()) {
                 file_size_ = std::stoll(it->value());
                 if (file_size_ < max_file_size_) {
-                    response_parser_.body_limit(file_size_ + KiB);
+                    response_parser_.body_limit(file_size_ + 10 * KiB);
                     return true;
                 }
             }
@@ -116,6 +114,7 @@ namespace http_domain {
 
         void SetMaxFileSize(size_t new_max_file_size) {
             max_file_size_ = new_max_file_size;
+            response_parser_.body_limit(max_file_size_);
         }
 
         size_t GetFileSize() {
@@ -127,7 +126,7 @@ namespace http_domain {
         DynamicResponse dynamic_response_;
         std::vector<char> body_bytes_;
         size_t file_size_ = 0;
-        size_t max_file_size_ = 50 * MiB;
+        size_t max_file_size_ = 200 * MiB;
 
 
         std::string ParseFileName(std::string_view content) {
