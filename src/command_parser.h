@@ -30,6 +30,8 @@ namespace commands {
                 // TODO:
             }
             if (auto id = CheckForLOsuMapURLAndGetID(line)) {
+                std::ofstream log_request("LogRequest.txt", std::ios::app);
+                log_request << message.GetNick() << message.GetContent() << "\n";
                 Command osu_request(CommandType::OsuRequest, std::string(message.GetNick()), std::move(*id));
                 LOG_INFO("Osu map find");
                 return osu_request;
@@ -54,7 +56,6 @@ namespace commands {
 
         std::optional<std::string> CheckForLOsuMapURLAndGetID(std::string_view url) {
             size_t url_start = url.find(OSU_BEATMAPS_URL);
-            LOG_INFO(std::to_string(url_start));
             if (url_start == std::string::npos) {
                 return std::nullopt;
             }
@@ -72,7 +73,6 @@ namespace commands {
         }
 
         std::string GetOsuMapID(std::string_view message) {
-            //"https://osu.ppy.sh/beatmapsets/2440776#osu/5324309"
             size_t map_id_pos = message.find_last_of('/');
             if (map_id_pos == std::string::npos) {
                 return  "";
@@ -81,9 +81,10 @@ namespace commands {
         }
 
         std::string GetBeatmapSetId(std::string_view url) {
-            LOG_INFO("Checking for url " + std::string(url));
             std::string_view cut = url.substr(OSU_BEATMAPS_URL.size());
             size_t end = cut.find_first_of("#");
+            std::ofstream log_request("LogRequest.txt", std::ios::app);
+            log_request << "Parsed as: " << url << " " << cut << " " << cut.substr(0, end) << '\n';
             return std::string(cut.substr(0, end));
         }
 
