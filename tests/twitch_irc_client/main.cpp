@@ -49,10 +49,10 @@ int main() {
     auto irc_strand = net::make_strand(ioc);
 
     auto ctx_dl = connection::GetSSLContext();
-    std::string resourse = "catboy.best";
+    std::string resourse = "osu.direct";
     auto downloader = std::make_shared<downloader::Downloader>(ioc, ctx_dl);
     downloader->SetResourse(resourse);
-    downloader->SetUriPrefix("/d/");
+    downloader->SetUriPrefix("/api/d/");
     downloader->SetDownloadsFolder(std::filesystem::current_path().string() + "/downloads");
     auto executor = std::make_shared<commands::CommandExecutor>(downloader);
     auto parser = std::make_shared<commands::CommandParser>(*executor);
