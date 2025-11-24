@@ -71,7 +71,6 @@ namespace test_http_client {
         client->Get("/d/1886002", u_agent.GetUserAgent(), handler);
     }
 
-
     void TestSSLGet(std::shared_ptr<http_domain::Client> client) {
         RandomUserAgent u_agent(100);
 

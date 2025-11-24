@@ -2,6 +2,9 @@
 #include "irc_client.h"
 #include "logging.h"
 #include "connection.h"
+#include "downloader.h"
+#include "random_user_agent.h"
+
 
 #include <boost/asio/executor_work_guard.hpp>
 #include <boost/asio/impl/io_context.ipp>
@@ -20,27 +23,6 @@
 using namespace irc;
 namespace fs = std::filesystem;
 
-static void ConnectAndReadMultichat(const std::vector<std::string_view>& channels_names
-    , const domain::AuthorizeData& a_data
-    , std::shared_ptr<Client> client) {
-    client->Connect();
-    client->CapRequest();
-    client->Authorize(a_data);
-
-    client->Join(channels_names);
-    try {
-        client->Read();
-    }
-    catch (const std::exception& e) {
-        LOG_ERROR(e.what());
-    }
-    catch (...) { 
-        LOG_FUCKUP("call the exorcist! NOW!!!");
-    }
-
-    //client->Part(channels_names);
-}
-
 template <typename Fn>
 void RunWorkers(unsigned num_workers, Fn&& func) {
     try {
@@ -58,29 +40,36 @@ void RunWorkers(unsigned num_workers, Fn&& func) {
 
 
 int main() {
-
     logging::Logger::Init();
-
     setlocale(LC_ALL, "Russian_Russia.1251");
 
     net::io_context ioc(2);
     auto ctx = connection::GetSSLContext();
-
     auto work = net::make_work_guard(ioc);
-
     auto irc_strand = net::make_strand(ioc);
 
-    domain::AuthorizeData a_data; 
-
-    //auto client = std::make_shared<Client>(ioc);
-    auto ssl_client = std::make_shared<Client>(ioc, ctx); 
+    auto ctx_dl = connection::GetSSLContext();
+    std::string resourse = "catboy.best";
+    auto downloader = std::make_shared<downloader::Downloader>(ioc, ctx_dl);
+    downloader->SetResourse(resourse);
+    downloader->SetUriPrefix("/d/");
+    downloader->SetDownloadsFolder(std::filesystem::current_path().string() + "/downloads");
+    auto executor = std::make_shared<commands::CommandExecutor>(downloader);
+    auto parser = std::make_shared<commands::CommandParser>(*executor);
+    auto chat_bot = std::make_shared<chat_bot::ChatBot>(executor, parser);
+    auto client = std::make_shared<Client<chat_bot::ChatBot>>(ioc, chat_bot, true);
 
     std::vector<std::string_view> streamers{"myangelwhitecat"};
+    domain::AuthorizeData a_data;
+
+    client->Connect();
+    client->Authorize(a_data);
+    client->Read();
+    client->CapRequest();
+    client->Join(streamers);
 
     LOG_DEBUG("System start...");
-    net::post(irc_strand, [&streamers, &a_data, &ssl_client]() {
-        ConnectAndReadMultichat(streamers, a_data, ssl_client);
-        });
+
     RunWorkers(2, [&ioc]() {
         ioc.run();
         });
