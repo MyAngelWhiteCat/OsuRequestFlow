@@ -39,6 +39,7 @@ namespace http_domain {
         req.set(http::field::user_agent, user_agent);
         req.set(http::field::accept, accept);
         req.set(http::field::connection, connection);
+        req.set(http::field::accept_encoding, "gzip, deflate, br");
 
         return req;
     }
