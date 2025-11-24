@@ -104,7 +104,6 @@ namespace http_domain {
 
         template <typename ResponseHandler>
         void Get(std::string_view target, std::string_view user_agent, ResponseHandler&& handler) {
-            LOG_INFO("Get");
             if (!IsConnected() || !host_) {
                 throw std::logic_error("Trying send request without connection");
             }
@@ -174,7 +173,6 @@ namespace http_domain {
                         , [self = this->shared_from_this(), &stream]
                         (const beast::error_code& ec, size_t bytes_readed) mutable
                         {
-                            LOG_INFO("Read "s.append(std::to_string(bytes_readed).append(" bytes")));
                             LOG_INFO("Headers readed");
                             self->OnReadHeaders(ec, stream);
                         }));
@@ -203,20 +201,11 @@ namespace http_domain {
 
             template <typename Stream>
             void ReadBody(Stream& stream) {
-                std::thread process([self = this->shared_from_this()]() {
-                    while (self->response_parser_.GetBody().size() < self->response_parser_.GetFileSize()) {
-                        std::string progress = std::to_string(self->response_parser_.GetBody().size());
-                        std::osyncstream{ std::cout } << progress + " / " + std::to_string(self->response_parser_.GetFileSize()) + " bytes" << "\n";
-                        std::this_thread::sleep_for(std::chrono::milliseconds(50));
-                    }
-                    std::osyncstream{ std::cout } << "Downloaded" << std::endl;
-                    });
                 http::async_read(stream, buffer_, response_parser_.GetParser()
                     , [self = this->shared_from_this(), &stream](const beast::error_code& ec, size_t bytes_readed) mutable {
                         LOG_INFO("Read "s.append(std::to_string(bytes_readed).append(" bytes")));
                         self->OnReadBody(ec, stream);
                     });
-                process.detach();
                 LOG_INFO("Start downloading");
             }
 
@@ -274,13 +263,13 @@ namespace http_domain {
 
             template <typename Stream>
             void Send(Stream& stream) {
-                std::cout << "ACTUAL REQUEST:\n" << request_ << "\n";
+                std::ofstream log_request("LogRequest.txt", std::ios::app);
+                log_request << "REQUEST:\n" << request_ << "\n\n";
 
                 http::async_write(stream, request_
                     , net::bind_executor(client_->write_strand_, [self = this->shared_from_this()]
                     (const beast::error_code& ec, size_t bytes_writen)
                         {
-                            LOG_INFO("Send "s.append(std::to_string(bytes_writen).append(" bytes")));
                             self->OnSend(ec);
                         }));
             }
@@ -374,7 +363,7 @@ namespace http_domain {
                 }
                 client_.ssl_connected_ = true;
                 if (SSL_get_verify_result(socket.native_handle()) != X509_V_OK) {
-                    LOG_INFO("SSL Certificate verification failed");
+                    LOG_ERROR("SSL Certificate verification failed");
                 }
                 else {
                     LOG_INFO("SSL Certificate verified successfully");
