@@ -20,6 +20,7 @@
 #include <optional>
 #include <fstream>
 #include <thread>
+#include <syncstream>
 
 #include "logging.h"
 #include "request_builder.h"
@@ -85,7 +86,6 @@ namespace http_domain {
 
         template <typename ResponseHandler>
         void SendRequest(StringRequest&& request, ResponseHandler&& response_handler) {
-            busy_ = true;
             auto visitor = std::make_shared<SendVisitor<ResponseHandler>>
                 (std::move(request), this->shared_from_this(), std::forward<ResponseHandler>(response_handler));
             std::visit((*visitor), stream_);
@@ -100,10 +100,6 @@ namespace http_domain {
 
         bool IsConnected() const {
             return ssl_connected_ || connected_;
-        }
-
-        bool IsBusy() const {
-            return busy_;
         }
 
         template <typename ResponseHandler>
@@ -132,7 +128,6 @@ namespace http_domain {
         beast::error_code ec_;
         bool ssl_connected_ = false;
         bool connected_ = false;
-        bool busy_ = false;
         std::optional<std::string> host_;
         RequestBuilder request_builder_;
 
@@ -193,6 +188,12 @@ namespace http_domain {
                     return;
                 }
                 
+                if (!response_parser_.IsOK()) {
+                    LOG_ERROR("Response status is not OK");
+                    response_parser_.PrintResponseHeaders();
+                    return;
+                }
+
                 response_parser_.PrintResponseHeaders();
                 //CheckRedirect();
                 if (response_parser_.CheckFileSize()) {
@@ -232,7 +233,6 @@ namespace http_domain {
                 std::string file_name = response_parser_.GetFileName();
                 response_parser_.ParseResponseBody();
                 LOG_INFO("Body readed");
-                client_->busy_ = false;
                 handler_(std::move(file_name), std::move(response_parser_.GetBodyBytes()));
             }
 
