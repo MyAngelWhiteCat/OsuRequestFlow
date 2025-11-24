@@ -45,10 +45,10 @@ namespace connection {
 
         SSL_CTX_set_info_callback(ctx->native_handle(), [](const SSL* ssl, int where, int ret) {
             if (where & SSL_CB_HANDSHAKE_START) {
-                std::cout << "SSL Handshake starting..." << std::endl;
+                LOG_INFO("SSL Handshake starting...");
             }
             if (where & SSL_CB_HANDSHAKE_DONE) {
-                std::cout << "SSL Handshake completed!" << std::endl;
+                LOG_INFO("SSL Handshake completed!");
             }
             });
 
@@ -64,10 +64,10 @@ namespace connection {
 
         try {
             ctx->set_default_verify_paths();
-            std::cout << "Default verify paths set successfully" << std::endl;
+            LOG_INFO("Default verify paths set successfully");
         }
         catch (const std::exception& e) {
-            std::cerr << "set_default_verify_paths failed: " << e.what() << std::endl;
+            LOG_ERROR("set_default_verify_paths failed: "s.append(e.what()));
         }
 
         ssl_domain_utilities::load_windows_ca_certificates(*ctx);
@@ -76,7 +76,7 @@ namespace connection {
             "ECDHE+AESGCM:ECDHE+CHACHA20:DHE+AESGCM:DHE+CHACHA20:!aNULL:!MD5:!DSS:!RC4";
 
         if (SSL_CTX_set_cipher_list(ctx->native_handle(), ciphers) != 1) {
-            std::cerr << "Failed to set cipher list" << std::endl;
+            LOG_ERROR("Failed to set cipher list");
         }
 
         SSL_CTX_set_min_proto_version(ctx->native_handle(), TLS1_2_VERSION);
@@ -87,9 +87,9 @@ namespace connection {
 
     class Connection : public std::enable_shared_from_this<Connection> {
     public:
-        Connection(net::io_context& ioc, Strand& write_strand, Strand& read_strand);
+        Connection(net::io_context& ioc, Strand& read_strand, Strand& write_strand);
 
-        Connection(net::io_context& ioc, ssl::context& ctx, Strand& write_strand, Strand& read_strand);
+        Connection(net::io_context& ioc, ssl::context& ctx, Strand& read_strand, Strand& write_strand);
 
         void Connect(std::string_view host, std::string_view port);
 
@@ -101,7 +101,6 @@ namespace connection {
         void AsyncRead(Handler&& handler) {
             auto visitor = std::make_shared<AsyncReadVisitor<Handler>>(
                 this->shared_from_this(), std::forward<Handler>(handler));
-
             std::visit(*visitor, socket_);
         }
 
@@ -199,7 +198,7 @@ namespace connection {
 
             explicit AsyncReadVisitor(std::weak_ptr<Connection> connection
                 , Handler&& handler
-                , size_t read_buffer_size = 512)
+                , size_t read_buffer_size = 128)
                 : connection_(connection)
                 , handler_(std::forward<Handler>(handler))
                 , read_buffer_size_(read_buffer_size)
@@ -207,50 +206,38 @@ namespace connection {
             }
 
             void operator()(tcp::socket& socket) {
-                if (auto connection = connection_.lock()) {
-                    ReadMessages(connection->connected_, socket);
-                }
-                else {
-                    LOG_CRITICAL("Connection destructed!");
-                }
+                ReadMessages(connection_->connected_, socket);
             }
 
             void operator()(ssl::stream<tcp::socket>& socket) {
-                if (auto connection = connection_.lock()) {
-                    ReadMessages(connection->ssl_connected_, socket);
-                }
-                else {
-                    LOG_CRITICAL("Connection destructed!");
-                }
+                ReadMessages(connection_->ssl_connected_, socket);
             }
 
         private:
             HandlerType handler_;
-            std::weak_ptr<Connection> connection_;
+            std::shared_ptr<Connection> connection_;
 
             size_t read_buffer_size_;
             std::shared_ptr<std::vector<char>> buffer_ = std::make_shared<std::vector<char>>(read_buffer_size_);
 
             template <typename Socket>
             void ReadMessages(bool is_connected, Socket& socket) {
-                if (auto connection = connection_.lock()) {
-                    if (is_connected) {
-                        net::async_read(socket, net::buffer(*buffer_)
-                            , net::bind_executor(connection->read_strand_
-                                , [self = this->shared_from_this()]
-                                (const sys::error_code& ec, std::size_t bytes_readed) mutable
-                                {
-                                    if (bytes_readed > 0) {
-                                        self->OnRead(ec, std::vector<char>(self->buffer_->begin(), self->buffer_->begin() + bytes_readed));
-                                    }
-                                }));
-                    }
-                    else {
-                        throw std::runtime_error("Trying read socket without connection");
-                    }
+                if (is_connected) {
+                    net::async_read(socket, net::buffer(*buffer_), net::transfer_at_least(1)
+                        , net::bind_executor(connection_->read_strand_
+                            , [self = this->shared_from_this()]
+                            (const sys::error_code& ec, std::size_t bytes_readed) mutable
+                            {
+                                if (bytes_readed > 0) {
+                                    self->OnRead(ec, std::vector<char>(self->buffer_->begin(), self->buffer_->begin() + bytes_readed));
+                                }
+                                else {
+                                    LOG_ERROR("0 bytes readed");
+                                }
+                            }));
                 }
                 else {
-                    LOG_CRITICAL("Connection destructed!");
+                    throw std::runtime_error("Trying read socket without connection");
                 }
             }
 
@@ -258,16 +245,12 @@ namespace connection {
             void OnRead(const sys::error_code& ec, std::vector<char>&& bytes) {
                 if (ec) {
                     logging::ReportError(ec, "Reading");
-                    if (auto con = connection_.lock()) {
-                        con->reconnect_required_ = true;
-                    }
+                    connection_->reconnect_required_ = true;
                 }
-                if (auto con = connection_.lock()) {
-                    net::post(con->read_strand_,
-                        [handler = handler_, bytes = std::move(bytes)]() mutable {
-                            handler(std::move(bytes));
-                        });
-                }
+                net::post(connection_->read_strand_,
+                    [handler = handler_, bytes = std::move(bytes)]() mutable {
+                        handler(std::move(bytes));
+                    });
             }
         };
 
