@@ -66,8 +66,10 @@ namespace irc {
                         SendPong(message.GetContent());
                         break;
                     case MessageType::PRIVMSG: // debug only
-                        PrintTime(out);
-                        out << GetColorFromHex(message.GetColorFromHex()) << message.GetNick() << RESET << message.GetContent() << "\n";
+                        logging::output_mutex.lock();
+                        //PrintTime(out);
+                        out/* << GetColorFromHex(message.GetColorFromHex()) */<< message.GetNick() /*<< RESET*/ << message.GetContent() << "\n";
+                        logging::output_mutex.unlock();
                         if (!chat_bot_) {
                             return;
                         }
@@ -80,10 +82,10 @@ namespace irc {
                         fuckedup << message.GetContent() << std::endl;
                         LOG_ERROR("Unknow message type reseiced. Writed on log file");
                         break;
-                    default:
-                        std::ostringstream strm{};
-                        domain::PrintMessageType(strm, message.GetMessageType());
-                        LOG_INFO(strm.str().append(": ").append(std::string(message.GetContent())));
+                    //default:
+                        //std::ostringstream strm{};
+                        //domain::PrintMessageType(strm, message.GetMessageType());
+                        //LOG_INFO(strm.str().append(": ").append(std::string(message.GetContent())));
                     }
                 }
 
