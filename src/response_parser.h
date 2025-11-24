@@ -38,8 +38,17 @@ namespace http_domain {
         static constexpr std::string_view LOCATION = "Location"sv;
     };
 
+    struct Status {
+        static constexpr std::string_view OK = "OK"sv;
+    };
+
     class ResponseParser {
     public:
+
+        bool IsOK() {
+            auto& response = response_parser_.get();
+            return response.reason() == Status::OK;
+        }
 
         void PrintResponseHeaders() {
             auto& response = response_parser_.get();
