@@ -64,6 +64,7 @@ add_library(Connection STATIC
     src/connection.h
     src/connection.cpp
 )
+
 target_link_libraries(Connection PUBLIC 
     SSLCertsLoader
     Logger
@@ -82,18 +83,18 @@ add_library(ChatBot STATIC
     src/command_parser.h
     src/command_parser.cpp
     src/user_validator.h
+    src/chat_bot.h 
+    src/chat_bot.cpp
 )
 
 ##########################################
 
 add_library(TwitchIRCClient STATIC
     src/irc_client.h
-    src/irc_client.cpp
 
     src/message.h
     src/message.cpp
     src/message_handler.h
-    src/message_handler.cpp
     src/message_processor.h 
     src/message_processor.cpp
 
@@ -168,6 +169,8 @@ add_executable(TestTwitchIRCClient
 
 target_link_libraries(TestTwitchIRCClient PUBLIC
     TwitchIRCClient
+    Downloader
+    ChatBot
 )
 
 ##########################################
@@ -251,9 +254,11 @@ target_link_libraries(TestUserVerificator PUBLIC
 add_executable(Core 
     src/core.h 
     src/core.cpp 
+    src/main.cpp
 )
 
 target_link_libraries(Core PRIVATE 
-    TwitchIRCCLient 
-    # ... TODO
+    TwitchIRCCLient
+    Downloader
+    ChatBot
 )
