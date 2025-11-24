@@ -7,15 +7,23 @@
 
 #include "message.h"
 #include "command.h"
+#include "logging.h"
+#include "command_executor.h"
 
 namespace commands {
 
     class CommandParser {
     public:
-        void Parse(irc::domain::Message&& message) {
+        CommandParser(CommandExecutor& executor)
+            : executor_(executor)
+        {
+
+        }
+
+        std::optional<Command> Parse(irc::domain::Message&& message) {
             auto line = message.GetContent();
             if (line.empty()) {
-                return;
+                return std::nullopt;
             }
 
             if (line[0] == command_start_) {
@@ -23,8 +31,11 @@ namespace commands {
             }
             if (auto id = CheckForLOsuMapURLAndGetID(line)) {
                 Command osu_request(CommandType::OsuRequest, std::string(message.GetNick()), std::move(*id));
-
+                LOG_INFO("Osu map find");
+                return osu_request;
             }
+            return std::nullopt;
+
         }
 
         void SetCommandStart(char ch) {
@@ -39,15 +50,18 @@ namespace commands {
         char command_start_ = '!';
         const std::string OSU_BEATMAPS_URL = "https://osu.ppy.sh/beatmapsets/";
         std::string OSU_GAME_MODE = "osu";
+        CommandExecutor& executor_;
 
         std::optional<std::string> CheckForLOsuMapURLAndGetID(std::string_view url) {
-            if (url.substr(0, OSU_BEATMAPS_URL.size()) != OSU_BEATMAPS_URL) {
+            size_t url_start = url.find(OSU_BEATMAPS_URL);
+            LOG_INFO(std::to_string(url_start));
+            if (url_start == std::string::npos) {
                 return std::nullopt;
             }
-            if (!CheckGameMode(url)) {
+            if (!CheckGameMode(url.substr(url_start))) {
                 return std::nullopt;
             }
-            return GetBeatmapSetId(url);
+            return GetBeatmapSetId(url.substr(url_start));
         }
 
         bool CheckGameMode(std::string_view url) {
@@ -67,6 +81,7 @@ namespace commands {
         }
 
         std::string GetBeatmapSetId(std::string_view url) {
+            LOG_INFO("Checking for url " + std::string(url));
             std::string_view cut = url.substr(OSU_BEATMAPS_URL.size());
             size_t end = cut.find_first_of("#");
             return std::string(cut.substr(0, end));
