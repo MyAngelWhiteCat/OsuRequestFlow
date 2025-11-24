@@ -4,6 +4,8 @@
 #include <string_view>
 #include <utility>
 
+#include "message.h"
+
 namespace commands {
 
     enum class CommandType {
@@ -23,6 +25,7 @@ namespace commands {
         CommandType type_;
         std::string user_name_;
         std::string content_;
+        irc::domain::Role user_role_ = irc::domain::Role::MODERATOR; // dummy
     };
 
 }
