@@ -22,21 +22,27 @@ set(Boost_USE_STATIC_RUNTIME ON)
 set(OPENSSL_USE_STATIC_LIBS TRUE)
 
 find_package(Boost 1.84.0 REQUIRED COMPONENTS system)
+find_package(fmt REQUIRED)
 find_package(spdlog REQUIRED)
 find_package(nlohmann_json REQUIRED)
 find_package(OpenSSL REQUIRED)
 find_package(ZLIB REQUIRED)
-find_package(fmt REQUIRED)
 
 ############################################# libraries
 
 add_library(Logger STATIC 
     src/logging.h
     src/logging.cpp
-
 )
+
 target_link_libraries(Logger PUBLIC
     spdlog::spdlog
+)
+
+target_include_directories(Logger PUBLIC 
+    ${CMAKE_CURRENT_SOURCE_DIR}/src
+    ${spdlog_INCLUDE_DIRS}
+    ${fmt_INCLUDE_DIRS}
 )
 
 ##########################################
@@ -66,8 +72,11 @@ endif()
 ##########################################
 
 add_library(HTTPServer STATIC 
+    src/decode_url.h 
     src/http_server.h 
     src/http_server.cpp 
+    src/root_directory.h 
+    src/root_directory.cpp
 )
 
 target_include_directories(HTTPServer PUBLIC
@@ -112,7 +121,7 @@ add_library(ChatBot STATIC
     src/chat_bot.cpp
 )
 
-target_link_libraries( ChatBot PUBLIC
+target_link_libraries(ChatBot PUBLIC
     Logger 
 )
 
@@ -135,11 +144,12 @@ add_library(TwitchIRCClient STATIC
 
 target_link_libraries(TwitchIRCClient PUBLIC 
     Connection
+    Logger
 )
 
 ##########################################
 
-add_library(HttpClient STATIC
+add_library(HTTPClient STATIC
     tests/http_client/main.cpp 
     tests/http_client/test_http_client.h
 
@@ -157,9 +167,11 @@ add_library(HttpClient STATIC
     
     src/connection_pool.h 
     src/connection_pool.cpp 
+
+    src/decode_url.h
 )
 
-target_link_libraries(HttpClient PUBLIC 
+target_link_libraries(HTTPClient PUBLIC 
     SSLCertsLoader
     Logger
     nlohmann_json::nlohmann_json
@@ -186,7 +198,7 @@ add_library(Downloader STATIC
 )
 
 target_link_libraries(Downloader PUBLIC 
-    HttpClient 
+    HTTPClient 
     FileManager
 )
 
@@ -246,7 +258,7 @@ add_executable(TestHttpClient
 )
 
 target_link_libraries(TestHttpClient PUBLIC
-    HttpClient 
+    HTTPClient 
 )
 
 ##########################################

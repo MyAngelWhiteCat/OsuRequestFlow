@@ -1,4 +1,5 @@
 [requires]
+fmt/10.2.1
 boost/1.84.0
 openssl/1.1.1w
 zlib/1.3.1
