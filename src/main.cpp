@@ -24,8 +24,6 @@ using namespace irc;
 namespace fs = std::filesystem;
 
 
-
-
 int main() {
     logging::Logger::Init();
     setlocale(LC_ALL, "Russian_Russia.1251");
@@ -40,7 +38,11 @@ int main() {
     core.SetupDownloader(true, resourse, uri_prefix, downloads_path);
     core.SetupChatBot();
     core.SetupIRCClient(true);
-
+    core.AddUserInWhiteList("myangelwhitecat");
+    core.AddUserInBlackList("nigger");
+    core.SetWhiteListOnly(true);
+    core.SetRoleLevelFilter(2);
+    core.SaveSettings();
     core.Start(streamer);
     core.Run(2);
     logging::Logger::Shutdown();
