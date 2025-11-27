@@ -3,6 +3,7 @@
 #include "command.h"
 #include "downloader.h"
 #include "user_validator.h"
+#include <utility>
 
 namespace commands {
 
@@ -25,6 +26,13 @@ namespace commands {
             }
         }
 
+        user_validator::UserVerificator* GetUserVerificator() {
+            return &verificator_;
+        }
+
+        void SetUserVerificator(user_validator::UserVerificator&& verificator) {
+            verificator_ = std::move(verificator);
+        }
 
     private:
         std::shared_ptr<downloader::Downloader> downloader_;
