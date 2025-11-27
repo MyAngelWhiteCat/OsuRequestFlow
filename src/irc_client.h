@@ -38,7 +38,7 @@ namespace irc {
         void Join(const std::vector<std::string_view>& channels_names);
         void Join(const std::string_view channel_name);
         void Join();
-        void Part(const std::vector<std::string_view>& channels_names);
+        void Part(const std::string_view channel_name);
         void Authorize();
         void Authorize(const domain::AuthorizeData& auth_data);
         void CapRequest();
@@ -125,9 +125,8 @@ namespace irc {
     }
 
     template <typename ChatBot>
-    void Client<ChatBot>::Part(const std::vector<std::string_view>& channels_names) {
-        std::string command = GetChannelNamesInStringCommand(channels_names);
-        connection_->Write(std::string(domain::Command::PART_CHANNEL) + command + "\r\n"s);
+    void Client<ChatBot>::Part(const std::string_view channel_name) {
+        connection_->Write(std::string(domain::Command::PART_CHANNEL) + std::string(channel_name) + "\r\n"s);
     }
 
     template <typename ChatBot>
