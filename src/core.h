@@ -154,6 +154,16 @@ namespace core {
             downloader_->SetDownloadsFolder(path);
         }
 
+        // irc client
+
+        void Join(std::string_view channel) {
+            client_->Join(channel);
+        }
+
+        void Part(std::string_view channel) {
+            client_->Part(channel);
+        }
+
     private:
         net::io_context ioc_;
         std::shared_ptr<ssl::context> ctx_{ nullptr };
