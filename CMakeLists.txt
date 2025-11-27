@@ -16,12 +16,17 @@ set(CMAKE_MSVC_RUNTIME_LIBRARY "MultiThreaded$<$<CONFIG:Debug>:Debug>")
 
 add_compile_definitions(BOOST_ALL_NO_LIB=1)
 
+set(Boost_USE_STATIC_LIBS ON)
+set(Boost_USE_STATIC_RUNTIME ON)
+
+set(OPENSSL_USE_STATIC_LIBS TRUE)
 
 find_package(Boost 1.84.0 REQUIRED COMPONENTS system)
 find_package(spdlog REQUIRED)
 find_package(nlohmann_json REQUIRED)
 find_package(OpenSSL REQUIRED)
 find_package(ZLIB REQUIRED)
+find_package(fmt REQUIRED)
 
 ############################################# libraries
 
@@ -257,8 +262,8 @@ add_executable(Core
     src/main.cpp
 )
 
-target_link_libraries(Core PRIVATE 
-    TwitchIRCCLient
+target_link_libraries(Core PUBLIC 
+    TwitchIRCClient
     Downloader
     ChatBot
 )

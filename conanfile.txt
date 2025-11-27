@@ -13,3 +13,5 @@ CMakeToolchain
 boost/*:shared=False
 spdlog/*:shared=False
 fmt/*:shared=False 
+openssl/*:shared=False
+zlib/*:shared=False
