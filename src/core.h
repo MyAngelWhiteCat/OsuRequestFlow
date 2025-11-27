@@ -163,7 +163,7 @@ namespace core {
         }
 
         void SetMaxFileSize(int MiB) {
-            downloader_->
+            downloader_->SetMaxFileSize(MiB);
         }
 
         // irc client
