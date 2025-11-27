@@ -15,13 +15,17 @@
 
 namespace logging {
 
+    static std::mutex output_mutex;
+
     class Logger {
     public:
         static void Init();
         static void Shutdown();
 
         static void Info(const std::string& message) {
+            output_mutex.lock();
             spdlog::info(message);
+            output_mutex.unlock();
         }
 
         static void Error(const std::string& message) {
