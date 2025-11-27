@@ -71,6 +71,10 @@ namespace http_domain {
             LOG_INFO("HTTP Client destructed");
         }
 
+        void SetMaxFileSize(int file_size_MiB) {
+            max_file_size_MiB_ = file_size_MiB;
+        }
+
         void Connect(std::string_view host, std::string_view port) {
             ec_.clear();
 
@@ -129,6 +133,7 @@ namespace http_domain {
         bool connected_ = false;
         std::optional<std::string> host_;
         RequestBuilder request_builder_;
+        int max_file_size_MiB_ = 200;
 
 
         template <typename Handler>
@@ -137,6 +142,7 @@ namespace http_domain {
             ReadVisitor(std::shared_ptr<Client> client, Handler&& handler)
                 : client_(client)
                 , handler_(std::forward<Handler>(handler))
+                , response_parser_(client->max_file_size_MiB_)
             {
 
             }

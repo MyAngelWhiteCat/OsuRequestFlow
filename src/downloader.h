@@ -44,11 +44,12 @@ namespace downloader {
         void SetDownloadsFolder(std::string_view path);
         void SetupNonSecuredConnection();
         void SetupSecuredConnection();
+        void SetMaxFileSize(int MiB);
 
     private:
         net::io_context& ioc_;
         std::shared_ptr<ssl::context> ctx_{ nullptr };
-        std::string user_agent_ = "Mozilla/5.0 (X11; Ubuntu; Linux x86_64; rv:121.0) Gecko/20100101 Firefox/121.0";
+        std::string user_agent_ = "OsuRequestFlow v0.1";
         std::shared_ptr<http_domain::Client> client_{ nullptr };
         std::shared_ptr<file_manager::FileManager> file_manager_{ nullptr };
         std::string resourse_;

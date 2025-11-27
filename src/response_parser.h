@@ -34,7 +34,9 @@ namespace http_domain {
     class ResponseParser {
     public:
 
-        ResponseParser() {
+        ResponseParser(int max_file_size_MiB)
+            : max_file_size_(MiB * max_file_size_MiB)
+        {
             response_parser_.body_limit(max_file_size_);
         }
 

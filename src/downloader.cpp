@@ -100,6 +100,10 @@ namespace downloader {
         client_->Connect(resourse_, http_domain::Port::SECURED);
     }
 
+    void Downloader::SetMaxFileSize(int MiB) {
+        client_->SetMaxFileSize(MiB);
+    }
+
     std::string Downloader::GetEndpoint(std::string_view file) {
         return uri_prefix_ + std::string(file);
     }
