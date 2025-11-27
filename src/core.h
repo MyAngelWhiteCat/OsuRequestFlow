@@ -4,9 +4,12 @@
 #include "auth_data.h"
 #include "command_executor.h"
 #include "command_parser.h"
+#include "nlohmann/json.hpp"
+#include "user_validator.h"
 
 #include <memory>
 #include <string_view>
+#include <fstream>
 
 
 namespace core {
@@ -15,9 +18,19 @@ namespace core {
     namespace sys = boost::system;
     namespace ssl = net::ssl;
     using net::ip::tcp;
+    using json = nlohmann::json;
     using namespace std::literals;
 
     using Strand = net::strand<net::io_context::executor_type>;
+
+    struct SettingsKeys {
+        static constexpr std::string_view FILENAME = "settings.json"sv;
+        static constexpr std::string_view USER_VERIFICATOR = "user_verificator"sv;
+        static constexpr std::string_view WHITELIST = "whitelist"sv;
+        static constexpr std::string_view BLACKLIST = "blacklist"sv;
+        static constexpr std::string_view WHITELIST_ONLY = "whitelist_only"sv;
+        static constexpr std::string_view ROLEFILTER_LEVEL = "rolefilter_level"sv;
+    };
 
     class Core {
     public:
@@ -98,6 +111,49 @@ namespace core {
             }
         }
 
+        void SaveSettings() {
+            json settings;
+            settings[SettingsKeys::USER_VERIFICATOR] = GetUserVerificatorSettings();
+            std::ofstream out(std::string(SettingsKeys::FILENAME.data(), SettingsKeys::FILENAME.size()));
+            out << settings.dump(4);
+        }
+
+        void LoadSettings() {
+            json settings;
+            std::ifstream in(std::string(SettingsKeys::FILENAME.data(), SettingsKeys::FILENAME.size()));
+            in >> settings;
+            LoadUserVerificator(settings);
+        }
+
+        // user_validator
+
+        void AddUserInWhiteList(std::string_view user) {
+           command_executor_->GetUserVerificator()->AddUserInWhiteList(user);
+        }
+
+        void AddUserInBlackList(std::string_view user) {
+            command_executor_->GetUserVerificator()->AddUserInBlackList(user);
+        }
+
+        void SetRoleLevelFilter(int level) {
+            command_executor_->GetUserVerificator()->SetRoleLevel(level);
+        }
+
+        void SetWhiteListOnly(bool on) {
+            command_executor_->GetUserVerificator()->SetWhiteListOnly(on);
+        }
+
+        // downloader
+
+        void SetDownloadResourseAndPrefix(std::string_view resourse, std::string_view prefix) {
+            downloader_->SetResourse(resourse);
+            downloader_->SetUriPrefix(prefix);
+        }
+
+        void SetDownloadsFolder(std::string_view path) {
+            downloader_->SetDownloadsFolder(path);
+        }
+
     private:
         net::io_context ioc_;
         std::shared_ptr<ssl::context> ctx_{ nullptr };
@@ -133,6 +189,29 @@ namespace core {
             if (!client_) {
                 throw std::logic_error("need to setup irc client");
             }
+        }
+
+        json GetUserVerificatorSettings() {
+            json settings;
+            auto* const user_verificator = command_executor_->GetUserVerificator();
+            const auto* const black_list = user_verificator->GetBlackList();
+            const auto* const white_list = user_verificator->GetWhiteList();
+            settings[SettingsKeys::BLACKLIST] = std::vector<std::string>
+                (black_list->begin(), black_list->end());
+            settings[SettingsKeys::WHITELIST] = std::vector<std::string>
+                (white_list->begin(), white_list->end());
+            settings[SettingsKeys::ROLEFILTER_LEVEL] = user_verificator->GetRoleLevel();
+            settings[SettingsKeys::WHITELIST_ONLY] = user_verificator->GetWhiteListOnly();
+            return settings;
+        }
+
+        void LoadUserVerificator(json& settings) {
+            auto black_list = settings.at(SettingsKeys::BLACKLIST).get<std::vector<std::string>>();
+            auto white_list = settings.at(SettingsKeys::WHITELIST).get<std::vector<std::string>>();
+            int role_level = settings.at(SettingsKeys::ROLEFILTER_LEVEL).get<int>();
+            bool is_whitelist_only = settings.at(SettingsKeys::WHITELIST_ONLY).get<bool>();
+            commands::user_validator::UserVerificator verificator(white_list, black_list);
+            command_executor_->SetUserVerificator(std::move(verificator));
         }
 
     };
