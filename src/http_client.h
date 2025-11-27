@@ -25,6 +25,7 @@
 #include "logging.h"
 #include "request_builder.h"
 #include "response_parser.h"
+#include "decode_url.h"
 
 
 namespace http_domain {
