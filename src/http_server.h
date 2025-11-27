@@ -81,7 +81,7 @@ namespace http_server {
         }
 
         void HandleRequest(HttpRequest&& request) override {
-            request_handler_(std::move(request), GetEndpoint(), [self = this->shared_from_this()](auto&& response) {
+            request_handler_(std::move(request), [self = this->shared_from_this()](auto&& response) {
                 self->Write(std::move(response));
                 });
         }
@@ -120,7 +120,7 @@ namespace http_server {
             using namespace std::literals;
 
             if (ec) {
-                return ReportError(ec, "accept"sv);
+                return logging::ReportError(ec, "accept"sv);
             }
 
             AsyncRunSession(std::move(socket));
