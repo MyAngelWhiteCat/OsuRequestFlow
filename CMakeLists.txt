@@ -65,6 +65,26 @@ endif()
 
 ##########################################
 
+add_library(HTTPServer STATIC 
+    src/http_server.h 
+    src/http_server.cpp 
+)
+
+target_include_directories(HTTPServer PUBLIC
+    ${Boost_INCLUDE_DIRS}
+    ${OPENSSL_INCLUDE_DIR}
+)
+
+target_link_libraries(HTTPServer PUBLIC
+    OpenSSL::SSL
+    OpenSSL::Crypto
+    Boost::system
+    Boost::thread
+    ZLIB::ZLIB
+)
+
+##########################################
+
 add_library(Connection STATIC 
     src/connection.h
     src/connection.cpp
@@ -91,6 +111,7 @@ add_library(ChatBot STATIC
     src/chat_bot.h 
     src/chat_bot.cpp
 )
+
 target_link_libraries( ChatBot PUBLIC
     Logger 
 )
@@ -167,6 +188,20 @@ add_library(Downloader STATIC
 target_link_libraries(Downloader PUBLIC 
     HttpClient 
     FileManager
+)
+
+##########################################
+
+add_library(Core STATIC
+    src/core.h 
+    src/core.cpp 
+)
+
+target_link_libraries(Core PUBLIC 
+    TwitchIRCClient
+    Downloader
+    ChatBot
+    nlohmann_json::nlohmann_json
 )
 
 ############################################# tests
@@ -259,15 +294,12 @@ target_link_libraries(TestUserVerificator PUBLIC
 
 ###########################################
 
-add_executable(Core 
-    src/core.h 
-    src/core.cpp 
+add_executable(GUI
+    src/request_handler.h 
     src/main.cpp
 )
 
-target_link_libraries(Core PUBLIC 
-    TwitchIRCClient
-    Downloader
-    ChatBot
-    nlohmann_json::nlohmann_json
+target_link_libraries(GUI PUBLIC 
+    Core 
+    HTTPServer 
 )
