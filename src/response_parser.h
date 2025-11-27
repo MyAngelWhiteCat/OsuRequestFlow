@@ -31,6 +31,27 @@ namespace http_domain {
         static constexpr std::string_view OK = "OK"sv;
     };
 
+    static std::string DecodeURL(const std::string_view uri) {
+        std::string decoded;
+        std::string uri_str(uri);
+
+        for (int i = 0; i < uri_str.size(); ++i) {
+            char ch = uri_str[i];
+            if (ch == '%') {
+                char hex[2] = { uri_str[++i], uri_str[++i] };
+                int char_code = std::stoi(hex, nullptr, 16);
+                ch = static_cast<char>(char_code);
+            }
+            decoded += ch;
+        }
+
+        if (!decoded.empty() && decoded[0] == '/') {
+            decoded.erase(0, 1);
+        }
+
+        return std::string(decoded);
+    }
+
     class ResponseParser {
     public:
 
@@ -135,7 +156,7 @@ namespace http_domain {
             size_t start_pos = content.find_first_of('"') + 1;
             size_t end_pos = content.find_last_of('"');
             if (start_pos != std::string::npos && end_pos != std::string::npos) {
-                return std::string(content.substr(start_pos, end_pos - start_pos));
+                return DecodeURL(content.substr(start_pos, end_pos - start_pos));
             }
             return "JohnDoe";
         }
