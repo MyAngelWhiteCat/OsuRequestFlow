@@ -38,8 +38,14 @@ int main() {
     core.SetupDownloader(true, resourse, uri_prefix, downloads_path);
     core.SetupChatBot();
     core.SetupIRCClient(true);
-    core.LoadSettings();
-    core.Start(streamer);
+    core.AddUserInBlackList("Nigger");
+    core.AddUserInWhiteList("myangelwhitecat");
+    core.SetRoleLevelFilter(2);
+    core.SetWhiteListOnly(true);
+    core.SaveSettings();
+    core.Start();
+
+    core.Join(streamer);
     core.Run(2);
     logging::Logger::Shutdown();
 }
