@@ -95,59 +95,59 @@
 Эндпоинты: 
 
 - setting/load
-  verb = POST
-  body = json string path
-  response: ok / error
+  - verb = POST
+  - body = json string path
+  - response: ok / error
 
 - settings/save
-  verb = POST
-  body = json string path
-  response: ok / error
+  - verb = POST
+  - body = json string path
+  - response: ok / error
 
 - downloader/settings/max_file_size 
-  verb = PUT
-  body = json int max_file_size_MiB
-  response: ok / error
+  - verb = PUT
+  - body = json int max_file_size_MiB
+  - response: ok / error
 
 - downloader/settings/folder 
-  verb = PUT 
-  body = json string folder_path
-  response: ok / error
+  - verb = PUT 
+  - body = json string folder_path
+  - response: ok / error
 
 - downloader/settings/resourse_and_prefix 
-  verb = PUT
-  body = json dict {string - string, string - string} resourse, prefix
-  response: ok / error (resourse unavailable | not found (maybe wrong prefix))
+  - verb = PUT
+  - body = json dict {string - string, string - string} resourse, prefix
+  - response: ok / error (resourse unavailable | not found (maybe wrong prefix))
 
 - validator/white_list/users
-  verb = PUT
-  body = json string username
-  response: ok / error (user allready in white list | user in black list, need extra confirm)
+  - verb = PUT
+  - body = json string username
+  - response: ok / error (user allready in white list | user in black list, need extra confirm)
 
 - validator/white_list/users/
-  verb = DELETE
-  body = json string username
-  response: ok / error (user not in white list)
+  - verb = DELETE
+  - body = json string username
+  - response: ok / error (user not in white list)
 
 - validator/black_list/users
-  verb = PUT
-  body = json string username
-  response: ok / error (user allready in black list | user in white list, need extra confirm)
+  - verb = PUT
+  - body = json string username
+  - response: ok / error (user allready in black list | user in white list, need extra confirm)
 
 - settings/black_list/users
-  verb = DELETE
-  body = json string username
-  response: ok / error (user not in black list)
+  - verb = DELETE
+  - body = json string username
+  - response: ok / error (user not in black list)
 
 - validator/settings/role_filter_level
-  verb = PUT
-  body = json int(0 - 4) level
-  response: ok / error (level out of range)
+  - verb = PUT
+  - body = json int(0 - 4) level
+  - response: ok / error (level out of range)
 
 - settings/validator/set_whitelist_only
-  verb = POST
-  body = empty (On / Off)
-  response: ok / error (actually wtf)
+  - verb = POST
+  - body = empty (On / Off)
+  - response: ok / error (actually wtf)
 
 - settings/irc_client/set_reconnect_timeout
   verb = PUT
