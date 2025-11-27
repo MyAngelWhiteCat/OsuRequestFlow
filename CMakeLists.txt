@@ -91,6 +91,9 @@ add_library(ChatBot STATIC
     src/chat_bot.h 
     src/chat_bot.cpp
 )
+target_link_libraries( ChatBot PUBLIC
+    Logger 
+)
 
 ##########################################
 
@@ -266,4 +269,5 @@ target_link_libraries(Core PUBLIC
     TwitchIRCClient
     Downloader
     ChatBot
+    nlohmann_json::nlohmann_json
 )
