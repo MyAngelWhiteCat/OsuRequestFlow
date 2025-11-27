@@ -85,13 +85,12 @@ namespace core {
             client_ = std::make_shared<irc::Client<chat_bot::ChatBot>>(ioc_, chat_bot_, secured);
         }
 
-        void Start(std::string_view channel_name) {
+        void Start() {
             CheckReadyness();
             client_->Connect();
             client_->Authorize(auth_data_);
             client_->CapRequest();
             client_->Read();
-            client_->Join(channel_name);
         }
 
         void Run(unsigned num_workers) {
@@ -122,7 +121,8 @@ namespace core {
             json settings;
             std::ifstream in(std::string(SettingsKeys::FILENAME.data(), SettingsKeys::FILENAME.size()));
             in >> settings;
-            LoadUserVerificator(settings);
+            std::cout << settings << std::endl;
+            LoadUserVerificator(settings.at(SettingsKeys::USER_VERIFICATOR));
         }
 
         // user_validator
@@ -133,6 +133,14 @@ namespace core {
 
         void AddUserInBlackList(std::string_view user) {
             command_executor_->GetUserVerificator()->AddUserInBlackList(user);
+        }
+
+        void RemoveUserFromWhiteList(std::string_view user) {
+            command_executor_->GetUserVerificator()->RemoveUserFromWhiteList(user);
+        }
+
+        void RemoveUserFromBlackList(std::string_view user) {
+            command_executor_->GetUserVerificator()->RemoveUserFromBlackList(user);
         }
 
         void SetRoleLevelFilter(int level) {
@@ -154,6 +162,10 @@ namespace core {
             downloader_->SetDownloadsFolder(path);
         }
 
+        void SetMaxFileSize(int MiB) {
+            downloader_->
+        }
+
         // irc client
 
         void Join(std::string_view channel) {
@@ -162,6 +174,10 @@ namespace core {
 
         void Part(std::string_view channel) {
             client_->Part(channel);
+        }
+
+        void SetReconnectTimeout(int seconds) {
+            client_->SetReconnectTimeout(seconds);
         }
 
     private:
