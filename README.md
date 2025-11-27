@@ -150,19 +150,19 @@
   - response: ok / error (actually wtf)
 
 - settings/irc_client/set_reconnect_timeout
-  verb = PUT
-  body = json int reconnect_timeot_seconds
-  response: ok / error (actually wtf)
+  - verb = PUT
+  - body = json int reconnect_timeot_seconds
+  - response: ok / error (actually wtf)
 
 - irc_client/join
-  verb = POST 
-  body json string channel_name 
-  response ok / error (net error / wrong channel name)
+  - verb = POST 
+  - body json string channel_name 
+  - response ok / error (net error / wrong channel name)
 
 - irc_client/part
-  verb = POST 
-  body json string channel_name 
-  response ok / error (net error / not joined)
+  - verb = POST 
+  - body json string channel_name 
+  - response ok / error (net error / not joined)
 
 
 ---
