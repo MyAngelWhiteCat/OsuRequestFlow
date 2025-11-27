@@ -82,6 +82,7 @@ add_library(HTTPServer STATIC
 target_include_directories(HTTPServer PUBLIC
     ${Boost_INCLUDE_DIRS}
     ${OPENSSL_INCLUDE_DIR}
+    Logger
 )
 
 target_link_libraries(HTTPServer PUBLIC
@@ -90,6 +91,7 @@ target_link_libraries(HTTPServer PUBLIC
     Boost::system
     Boost::thread
     ZLIB::ZLIB
+    Logger
 )
 
 ##########################################
