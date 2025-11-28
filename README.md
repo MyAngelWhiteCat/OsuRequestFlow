@@ -108,72 +108,72 @@
 
 Эндпоинты: 
 
-- setting/load
+- api/setting/load
   - verb = POST
-  - body = json string path
+  - body = empty
   - response: ok / error
 
-- settings/save
+- api/settings/save
   - verb = POST
-  - body = json string path
+  - body = empty
   - response: ok / error
 
-- downloader/settings/max_file_size 
+- api/downloader/settings/max_file_size 
   - verb = PUT
-  - body = json int max_file_size_MiB
+  - body = json dict {"FileSize": unsigned int}
   - response: ok / error
 
-- downloader/settings/folder 
+- api/downloader/settings/folder 
   - verb = PUT 
   - body = json string folder_path
   - response: ok / error
 
-- downloader/settings/resourse_and_prefix 
+- api/downloader/settings/resourse_and_prefix 
   - verb = PUT
   - body = json dict {string - string, string - string} resourse, prefix
   - response: ok / error (resourse unavailable | not found (maybe wrong prefix))
 
-- validator/white_list/users
+- api/white_list/users
   - verb = PUT
   - body = json string username
   - response: ok / error (user allready in white list | user in black list, need extra confirm)
 
-- validator/white_list/users/
+- api/white_list/users
   - verb = DELETE
   - body = json string username
   - response: ok / error (user not in white list)
 
-- validator/black_list/users
+- api/black_list/users
   - verb = PUT
   - body = json string username
   - response: ok / error (user allready in black list | user in white list, need extra confirm)
 
-- settings/black_list/users
+- api/black_list/users
   - verb = DELETE
   - body = json string username
   - response: ok / error (user not in black list)
 
-- validator/settings/role_filter_level
+- api/validator/settings/role_filter_level
   - verb = PUT
   - body = json int(0 - 4) level
   - response: ok / error (level out of range)
 
-- settings/validator/set_whitelist_only
+- api/validator/settings/set_whitelist_only
   - verb = POST
   - body = empty (On / Off)
   - response: ok / error (actually wtf)
 
-- settings/irc_client/set_reconnect_timeout
+- api/irc_client/settings/set_reconnect_timeout
   - verb = PUT
   - body = json int reconnect_timeot_seconds
   - response: ok / error (actually wtf)
 
-- irc_client/join
+- api/irc_client/join
   - verb = POST 
   - body json string channel_name 
   - response ok / error (net error / wrong channel name)
 
-- irc_client/part
+- api/irc_client/part
   - verb = POST 
   - body json string channel_name 
   - response ok / error (net error / not joined)
