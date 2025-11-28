@@ -77,6 +77,7 @@ add_library(HTTPServer STATIC
     src/http_server.cpp 
     src/root_directory.h 
     src/root_directory.cpp
+    src/domain_fields.h
 )
 
 target_include_directories(HTTPServer PUBLIC
@@ -309,7 +310,13 @@ target_link_libraries(TestUserVerificator PUBLIC
 ###########################################
 
 add_executable(GUI
+    src/response_maker.h
+    src/response_maker.cpp
     src/request_handler.h 
+    src/request_validator.h 
+    src/request_validator.cpp 
+    src/api_request_handler.h 
+    src/file_request_handler.h 
     src/main.cpp
 )
 
