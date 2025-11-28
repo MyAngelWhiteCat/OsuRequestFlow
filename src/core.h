@@ -162,7 +162,7 @@ namespace core {
             downloader_->SetDownloadsFolder(path);
         }
 
-        void SetMaxFileSize(int MiB) {
+        void SetMaxFileSize(size_t MiB) {
             downloader_->SetMaxFileSize(MiB);
         }
 
