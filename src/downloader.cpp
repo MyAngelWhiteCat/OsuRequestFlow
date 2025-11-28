@@ -97,11 +97,15 @@ namespace downloader {
 
     void Downloader::SetupSecuredConnection() {
         client_ = std::make_shared<http_domain::Client>(ioc_, *ctx_);
+        client_->SetMaxFileSize(max_file_size_MiB_);
         client_->Connect(resourse_, http_domain::Port::SECURED);
     }
 
-    void Downloader::SetMaxFileSize(int MiB) {
-        client_->SetMaxFileSize(MiB);
+    void Downloader::SetMaxFileSize(size_t MiB) {
+        max_file_size_MiB_ = MiB;
+        if (client_) {
+            client_->SetMaxFileSize(MiB);
+        }
     }
 
     std::string Downloader::GetEndpoint(std::string_view file) {

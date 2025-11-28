@@ -44,7 +44,7 @@ namespace downloader {
         void SetDownloadsFolder(std::string_view path);
         void SetupNonSecuredConnection();
         void SetupSecuredConnection();
-        void SetMaxFileSize(int MiB);
+        void SetMaxFileSize(size_t MiB);
 
     private:
         net::io_context& ioc_;
@@ -54,6 +54,7 @@ namespace downloader {
         std::shared_ptr<file_manager::FileManager> file_manager_{ nullptr };
         std::string resourse_;
         std::string uri_prefix_ = "/d/";
+        size_t max_file_size_MiB_ = 100;
 
         void OnDownload(std::string&& file_name, std::vector<char>&& body);
 
