@@ -35,13 +35,12 @@ namespace irc {
 
         class MessageProcessor {
         public:
-            std::vector<domain::Message> GetMessagesFromRawBytes(const std::vector<char>& streambuf);
+            std::vector<domain::Message> GetMessagesFromRawBytes(const std::vector<char>& raw_bytes);
             void FlushBuffer();
 
         private:
             std::string last_read_incomplete_message_;
 
-            std::vector<domain::Message> ExtractMessages(const std::vector<char>& raw_read_result);
             domain::Message IdentifyMessageType(std::string_view raw_message);
             std::optional<domain::Message> CheckForCapRes(const std::vector<std::string_view>& split_raw_message);
             std::optional<domain::Message> CheckForCapRes(const std::vector<std::string_view>& split_raw_message, std::string_view raw_message);

@@ -13,17 +13,7 @@
 
 namespace irc {
 
-
     namespace message_processor {
-
-        std::vector<domain::Message> MessageProcessor::GetMessagesFromRawBytes(const std::vector<char>& streambuf) {
-            try {
-                return ExtractMessages(streambuf);
-            }
-            catch (const std::exception& e) {
-                std::cout << e.what() << std::endl;
-            }
-        }
 
         void MessageProcessor::FlushBuffer() {
             if (!last_read_incomplete_message_.empty()) {
@@ -31,23 +21,26 @@ namespace irc {
             }
         }
 
-        std::vector<domain::Message> MessageProcessor::ExtractMessages(const std::vector<char>& raw_read_result) {
+        std::vector<domain::Message> MessageProcessor::GetMessagesFromRawBytes(const std::vector<char>& raw_bytes) {
             std::vector<domain::Message> read_result;
             std::string raw_message;
-
+            for (const auto ch : raw_bytes) {
+                std::cout << ch;
+            }
+            std::cout << "\n";
             if (!last_read_incomplete_message_.empty()) {
                 raw_message = last_read_incomplete_message_;
                 last_read_incomplete_message_.clear();
             }
 
-            for (int i = 0; i < raw_read_result.size(); ++i) {
-                if (domain::IsCRLF(raw_read_result, i)) {
+            for (int i = 0; i < raw_bytes.size(); ++i) {
+                if (domain::IsCRLF(raw_bytes, i)) {
                     read_result.push_back(IdentifyMessageType(raw_message));
                     raw_message.clear();
                     ++i;
                     continue;
                 }
-                raw_message += raw_read_result[i];
+                raw_message += raw_bytes[i];
             }
             if (!raw_message.empty()) {
                 last_read_incomplete_message_ = raw_message;
