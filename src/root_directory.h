@@ -44,7 +44,6 @@ namespace root_directory {
 
         bool IsSubdir(fs::path path) const;
 
-        fs::path DecodeURL(const fs::path& uri) const;
     };
 
 }

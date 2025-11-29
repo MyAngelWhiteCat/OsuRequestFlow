@@ -5,7 +5,7 @@ namespace root_directory {
     Content RootDirectory::GetContent(const fs::path& uri) {
         http::file_body::value_type file;
 
-        auto decoded = DecodeURL(uri);
+        auto decoded = fs::path(DecodeURL(uri.string()));
 
         decoded = fs::weakly_canonical(root_ / decoded);
 
@@ -37,11 +37,6 @@ namespace root_directory {
             }
         }
         return true;
-    }
-
-    fs::path RootDirectory::DecodeURL(const fs::path& uri) const {
-        return fs::path(DecodeURL(uri.string()));
-
     }
 
 }
