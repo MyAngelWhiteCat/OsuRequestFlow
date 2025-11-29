@@ -34,8 +34,8 @@ namespace core {
 
     class Core {
     public:
-        Core(int num_workers)
-            : ioc_(num_workers)
+        Core(net::io_context& ioc)
+            : ioc_(ioc)
         {
 
         }
@@ -93,22 +93,7 @@ namespace core {
             client_->Read();
         }
 
-        void Run(unsigned num_workers) {
-            auto func = [this]() {
-                ioc_.run();
-                };
-            try {
-                std::vector<std::jthread> threads;
-                for (unsigned i = 0; i < num_workers - 1; ++i) {
-                    threads.emplace_back(func);
-                }
-                func();
-            }
-            catch (const std::exception& e) {
-                LOG_INFO("Catch exception in Run");
-                LOG_CRITICAL(e.what());
-            }
-        }
+        // settings
 
         void SaveSettings() {
             json settings;
@@ -126,6 +111,22 @@ namespace core {
         }
 
         // user_validator
+
+        std::unordered_set<std::string>* GetWhiteList() {
+            return command_executor_->GetUserVerificator()->GetWhiteList();
+        }
+
+        std::unordered_set<std::string>* GetBlackList() {
+            return command_executor_->GetUserVerificator()->GetBlackList();
+        }
+
+        bool IsUserInWhiteList(std::string_view username) {
+            return command_executor_->GetUserVerificator()->GetWhiteList()->count(std::string(username));
+        }
+
+        bool IsUserInBlackList(std::string_view username) {
+            return command_executor_->GetUserVerificator()->GetBlackList()->count(std::string(username));
+        }
 
         void AddUserInWhiteList(std::string_view user) {
            command_executor_->GetUserVerificator()->AddUserInWhiteList(user);
@@ -181,7 +182,7 @@ namespace core {
         }
 
     private:
-        net::io_context ioc_;
+        net::io_context& ioc_;
         std::shared_ptr<ssl::context> ctx_{ nullptr };
         Strand read_strand_ = net::make_strand(ioc_);
         Strand write_strand_ = net::make_strand(ioc_);
