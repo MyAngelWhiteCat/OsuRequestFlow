@@ -130,7 +130,7 @@ target_link_libraries(ChatBot PUBLIC
 
 ##########################################
 
-add_library(TwitchIRCClient STATIC
+add_library(IRCClient STATIC
     src/irc_client.h
 
     src/message.h
@@ -145,7 +145,7 @@ add_library(TwitchIRCClient STATIC
     src/auth_data.cpp
 )
 
-target_link_libraries(TwitchIRCClient PUBLIC 
+target_link_libraries(IRCClient PUBLIC 
     Connection
     Logger
 )
@@ -213,7 +213,7 @@ add_library(Core STATIC
 )
 
 target_link_libraries(Core PUBLIC 
-    TwitchIRCClient
+    IRCClient
     Downloader
     ChatBot
     nlohmann_json::nlohmann_json
@@ -226,7 +226,7 @@ add_executable(TestTwitchIRCClient
 )
 
 target_link_libraries(TestTwitchIRCClient PUBLIC
-    TwitchIRCClient
+    IRCClient
     Downloader
     ChatBot
 )
@@ -273,7 +273,7 @@ add_executable(TestMessageProcessor
 )
 
 target_link_libraries(TestMessageProcessor PUBLIC 
-    TwitchIRCClient
+    IRCClient
 )
 
 ##########################################
@@ -284,7 +284,7 @@ add_executable(TestBadgeParser
 )
 
 target_link_libraries(TestBadgeParser PUBLIC 
-    TwitchIRCClient
+    IRCClient
 )
 
 ##########################################
@@ -294,7 +294,7 @@ add_executable(TestCommandParser
     tests/command_parser/test_command_parser.h
 )
 target_link_libraries(TestCommandParser PUBLIC
-    TwitchIRCClient
+    IRCClient
 )
 
 ##########################################
@@ -303,7 +303,7 @@ add_executable(TestUserVerificator
     tests/verificator/main.cpp 
 )
 target_link_libraries(TestUserVerificator PUBLIC
-    TwitchIRCClient 
+    IRCClient 
     FileManager
 )
 
