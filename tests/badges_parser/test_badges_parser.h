@@ -5,24 +5,33 @@
 
 namespace test_badge_parser {
 
-    void TestParsingReply() {
-        std::string PRIVMSG_REPLY = "@badge-info=subscriber/50;badges=subscriber/48,premium/1;client-nonce=0a3cd65c0adb1d127e10f47f15d70119;color=#00D95D;display-name=TheNewVirus_;emotes=;first-msg=0;flags=;id=4081bc1a-db9a-4ef6-a664-b15e3c127c38;mod=0;reply-parent-display-name=KreyGasmed;reply-parent-msg-body=8%!!\sIT\sCOMING\sOUT\sTODAY;reply-parent-msg-id=6fa5de3e-9242-4962-a8bd-bc43b764dc05;reply-parent-user-id=87447781;reply-parent-user-login=kreygasmed;reply-thread-parent-display-name=KreyGasmed;reply-thread-parent-msg-id=6fa5de3e-9242-4962-a8bd-bc43b764dc05;reply-thread-parent-user-id=87447781;reply-thread-parent-user-login=kreygasmed;returning-chatter=0;room-id=26490481;subscriber=1;tmi-sent-ts=1763029658409;turbo=0;user-id=59203031;user-type= :thenewvirus_!thenewvirus_@thenewvirus_.tmi.twitch.tv PRIVMSG #summit1g :@KreyGasmed Pffttt how we tell him";
-        auto split = irc::domain::Split(PRIVMSG_REPLY);
-        //...
-    }
-
-    void TestParsingPRIVMSG() {
-        std::string PRIVMSG = "@badge-info=;badges=broadcaster/1;client-nonce=459e3142897c7a22b7d275178f2259e0;color=#0000FF;display-name=lovingt3s;emote-only=1;emotes=62835:0-10;first-msg=0;flags=;id=885196de-cb67-427a-baa8-82f9b0fcd05f;mod=0;room-id=713936733;subscriber=0;tmi-sent-ts=1643904084794;turbo=0;user-id=713936733;user-type= :lovingt3s!lovingt3s@lovingt3s.tmi.twitch.tv PRIVMSG #lovingt3s :bleedPurple";
+    void TestParsingPRIVMSG(std::string PRIVMSG) {
         auto split = irc::domain::Split(PRIVMSG);
-        std::cout << split.size() << std::endl;
         irc::domain::Message msg(irc::domain::MessageType::PRIVMSG, std::string(split[4]), std::string(split[0]));
         auto badges = msg.GetBadges();
-        std::cout << badges.at("color")[0].substr(1) << std::endl;
-        //...
+        /*for (const auto& [badge, values] : badges) {
+            std::cout << "Badge: " << badge << "\n";
+            for (const auto& value : values) {
+                std::cout << value << "\n";
+            }
+            std::cout << "\n";
+        }*/
+        std::cout << "Main badge: " << static_cast<int>(msg.GetRole()) << std::endl;
     }
 
     void RunTests() {
-        TestParsingPRIVMSG();
+        std::string user = "@badge-info=;badges=;client-nonce=a23479049666f973233e19c1f6b98175;color=;display-name=EblAde1_;emotes=;first-msg=0;flags=;id=bbf84ad6-2d6b-4315-9407-9e3ce3a0ff93;mod=0;returning-chatter=0;room-id=124613167;subscriber=0;tmi-sent-ts=1764437356751;turbo=0;user-id=799789864;user-type= :eblade1_!eblade1_@eblade1_.tmi.twitch.tv PRIVMSG #myangelwhitecat :as_user";
+        std::string vip = "@badge-info=;badges=vip/1;client-nonce=f0ed63a2c802825d8f6965049c2b089b;color=;display-name=EblAde1_;emotes=;first-msg=0;flags=;id=9819d1f5-2c64-4dea-b7be-1f5031f2eb75;mod=0;returning-chatter=0;room-id=124613167;subscriber=0;tmi-sent-ts=1764437369605;turbo=0;user-id=799789864;user-type=;vip=1 :eblade1_!eblade1_@eblade1_.tmi.twitch.tv PRIVMSG #myangelwhitecat :as_vip";
+        std::string mode = "@badge-info=;badges=moderator/1;client-nonce=54ac998612e0f2378e6d820eb6a943fe;color=;display-name=EblAde1_;emotes=;first-msg=0;flags=;id=b0198b24-6794-4133-98d9-933f4f703f19;mod=1;returning-chatter=0;room-id=124613167;subscriber=0;tmi-sent-ts=1764437383564;turbo=0;user-id=799789864;user-type=mod :eblade1_!eblade1_@eblade1_.tmi.twitch.tv PRIVMSG #myangelwhitecat :as_moderator";
+        std::string broadcaster = "@badge-info=subscriber/54;badges=broadcaster/1,subscriber/0;client-nonce=ddca48da514181768574e969c51295a2;color=#0000FF;display-name=MyAngeIWhiteCat;emotes=;first-msg=0;flags=;id=6ece678a-b92a-44ff-a805-193db5dcc8ed;mod=0;returning-chatter=0;room-id=124613167;subscriber=1;tmi-sent-ts=1764437336631;turbo=0;user-id=124613167;user-type= :myangelwhitecat!myangelwhitecat@myangelwhitecat.tmi.twitch.tv PRIVMSG #myangelwhitecat :as_broadcaster";
+        std::cout << "-----------------------USER---------------------------" << std::endl;
+        TestParsingPRIVMSG(user);
+        std::cout << "-----------------------VIP---------------------------" << std::endl;
+        TestParsingPRIVMSG(vip);
+        std::cout << "-----------------------MODERATOR---------------------------" << std::endl;
+        TestParsingPRIVMSG(mode);
+        std::cout << "-----------------------BROADCASTER---------------------------" << std::endl;
+        TestParsingPRIVMSG(broadcaster);
     }
 
 }
