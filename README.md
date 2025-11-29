@@ -31,6 +31,7 @@
 
 ## Current Task 
 - Парсинг ссылок
+- Проверить отдачу статических файлов
 
 ---
 
@@ -108,76 +109,84 @@
 
 Эндпоинты: 
 
-- api/setting/load
-  - verb = POST
-  - body = empty
-  - response: ok / error
+- **POST** `/api/setting/load`
+  - Body: `empty`
+  - Response: `ok` / `error`
+  - Description: Загрузить настройки системы
 
-- api/settings/save
-  - verb = POST
-  - body = empty
-  - response: ok / error
+- **POST** `/api/settings/save`
+  - Body: `empty`
+  - Response: `ok` / `error`
+  - Description: Сохранить текущие настройки
 
-- api/downloader/settings/max_file_size 
-  - verb = PUT
-  - body = json dict {"FileSize": unsigned int}
-  - response: ok / error
+### Downloader Settings
+- **PUT** `/api/downloader/settings/max_file_size`
+  - Body: `{"FileSize": number}` (unsigned int)
+  - Response: `ok` / `error`
+  - Description: Установить максимальный размер файла для загрузки
 
-- api/downloader/settings/folder 
-  - verb = PUT 
-  - body = json string folder_path
-  - response: ok / error
+- **PUT** `/api/downloader/settings/folder`
+  - Body: `{"Path": "string"}` (путь к папке)
+  - Response: `ok` / `error` (проверка существования пути)
+  - Description: Установить папку для загрузок
 
-- api/downloader/settings/resourse_and_prefix 
-  - verb = PUT
-  - body = json dict {string - string, string - string} resourse, prefix
-  - response: ok / error (resourse unavailable | not found (maybe wrong prefix))
+- **PUT** `/api/downloader/settings/resourse_and_prefix`
+  - Body: `{"Resourse": "string", "Prefix": "string"}`
+  - Response: `ok` / `error` (ресурс недоступен | не найден)
+  - Description: Настроить ресурс и префикс для загрузки
 
-- api/white_list/users
-  - verb = PUT
-  - body = json string username
-  - response: ok / error (user allready in white list | user in black list, need extra confirm)
+### User Lists Management
+- **PUT** `/api/white_list/users`
+  - Body: `{"UserName": "string"}`
+  - Response: `ok` / `error` (пользователь уже в белом списке | пользователь в черном списке, требуется подтверждение)
+  - Description: Добавить пользователя в белый список
 
-- api/white_list/users
-  - verb = DELETE
-  - body = json string username
-  - response: ok / error (user not in white list)
+- **DELETE** `/api/white_list/users`
+  - Body: `{"UserName": "string"}`
+  - Response: `ok` / `error` (пользователь не найден в белом списке)
+  - Description: Удалить пользователя из белого списка
 
-- api/black_list/users
-  - verb = PUT
-  - body = json string username
-  - response: ok / error (user allready in black list | user in white list, need extra confirm)
+- **PUT** `/api/black_list/users`
+  - Body: `{"UserName": "string"}`
+  - Response: `ok` / `error` (пользователь уже в черном списке | пользователь в белом списке, требуется подтверждение)
+  - Description: Добавить пользователя в черный список
 
-- api/black_list/users
-  - verb = DELETE
-  - body = json string username
-  - response: ok / error (user not in black list)
+- **DELETE** `/api/black_list/users`
+  - Body: `{"UserName": "string"}`
+  - Response: `ok` / `error` (пользователь не найден в черном списке)
+  - Description: Удалить пользователя из черного списка
 
-- api/validator/settings/role_filter_level
-  - verb = PUT
-  - body = json int(0 - 4) level
-  - response: ok / error (level out of range)
+### Validator Settings
+- **PUT** `/api/validator/settings/role_filter_level`
+  - Body: `{"RoleFilterLevel": number}` (0-4)
+  - EMPTY = 0,
+  - SUBSCRIBER = 1,
+  - VIP = 2,
+  - MODERATOR = 3,
+  - BROADCASTER = 4
+  - Response: `ok` / `error` (уровень вне диапазона)
+  - Description: Установить уровень фильтрации по ролям
 
-- api/validator/settings/set_whitelist_only
-  - verb = POST
-  - body = empty (On / Off)
-  - response: ok / error (actually wtf)
+- **PUT** `/api/validator/settings/set_whitelist_only`
+  - Body: `{"IsOn": boolean}`
+  - Response: `ok` / `error`
+  - Description: Включить/выключить режим только белого списка
 
-- api/irc_client/settings/set_reconnect_timeout
-  - verb = PUT
-  - body = json int reconnect_timeot_seconds
-  - response: ok / error (actually wtf)
+### IRC Client Settings
+- **PUT** `/api/irc_client/settings/set_reconnect_timeout`
+  - Body: `{"ReconnectTimeout": number}` (секунды)
+  - Response: `ok` / `error`
+  - Description: Установить таймаут переподключения IRC клиента
 
-- api/irc_client/join
-  - verb = POST 
-  - body json string channel_name 
-  - response ok / error (net error / wrong channel name)
+- **POST** `/api/irc_client/join`
+  - Body: `{"Channel": "string"}` (название канала)
+  - Response: `ok` / `error` (ошибка сети | неверное имя канала)
+  - Description: Подключиться к IRC каналу
 
-- api/irc_client/part
-  - verb = POST 
-  - body json string channel_name 
-  - response ok / error (net error / not joined)
-
+- **POST** `/api/irc_client/part`
+  - Body: `{"Channel": "string"}` (название канала)
+  - Response: `ok` / `error` (ошибка сети | не подключен к каналу)
+  - Description: Отключиться от IRC канала
 
 ---
 
