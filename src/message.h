@@ -15,10 +15,10 @@ namespace irc {
 
         enum class Role {
             EMPTY = 0,
-            FOLLOWER = 1,
-            SUBSCRIBER = 2,
-            VIP = 3,
-            MODERATOR = 4
+            SUBSCRIBER = 1,
+            VIP = 2,
+            MODERATOR = 3,
+            BROADCASTER = 4
         };
 
         class Message {
@@ -39,12 +39,16 @@ namespace irc {
             std::string_view GetContent() const;
             std::string_view GetNick() const;
             Badges GetBadges() const;
-            Role GetMainBadge() const;
+            Role GetRole() const;
             std::string GetColorFromHex() const;
+
         private:
             MessageType message_type_;
             std::string content_;
             Badges badges_;
+            Role role_ = Role::EMPTY;
+
+            void SetRole();
         };
 
         static std::ostream& operator<<(std::ostream& out, const Message& msg) { // TODO: TEST ONLY! Remove in prod!!!
