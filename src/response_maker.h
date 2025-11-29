@@ -41,6 +41,9 @@ namespace response_maker {
             }
             response.keep_alive(keep_alive);
             response.set(http::field::cache_control, "no-cache"sv);
+            response.set(http::field::access_control_allow_origin, "*");
+            response.set(http::field::access_control_allow_methods, "GET, POST, PUT, DELETE, OPTIONS");
+            response.set(http::field::access_control_allow_headers, "Content-Type");
 
             try {
                 response.body() = std::forward<BodyValue>(body_value);
