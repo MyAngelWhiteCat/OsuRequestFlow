@@ -25,22 +25,6 @@ namespace commands {
                 return role >= accept_from_;
             }
 
-            void SetFollowers() {
-                accept_from_ = irc::domain::Role::FOLLOWER;
-            }
-
-            void SetSubsribers() {
-                accept_from_ = irc::domain::Role::SUBSCRIBER;
-            }
-
-            void SetVIPs() {
-                accept_from_ = irc::domain::Role::VIP;
-            }
-
-            void SetMods() {
-                accept_from_ = irc::domain::Role::MODERATOR;
-            }
-
             void SetLevel(int level) {
                 accept_from_ = static_cast<irc::domain::Role>(level);
             }
@@ -86,6 +70,7 @@ namespace commands {
             }
 
             void AddUserInWhiteList(std::string_view user_name) {
+                std::cout << "Adding to white list " << user_name << std::endl;
                 white_list_->insert(std::string(user_name));
             }
 
