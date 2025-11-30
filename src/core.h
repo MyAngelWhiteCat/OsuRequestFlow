@@ -10,6 +10,7 @@
 #include <memory>
 #include <string_view>
 #include <fstream>
+#include <utility>
 
 
 namespace core {
@@ -233,14 +234,36 @@ namespace core {
         }
 
         void LoadUserVerificator(json& settings) {
-            auto black_list = settings.at(SettingsKeys::BLACKLIST).get<std::vector<std::string>>();
-            auto white_list = settings.at(SettingsKeys::WHITELIST).get<std::vector<std::string>>();
-            int role_level = settings.at(SettingsKeys::ROLEFILTER_LEVEL).get<int>();
-            bool is_whitelist_only = settings.at(SettingsKeys::WHITELIST_ONLY).get<bool>();
+            std::vector<std::string> white_list;
+            std::vector<std::string> black_list;
+            if (auto it = settings.find(SettingsKeys::BLACKLIST); it != settings.end()) {
+                auto black_list_ = it->get<std::vector<std::string>>();
+                black_list.reserve(black_list_.size());
+                black_list = std::move(black_list_);
+            }
+            if (auto it = settings.find(SettingsKeys::WHITELIST); it != settings.end()) {
+                auto white_list_ = settings.at(SettingsKeys::WHITELIST).get<std::vector<std::string>>();
+                white_list.reserve(white_list_.size());
+                white_list = std::move(white_list_);
+            }
             commands::user_validator::UserVerificator verificator(white_list, black_list);
+
+            if (auto it = settings.find(SettingsKeys::ROLEFILTER_LEVEL); it != settings.end()) {
+                int role_level = settings.at(SettingsKeys::ROLEFILTER_LEVEL).get<int>();
+                verificator.SetRoleLevel(role_level);
+            }
+            if (auto it = settings.find(SettingsKeys::WHITELIST_ONLY); it != settings.end()) {
+                bool is_whitelist_only = settings.at(SettingsKeys::WHITELIST_ONLY).get<bool>();
+                verificator.SetWhiteListOnly(is_whitelist_only);
+            }
+
+
             command_executor_->SetUserVerificator(std::move(verificator));
         }
 
+        void LoadIRCClient(json& settings) {
+
+        }
     };
 
 } // namespace core
