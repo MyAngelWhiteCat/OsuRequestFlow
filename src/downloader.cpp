@@ -91,14 +91,19 @@ namespace downloader {
     }
 
     void Downloader::SetupNonSecuredConnection() {
-        client_ = std::make_shared<http_domain::Client>(ioc_);
-        client_->Connect(resourse_, http_domain::Port::NON_SECURED);
+        if (resourse_) {
+            client_ = std::make_shared<http_domain::Client>(ioc_);
+            client_->Connect(*resourse_, http_domain::Port::NON_SECURED);
+        }
     }
 
     void Downloader::SetupSecuredConnection() {
+        if (resourse_) {
+            throw std::runtime_error("Resourse doesnt setted");
+        }
         client_ = std::make_shared<http_domain::Client>(ioc_, *ctx_);
         client_->SetMaxFileSize(max_file_size_MiB_);
-        client_->Connect(resourse_, http_domain::Port::SECURED);
+        client_->Connect(*resourse_, http_domain::Port::SECURED);
     }
 
     void Downloader::SetMaxFileSize(size_t MiB) {
@@ -109,7 +114,10 @@ namespace downloader {
     }
 
     std::string Downloader::GetEndpoint(std::string_view file) {
-        return uri_prefix_ + std::string(file);
+        if (!uri_prefix_) {
+            throw std::runtime_error("prefix doesnt setted");
+        }
+        return *uri_prefix_ + std::string(file);
     }
 
 } // namespace downloader

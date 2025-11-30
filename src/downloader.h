@@ -52,8 +52,8 @@ namespace downloader {
         std::string user_agent_ = "OsuRequestFlow v0.1";
         std::shared_ptr<http_domain::Client> client_{ nullptr };
         std::shared_ptr<file_manager::FileManager> file_manager_{ nullptr };
-        std::string resourse_;
-        std::string uri_prefix_ = "/d/";
+        std::optional<std::string> resourse_;
+        std::optional<std::string> uri_prefix_;
         size_t max_file_size_MiB_ = 100;
 
         void OnDownload(std::string&& file_name, std::vector<char>&& body);
