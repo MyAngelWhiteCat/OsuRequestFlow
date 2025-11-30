@@ -58,6 +58,7 @@ namespace irc {
                         SendPong(message.GetContent());
                         break;
                     case MessageType::PRIVMSG:
+                        std::cout << '[' << static_cast<int>(message.GetRole()) << ']' << message.GetNick() << ' ' << message.GetContent() << "\n";
                         if (!chat_bot_) {
                             return;
                         }
