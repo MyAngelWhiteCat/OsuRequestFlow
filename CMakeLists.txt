@@ -120,6 +120,7 @@ add_library(ChatBot STATIC
     src/command_parser.h
     src/command_parser.cpp
     src/user_validator.h
+    src/user_validator.cpp
     src/chat_bot.h 
     src/chat_bot.cpp
 )
