@@ -32,7 +32,8 @@ namespace commands {
             if (auto id = CheckForLOsuMapURLAndGetID(line)) {
                 std::ofstream log_request("LogRequest.txt", std::ios::app);
                 log_request << message.GetNick() << message.GetContent() << "\n";
-                Command osu_request(CommandType::OsuRequest, std::string(message.GetNick()), std::move(*id));
+                Command osu_request(CommandType::OsuRequest
+                    , std::string(message.GetNick()), std::move(*id), std::move(message.GetRole()));
                 LOG_INFO("Osu map find");
                 return osu_request;
             }
