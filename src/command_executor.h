@@ -17,9 +17,9 @@ namespace commands {
         }
 
         void Execute(Command&& command) {
-            /*if (!verificator_.Verify(command.user_name_, command.user_role_)) {
+            if (!verificator_.Verify(command.user_name_, command.user_role_)) {
                 return;
-            }*/
+            }
             switch (command.type_) {
             case CommandType::OsuRequest:
                 downloader_->Download(command.content_);
