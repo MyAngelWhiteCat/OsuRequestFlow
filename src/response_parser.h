@@ -90,6 +90,10 @@ namespace http_domain {
                     response_parser_.body_limit(file_size_ + 10 * KiB);
                     return true;
                 }
+                LOG_ERROR("Filesize " + std::to_string(file_size_ / MiB) + "MiB > Max file size " + std::to_string(max_file_size_ * MiB));
+            }
+            else {
+                LOG_INFO("UNDEFINED CONTENT LENGTH");
             }
             return false;
         }
@@ -124,6 +128,10 @@ namespace http_domain {
 
         size_t GetFileSize() {
             return file_size_;
+        }
+
+        double GetProgress() {
+            return static_cast<double>(response_parser_.get().body().size()) / static_cast<double>(file_size_) * 100;
         }
 
     private:
