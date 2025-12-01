@@ -1,6 +1,7 @@
 #include "downloader.h"
 #include "file_manager.h"
 #include "http_client.h"
+#include "connection.h"
 
 #include <memory>
 #include <string>
@@ -29,15 +30,10 @@ namespace downloader {
     using ResoursesAccess = std::unordered_map<std::string, std::vector<std::shared_ptr<http_domain::Client>>>;
 
 
-    Downloader::Downloader(net::io_context& ioc
-        , std::shared_ptr<ssl::context> ctx)
+    Downloader::Downloader(net::io_context& ioc, bool secured)
         : ioc_(ioc)
-        , ctx_(ctx)
-    {
-    }
-
-    Downloader::Downloader(net::io_context& ioc)
-        : ioc_(ioc)
+        , secured_(secured)
+        , dl_strand(net::make_strand(ioc))
     {
     }
 
@@ -45,19 +41,21 @@ namespace downloader {
         LOG_INFO("Downloader destructed");
     }
 
-    void Downloader::Download(std::string_view uri) {
-        LOG_INFO("Downdload "s.append(uri));
-        if (!client_ || !client_->IsConnected()) {
-            if (ctx_) {
-                SetupSecuredConnection();
+    void Downloader::Download(std::string_view file) {
+        LOG_INFO("Downdload "s.append(file));
+        net::dispatch(dl_strand, [self = this->shared_from_this(), file = std::string(file)]() {
+            std::shared_ptr<http_domain::Client> client = nullptr;
+            if (self->secured_) {
+                client = self->SetupSecuredConnection();
             }
             else {
-                SetupNonSecuredConnection();
+                client = self->SetupNonSecuredConnection();
             }
-        }
-        client_->Get(GetEndpoint(uri), user_agent_, [self = this->shared_from_this()]
-        (std::string&& file_name, std::vector<char>&& body) {
-                self->OnDownload(std::move(file_name), std::move(body));
+            client->SetMaxFileSize(self->max_file_size_MiB_);
+            client->Get(self->GetEndpoint(file), self->user_agent_, [self, client]
+            (std::string&& file_name, std::vector<char>&& body) {
+                    self->OnDownload(std::move(file_name), std::move(body));
+                });
             });
     }
 
@@ -90,27 +88,27 @@ namespace downloader {
             });
     }
 
-    void Downloader::SetupNonSecuredConnection() {
-        if (resourse_) {
-            client_ = std::make_shared<http_domain::Client>(ioc_);
-            client_->Connect(*resourse_, http_domain::Port::NON_SECURED);
-        }
-    }
-
-    void Downloader::SetupSecuredConnection() {
-        if (resourse_) {
+    std::shared_ptr<http_domain::Client> Downloader::SetupNonSecuredConnection() {
+        if (!resourse_) {
             throw std::runtime_error("Resourse doesnt setted");
         }
-        client_ = std::make_shared<http_domain::Client>(ioc_, *ctx_);
-        client_->SetMaxFileSize(max_file_size_MiB_);
-        client_->Connect(*resourse_, http_domain::Port::SECURED);
+        auto client = std::make_shared<http_domain::Client>(ioc_);
+        client->Connect(*resourse_, http_domain::Port::NON_SECURED);
+        return client;
+    }
+
+    std::shared_ptr<http_domain::Client> Downloader::SetupSecuredConnection() {
+        if (!resourse_) {
+            throw std::runtime_error("Resourse doesnt setted");
+        }
+        auto client = std::make_shared<http_domain::Client>(ioc_, connection::GetSSLContext());
+        client->SetMaxFileSize(max_file_size_MiB_);
+        client->Connect(*resourse_, http_domain::Port::SECURED);
+        return client;
     }
 
     void Downloader::SetMaxFileSize(size_t MiB) {
         max_file_size_MiB_ = MiB;
-        if (client_) {
-            client_->SetMaxFileSize(MiB);
-        }
     }
 
     std::string Downloader::GetEndpoint(std::string_view file) {

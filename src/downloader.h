@@ -4,7 +4,6 @@
 #include <string>
 #include <string_view>
 #include <vector>
-#include <unordered_map>
 
 #include "file_manager.h"
 #include "random_user_agent.h"
@@ -29,28 +28,25 @@ namespace downloader {
     class Downloader : public std::enable_shared_from_this<Downloader> {
 
     public:
-
-        Downloader(net::io_context& ioc
-            , std::shared_ptr<ssl::context> ctx);
-
-        Downloader(net::io_context& ioc);
+        Downloader(net::io_context& ioc, bool secured = true);
 
         ~Downloader(); // debug only;
 
-        void Download(std::string_view uri);
+        void Download(std::string_view file);
         void SetUserAgent(std::string_view user_agent);
         void SetUriPrefix(std::string_view uri_prefix);
         void SetResourse(std::string_view resourse);
         void SetDownloadsFolder(std::string_view path);
-        void SetupNonSecuredConnection();
-        void SetupSecuredConnection();
+        std::shared_ptr<http_domain::Client> SetupNonSecuredConnection();
+        std::shared_ptr<http_domain::Client> SetupSecuredConnection();
         void SetMaxFileSize(size_t MiB);
 
     private:
         net::io_context& ioc_;
-        std::shared_ptr<ssl::context> ctx_{ nullptr };
+        Strand dl_strand;
+        bool secured_ = true;
         std::string user_agent_ = "OsuRequestFlow v0.1";
-        std::shared_ptr<http_domain::Client> client_{ nullptr };
+
         std::shared_ptr<file_manager::FileManager> file_manager_{ nullptr };
         std::optional<std::string> resourse_;
         std::optional<std::string> uri_prefix_;
