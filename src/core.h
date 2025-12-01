@@ -55,16 +55,16 @@ namespace core {
 
         void SetupDownloader(bool secured, std::string_view resourse
             , std::string_view uri_prefix, std::string_view downloads_directory) {
-            if (secured) {
-                ctx_ = connection::GetSSLContext();
-                downloader_ = std::make_shared<downloader::Downloader>(ioc_, ctx_);
-            }
-            else {
-                downloader_ = std::make_shared<downloader::Downloader>(ioc_);
-            }
+            downloader_ = std::make_shared<downloader::Downloader>(ioc_, secured);
             downloader_->SetResourse(resourse);
             downloader_->SetUriPrefix(uri_prefix);
             downloader_->SetDownloadsFolder(downloads_directory);
+            SetupChatBot();
+        }
+
+        void SetupDownloader(bool secured) {
+            downloader_ = std::make_shared<downloader::Downloader>(ioc_, secured);
+            SetupChatBot();
         }
 
         void SetupChatBot() {
@@ -87,7 +87,7 @@ namespace core {
         }
 
         void Start() {
-            CheckReadyness();
+            //CheckReadyness();
             client_->Connect();
             client_->Authorize(auth_data_);
             client_->CapRequest();
@@ -130,7 +130,7 @@ namespace core {
         }
 
         void AddUserInWhiteList(std::string_view user) {
-           command_executor_->GetUserVerificator()->AddUserInWhiteList(user);
+            command_executor_->GetUserVerificator()->AddUserInWhiteList(user);
         }
 
         void AddUserInBlackList(std::string_view user) {
