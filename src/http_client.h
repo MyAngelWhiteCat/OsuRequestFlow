@@ -19,6 +19,7 @@
 #include <utility>
 #include <optional>
 #include <fstream>
+#include <iomanip>
 #include <thread>
 #include <syncstream>
 
@@ -26,6 +27,7 @@
 #include "request_builder.h"
 #include "response_parser.h"
 #include "decode_url.h"
+#include <mutex>
 
 
 namespace http_domain {
@@ -60,8 +62,9 @@ namespace http_domain {
 
         }
 
-        Client(net::io_context& ioc, ssl::context& ctx)
-            : stream_(ssl::stream<beast::tcp_stream>(ioc, ctx))
+        Client(net::io_context& ioc, std::shared_ptr<ssl::context> ctx)
+            : ctx_(ctx)
+            , stream_(ssl::stream<beast::tcp_stream>(ioc, *ctx))
             , write_strand_(net::make_strand(ioc))
             , read_strand_(net::make_strand(ioc))
         {
@@ -127,6 +130,7 @@ namespace http_domain {
 
     private:
         std::variant<beast::tcp_stream, ssl::stream<beast::tcp_stream>> stream_;
+        std::shared_ptr<ssl::context> ctx_{ nullptr };
         Strand write_strand_;
         Strand read_strand_;
         beast::error_code ec_;
@@ -166,6 +170,10 @@ namespace http_domain {
 
             beast::flat_buffer buffer_;
             ResponseParser response_parser_;
+            bool in_downloading_ = false;
+            net::steady_timer downloading_monitoring_timer_{client_->write_strand_.get_inner_executor().context()};
+            std::vector<char> downloads_fasle_;
+            double last_knowed_progress_ = 0;
 
             template <typename Stream>
             void Read(Stream& stream) {
@@ -192,33 +200,41 @@ namespace http_domain {
                     logging::ReportError(ec, "Reading http response");
                     return;
                 }
-                
+                response_parser_.PrintResponseHeaders();
                 if (!response_parser_.IsOK()) {
                     LOG_ERROR("Response status is not OK");
-                    response_parser_.PrintResponseHeaders();
                     return;
                 }
 
-                response_parser_.PrintResponseHeaders();
-                //CheckRedirect();
+                response_parser_.CheckRedirect();
                 if (response_parser_.CheckFileSize()) {
                     ReadBody(stream);
+                }
+                else {
+                    LOG_ERROR("File size");
                 }
             }
 
             template <typename Stream>
             void ReadBody(Stream& stream) {
+                in_downloading_ = true;
                 http::async_read(stream, buffer_, response_parser_.GetParser()
                     , [self = this->shared_from_this(), &stream](const beast::error_code& ec, size_t bytes_readed) mutable {
+                        self->in_downloading_ = true;
                         LOG_INFO("Read "s.append(std::to_string(bytes_readed).append(" bytes")));
                         self->OnReadBody(ec, stream);
                     });
+                MonitorDownloading(stream);
                 LOG_INFO("Start downloading");
             }
 
             template <typename Stream>
             void OnReadBody(const beast::error_code& ec, Stream& stream) {
                 if (ec) {
+                    if (ec == net::error::operation_aborted) {
+                        LOG_INFO("Download cancelled");
+                        return;
+                    }
                     CheckConnectionError(ec);
                     logging::ReportError(ec, "Reading http response");
                     if (ec == http::error::need_more) {
@@ -239,6 +255,29 @@ namespace http_domain {
                     client_->connected_ = false;
                     client_->ssl_connected_ = false;
                 }
+            }
+
+            template <typename Stream>
+            void MonitorDownloading(Stream& stream) {
+                downloading_monitoring_timer_.expires_after(std::chrono::milliseconds(500));
+                downloading_monitoring_timer_.async_wait([self = this->weak_from_this(), &stream](auto ec) {
+                    if (auto cli = self.lock(); !ec && cli->in_downloading_) {
+                        double progress = cli->response_parser_.GetProgress();
+                        std::cout << std::setprecision(2) << progress << "%\n";
+                        if (progress == cli->last_knowed_progress_) {
+                            cli->downloads_fasle_.push_back('c');
+                            if (cli->downloads_fasle_.size() == 10) {
+                                auto& lowest_layer = beast::get_lowest_layer(stream);
+                                lowest_layer.cancel();
+                            }
+                        }
+                        else {
+                            if (!cli->downloads_fasle_.empty()) { cli->downloads_fasle_.pop_back(); }
+                        }
+                        cli->last_knowed_progress_ = progress;
+                        cli->MonitorDownloading(stream);
+                    }
+                    });
             }
 
         };
