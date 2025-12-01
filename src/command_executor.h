@@ -18,6 +18,7 @@ namespace commands {
 
         void Execute(Command&& command) {
             if (!verificator_.Verify(command.user_name_, command.user_role_)) {
+                std::cout << command.user_name_ << " Unverified" << std::endl;
                 return;
             }
             switch (command.type_) {
