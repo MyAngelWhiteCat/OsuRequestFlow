@@ -1,0 +1,1149 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Настройки</title>
+    <style>
+        :root {
+            --primary: #667eea;
+            --primary-light: #7c93ff;
+            --success: #48bb78;
+            --warning: #ed8936;
+            --error: #f56565;
+            --text: #e2e8f0;
+            --text-light: #a0aec0;
+            --background: #0f172a;
+            --card: #1e293b;
+            --card-hover: #2d3748;
+            --border: #334155;
+            --shadow: rgba(0, 0, 0, 0.4);
+        }
+
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+            background: var(--background);
+            color: var(--text);
+            line-height: 1.6;
+            padding: 20px;
+            min-height: 100vh;
+        }
+
+        .container {
+            max-width: 1200px;
+            margin: 0 auto;
+        }
+
+        .header {
+            text-align: center;
+            margin-bottom: 40px;
+            padding-bottom: 20px;
+            border-bottom: 1px solid var(--border);
+        }
+
+            .header h1 {
+                font-size: 2.5rem;
+                margin-bottom: 10px;
+                background: linear-gradient(135deg, var(--primary), var(--primary-light));
+                -webkit-background-clip: text;
+                -webkit-text-fill-color: transparent;
+            }
+
+            .header p {
+                color: var(--text-light);
+                font-size: 1.1rem;
+            }
+
+        /* Stepper */
+        .stepper {
+            display: flex;
+            justify-content: center;
+            gap: 20px;
+            margin-bottom: 40px;
+            position: relative;
+        }
+
+            .stepper::before {
+                content: '';
+                position: absolute;
+                top: 15px;
+                left: 10%;
+                right: 10%;
+                height: 2px;
+                background: var(--border);
+                z-index: 1;
+            }
+
+        .step {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            position: relative;
+            z-index: 2;
+        }
+
+        .step-circle {
+            width: 40px;
+            height: 40px;
+            border-radius: 50%;
+            background: var(--card);
+            border: 2px solid var(--border);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-weight: bold;
+            font-size: 1.2rem;
+            margin-bottom: 10px;
+            transition: all 0.3s ease;
+        }
+
+        .step.active .step-circle {
+            background: var(--primary);
+            border-color: var(--primary-light);
+            color: white;
+        }
+
+        .step.completed .step-circle {
+            background: var(--success);
+            border-color: var(--success);
+            color: white;
+        }
+
+        .step-label {
+            font-size: 0.9rem;
+            color: var(--text-light);
+            text-align: center;
+        }
+
+        .step.active .step-label {
+            color: var(--primary-light);
+            font-weight: 600;
+        }
+
+        /* Step Content */
+        .step-content {
+            display: none;
+            animation: fadeIn 0.5s ease;
+        }
+
+            .step-content.active {
+                display: block;
+            }
+
+        @keyframes fadeIn {
+            from {
+                opacity: 0;
+                transform: translateY(20px);
+            }
+
+            to {
+                opacity: 1;
+                transform: translateY(0);
+            }
+        }
+
+        /* Cards Grid */
+        .cards-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(380px, 1fr));
+            gap: 25px;
+            margin-bottom: 40px;
+        }
+
+        .card {
+            background: var(--card);
+            border-radius: 16px;
+            padding: 25px;
+            border: 1px solid var(--border);
+            transition: all 0.3s ease;
+            box-shadow: 0 10px 25px var(--shadow);
+        }
+
+            .card:hover {
+                transform: translateY(-5px);
+                background: var(--card-hover);
+                box-shadow: 0 15px 35px var(--shadow);
+            }
+
+        .card-header {
+            display: flex;
+            align-items: center;
+            gap: 15px;
+            margin-bottom: 20px;
+            padding-bottom: 15px;
+            border-bottom: 1px solid var(--border);
+        }
+
+        .card-icon {
+            font-size: 1.8rem;
+        }
+
+        .card-title {
+            font-size: 1.3rem;
+            font-weight: 600;
+            color: var(--text);
+        }
+
+        .card-description {
+            color: var(--text-light);
+            margin-bottom: 25px;
+            font-size: 0.95rem;
+            line-height: 1.5;
+        }
+
+        /* Controls */
+        .control-group {
+            margin-bottom: 20px;
+        }
+
+        .control-label {
+            display: block;
+            margin-bottom: 8px;
+            color: var(--text);
+            font-weight: 500;
+            font-size: 0.95rem;
+        }
+
+        .control-input {
+            width: 100%;
+            padding: 14px 16px;
+            background: rgba(255, 255, 255, 0.05);
+            border: 1px solid var(--border);
+            border-radius: 10px;
+            color: var(--text);
+            font-size: 1rem;
+            transition: all 0.3s ease;
+        }
+
+            .control-input:focus {
+                outline: none;
+                border-color: var(--primary);
+                box-shadow: 0 0 0 3px rgba(102, 126, 234, 0.1);
+            }
+
+            .control-input::placeholder {
+                color: var(--text-light);
+            }
+
+        /* Action Buttons */
+        .action-buttons {
+            display: flex;
+            gap: 15px;
+            margin-top: 30px;
+        }
+
+        .action-btn {
+            flex: 1;
+            padding: 16px;
+            background: linear-gradient(135deg, var(--primary), var(--primary-light));
+            color: white;
+            border: none;
+            border-radius: 12px;
+            font-size: 1rem;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            position: relative;
+            overflow: hidden;
+        }
+
+            .action-btn:hover {
+                transform: translateY(-2px);
+                box-shadow: 0 10px 20px rgba(102, 126, 234, 0.3);
+            }
+
+            .action-btn:active {
+                transform: translateY(0);
+            }
+
+            .action-btn:disabled {
+                opacity: 0.6;
+                cursor: not-allowed;
+                transform: none !important;
+            }
+
+        .btn-secondary {
+            background: transparent;
+            border: 2px solid var(--border);
+        }
+
+            .btn-secondary:hover {
+                background: rgba(255, 255, 255, 0.05);
+            }
+
+        /* Instructions */
+        .instructions {
+            background: rgba(102, 126, 234, 0.1);
+            border-radius: 12px;
+            padding: 20px;
+            margin-bottom: 25px;
+            border-left: 4px solid var(--primary);
+        }
+
+        .instructions-title {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            margin-bottom: 15px;
+            color: var(--primary-light);
+            font-weight: 600;
+        }
+
+        .instructions-content {
+            color: var(--text-light);
+            font-size: 0.95rem;
+            line-height: 1.5;
+        }
+
+            .instructions-content ul {
+                margin-left: 20px;
+                margin-bottom: 10px;
+            }
+
+            .instructions-content li {
+                margin-bottom: 5px;
+            }
+
+        /* Role Cards */
+        .role-card {
+            padding: 15px;
+            margin-bottom: 10px;
+            background: rgba(255, 255, 255, 0.03);
+            border-radius: 10px;
+            border: 1px solid transparent;
+            cursor: pointer;
+            transition: all 0.3s ease;
+        }
+
+            .role-card:hover {
+                background: rgba(255, 255, 255, 0.05);
+                border-color: var(--primary);
+            }
+
+            .role-card.selected {
+                background: rgba(102, 126, 234, 0.15);
+                border-color: var(--primary);
+            }
+
+        .role-header {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            margin-bottom: 8px;
+        }
+
+        .role-icon {
+            font-size: 1.2rem;
+        }
+
+        .role-name {
+            font-weight: 600;
+            color: var(--text);
+        }
+
+        .role-level {
+            margin-left: auto;
+            color: var(--text-light);
+            font-size: 0.9rem;
+        }
+
+        .role-description {
+            color: var(--text-light);
+            font-size: 0.9rem;
+            margin-bottom: 5px;
+        }
+
+        .role-access {
+            font-size: 0.85rem;
+            color: var(--success);
+        }
+
+        /* Loading Animation */
+        .loading-dots {
+            display: inline-block;
+            width: 20px;
+            height: 20px;
+            position: relative;
+        }
+
+            .loading-dots::after {
+                content: '';
+                position: absolute;
+                width: 20px;
+                height: 20px;
+                top: 0;
+                left: 0;
+                border: 2px solid transparent;
+                border-top-color: white;
+                border-radius: 50%;
+                animation: spin 1s linear infinite;
+            }
+
+        @keyframes spin {
+            0% {
+                transform: rotate(0deg);
+            }
+
+            100% {
+                transform: rotate(360deg);
+            }
+        }
+
+        /* Connection Status */
+        .connection-status {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            padding: 12px 20px;
+            background: var(--card);
+            border-radius: 12px;
+            border: 1px solid var(--border);
+            margin-bottom: 20px;
+        }
+
+        .status-dot {
+            width: 12px;
+            height: 12px;
+            border-radius: 50%;
+            background: var(--success);
+            box-shadow: 0 0 10px var(--success);
+            animation: pulse 2s infinite;
+        }
+
+            .status-dot.connecting {
+                background: var(--warning);
+                box-shadow: 0 0 10px var(--warning);
+            }
+
+            .status-dot.disconnected {
+                background: var(--error);
+                box-shadow: 0 0 10px var(--error);
+            }
+
+        @keyframes pulse {
+            0%, 100% {
+                opacity: 1;
+            }
+
+            50% {
+                opacity: 0.5;
+            }
+        }
+
+        /* Scrollbar */
+        ::-webkit-scrollbar {
+            width: 8px;
+        }
+
+        ::-webkit-scrollbar-track {
+            background: var(--card);
+            border-radius: 4px;
+        }
+
+        ::-webkit-scrollbar-thumb {
+            background: var(--border);
+            border-radius: 4px;
+        }
+
+            ::-webkit-scrollbar-thumb:hover {
+                background: var(--primary);
+            }
+
+        /* Responsive */
+        @media (max-width: 768px) {
+            .cards-grid {
+                grid-template-columns: 1fr;
+            }
+
+            .stepper {
+                flex-direction: column;
+                align-items: center;
+                gap: 30px;
+            }
+
+                .stepper::before {
+                    display: none;
+                }
+
+            .action-buttons {
+                flex-direction: column;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="header">
+            <h1>Настройки программы</h1>
+            <p>Пошаговая настройка программы для osu!</p>
+        </div>
+
+        <!-- Stepper -->
+        <div class="stepper">
+            <div class="step active" data-step="1">
+                <div class="step-circle">1</div>
+                <div class="step-label">Директория</div>
+            </div>
+            <div class="step" data-step="2">
+                <div class="step-circle">2</div>
+                <div class="step-label">Загрузчик</div>
+            </div>
+            <div class="step" data-step="3">
+                <div class="step-circle">3</div>
+                <div class="step-label">Чат</div>
+            </div>
+            <div class="step" data-step="4">
+                <div class="step-circle">4</div>
+                <div class="step-label">Пользователи</div>
+            </div>
+        </div>
+
+        <!-- Step 1: Directory Settings -->
+        <div class="step-content active" id="step-1">
+            <div class="instructions">
+                <div class="instructions-title">
+                    📌 Инструкция
+                </div>
+                <div class="instructions-content">
+                    <p><strong>Путь для сохранения osu! карт</strong></p>
+                    <ul>
+                        <li>Укажите полный путь к папке Songs в вашей установке osu!</li>
+                        <li>Пример: <code>D:\osu!\Songs</code> или <code>C:\Games\osu!\Songs</code></li>
+                        <li>Папка должна существовать и иметь права на запись</li>
+                    </ul>
+                </div>
+            </div>
+
+            <div class="cards-grid">
+                <div class="card">
+                    <div class="card-header">
+                        <span class="card-icon">📂</span>
+                        <span class="card-title">Настройки директории</span>
+                    </div>
+                    <p class="card-description">
+                        Укажите путь для сохранения загруженных карт
+                    </p>
+                    <div class="control-group">
+                        <label class="control-label">Путь к папке Songs</label>
+                        <input type="text" class="control-input" id="folder-path"
+                               value="D:\osu!\Songs"
+                               placeholder="Введите полный путь...">
+                    </div>
+                    <div class="action-buttons">
+                        <button class="action-btn" onclick="saveDirectorySettings()">
+                            Сохранить и продолжить
+                        </button>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Step 2: Downloader Settings -->
+        <div class="step-content" id="step-2">
+            <div class="instructions">
+                <div class="instructions-title">
+                    📌 Рекомендуемые значения
+                </div>
+                <div class="instructions-content">
+                    <p><strong>Максимальный размер файла:</strong> 350 MB (диапазон: 50-1024 MB)</p>
+                    <p><strong>Источник загрузки (выберите один):</strong></p>
+                    <ul>
+                        <li><strong>Сравнить и выбрать лучший:</strong> https://catboy.best/compare</li>
+                        <li><strong>catboy.best:</strong> Вебсайт: "catboy.best", Префикс пути: "/d/"</li>
+                        <li><strong>osu.direct:</strong> Вебсайт: "osu.direct", Префикс пути: "/api/d/"</li>
+                        <li><strong>nerinyan.moe:</strong> Вебсайт: "nerinyan.moe", Префикс пути: "/d/"</li>
+                    </ul>
+                </div>
+            </div>
+
+            <div class="cards-grid">
+                <div class="card">
+                    <div class="card-header">
+                        <span class="card-icon">📏</span>
+                        <span class="card-title">Ограничение размера</span>
+                    </div>
+                    <p class="card-description">
+                        Максимальный размер скачиваемых файлов
+                    </p>
+                    <div class="control-group">
+                        <label class="control-label">Максимальный размер (MB)</label>
+                        <input type="number" class="control-input" id="file-size"
+                               value="350" min="50" max="1024">
+                    </div>
+                </div>
+
+                <div class="card">
+                    <div class="card-header">
+                        <span class="card-icon">🔗</span>
+                        <span class="card-title">Источник загрузки</span>
+                    </div>
+                    <p class="card-description">
+                        Выберите источник для загрузки карт
+                    </p>
+                    <div class="control-group">
+                        <label class="control-label">Вебсайт</label>
+                        <input type="text" class="control-input" id="website-address"
+                               placeholder="catboy.best">
+                    </div>
+                    <div class="control-group">
+                        <label class="control-label">Префикс пути</label>
+                        <input type="text" class="control-input" id="path-prefix"
+                               placeholder="/d/">
+                    </div>
+                    <div class="action-buttons">
+                        <button class="action-btn btn-secondary" onclick="goToStep(1)">
+                            Назад
+                        </button>
+                        <button class="action-btn" onclick="saveDownloaderSettings()">
+                            Сохранить и продолжить
+                        </button>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Step 3: Chat Connection -->
+        <div class="step-content" id="step-3">
+            <div class="instructions">
+                <div class="instructions-title">
+                    ⚡ Настройки подключения
+                </div>
+                <div class="instructions-content">
+                    <p><strong>Задержка переподключения:</strong> 30 секунд (10-120 сек)</p>
+                    <p>Используется при разрывах соединения. Не нужно перезапускать программу.</p>
+                    <p><strong>Пример названия чата:</strong> darkyisoffline</p>
+                </div>
+            </div>
+
+            <div class="connection-status">
+                <div class="status-dot disconnected" id="connection-status"></div>
+                <span id="connection-text">Не подключено</span>
+            </div>
+
+            <div class="cards-grid">
+                <div class="card">
+                    <div class="card-header">
+                        <span class="card-icon">🔄</span>
+                        <span class="card-title">Автопереподключение</span>
+                    </div>
+                    <p class="card-description">
+                        Настройки восстановления соединения
+                    </p>
+                    <div class="control-group">
+                        <label class="control-label">Задержка (секунды)</label>
+                        <input type="number" class="control-input" id="reconnect-delay"
+                               value="30" min="10" max="120">
+                    </div>
+                </div>
+
+                <div class="card">
+                    <div class="card-header">
+                        <span class="card-icon">💬</span>
+                        <span class="card-title">Подключение к чату</span>
+                    </div>
+                    <p class="card-description">
+                        Введите название чата для подключения
+                    </p>
+                    <div class="control-group">
+                        <label class="control-label">Название чата</label>
+                        <input type="text" class="control-input" id="chat-room"
+                               placeholder="darkyisoffline">
+                    </div>
+                    <div class="action-buttons">
+                        <button class="action-btn btn-secondary" onclick="goToStep(2)">
+                            Назад
+                        </button>
+                        <button class="action-btn" onclick="connectToChat()" id="connect-btn">
+                            Подключиться
+                        </button>
+                    </div>
+                    <div class="result-area" id="result-chat"></div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Step 4: User Management -->
+        <div class="step-content" id="step-4">
+            <div class="instructions">
+                <div class="instructions-title">
+                    👥 Управление доступом
+                </div>
+                <div class="instructions-content">
+                    <p><strong>Выберите уровень доступа:</strong></p>
+                    <ul>
+                        <li><strong>0 - Все пользователи:</strong> Любой пользователь чата</li>
+                        <li><strong>1 - Подписчики и выше:</strong> Подписчики, VIP, модераторы, стример</li>
+                        <li><strong>2 - VIP и выше:</strong> VIP, модераторы, стример (рекомендуется)</li>
+                        <li><strong>3 - Модераторы и стример:</strong> Для ограниченного доступа</li>
+                        <li><strong>4 - Только стример:</strong> Для тестирования или приватных стримов</li>
+                    </ul>
+                    <p><strong>Режим "Только доверенные":</strong></p>
+                    <ul>
+                        <li>❌ Выключено: доступ по ролям (рекомендуется)</li>
+                        <li>✅ Включено: только пользователи из списка Allowed Users</li>
+                    </ul>
+                </div>
+            </div>
+
+            <div class="cards-grid">
+                <div class="card">
+                    <div class="card-header">
+                        <span class="card-icon">🎖️</span>
+                        <span class="card-title">Уровень доступа</span>
+                    </div>
+                    <p class="card-description">
+                        Минимальная роль для доступа к командам
+                    </p>
+
+                    <div class="control-group">
+                        <label class="control-label">Выберите уровень:</label>
+                        <div id="role-options">
+                            <!-- Roles will be populated by JavaScript -->
+                        </div>
+                    </div>
+
+                    <div class="control-group">
+                        <label class="control-label">Только доверенные пользователи</label>
+                        <select class="control-input" id="trusted-only">
+                            <option value="false">❌ Выключено - доступ по ролям (рекомендуется)</option>
+                            <option value="true">✅ Включено - только из списка Allowed Users</option>
+                        </select>
+                    </div>
+                </div>
+
+                <div class="card">
+                    <div class="card-header">
+                        <span class="card-icon">✅</span>
+                        <span class="card-title">Разрешенные пользователи</span>
+                    </div>
+                    <p class="card-description">
+                        Добавьте пользователей в белый список
+                    </p>
+                    <div class="control-group">
+                        <label class="control-label">Имя пользователя</label>
+                        <input type="text" class="control-input" id="allow-user"
+                               placeholder="Введите username...">
+                    </div>
+                    <button class="action-btn" onclick="allowUser(this)">
+                        Добавить
+                    </button>
+                    <button class="action-btn btn-secondary" onclick="removeAllowedUser(this)">
+                        Удалить
+                    </button>
+                </div>
+
+                <div class="card">
+                    <div class="card-header">
+                        <span class="card-icon">❌</span>
+                        <span class="card-title">Заблокированные пользователи</span>
+                    </div>
+                    <p class="card-description">
+                        Пользователи без доступа
+                    </p>
+                    <div class="control-group">
+                        <label class="control-label">Имя пользователя</label>
+                        <input type="text" class="control-input" id="block-user"
+                               placeholder="Введите username...">
+                    </div>
+                    <button class="action-btn" onclick="blockUser(this)">
+                        Заблокировать
+                    </button>
+                    <button class="action-btn btn-secondary" onclick="removeBlockedUser(this)">
+                        Разблокировать
+                    </button>
+                </div>
+            </div>
+
+            <div class="action-buttons">
+                <button class="action-btn btn-secondary" onclick="goToStep(3)">
+                    Назад
+                </button>
+                <button class="action-btn" onclick="saveAllSettings()">
+                    Сохранить все настройки
+                </button>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        const SERVER_URL = 'http://127.0.0.1:8181';
+        let currentStep = 1;
+        let selectedRoleLevel = 2; // По умолчанию VIP
+        let isConnected = false;
+
+        // Данные о ролях
+        const roles = [
+        {
+        level: 0,
+        icon: '🔓',
+        name: 'Все пользователи',
+        description: 'Любой пользователь чата',
+        access: 'Кто имеет доступ: любой пользователь чата',
+        when: 'Когда использовать: для открытых стримов'
+        },
+        {
+        level: 1,
+        icon: '⭐',
+        name: 'Подписчики и выше',
+        description: 'Подписчики, VIP, модераторы, стример',
+        access: 'Кто имеет доступ: подписчики, VIP, модераторы, стример',
+        when: 'Когда использовать: для стримов с подписчиками'
+        },
+        {
+        level: 2,
+        icon: '🎖️',
+        name: 'VIP пользователи и выше',
+        description: 'VIP, модераторы, стример',
+        access: 'Кто имеет доступ: VIP, модераторы, стример',
+        when: 'Когда использовать: по умолчанию, хороший баланс'
+        },
+        {
+        level: 3,
+        icon: '👮',
+        name: 'Модераторы и стример',
+        description: 'Только модераторы и стример',
+        access: 'Кто имеет доступ: модераторы и стример',
+        when: 'Когда использовать: для ограниченного доступа'
+        },
+        {
+        level: 4,
+        icon: '👑',
+        name: 'Только стример',
+        description: 'Только стример',
+        access: 'Кто имеет доступ: только стример',
+        when: 'Когда использовать: для тестирования или приватных стримов'
+        }
+        ];
+
+        // Инициализация
+        document.addEventListener('DOMContentLoaded', function() {
+        initRoleCards();
+        });
+
+        // Навигация по шагам
+        function goToStep(step) {
+        if (step < 1 || step > 4) return;
+
+        // Скрыть текущий шаг
+        document.querySelector(`#step-${currentStep}`).classList.remove('active');
+        document.querySelector(`.step[data-step="${currentStep}"]`).classList.remove('active');
+
+        // Показать новый шаг
+        currentStep = step;
+        document.querySelector(`#step-${currentStep}`).classList.add('active');
+        document.querySelector(`.step[data-step="${currentStep}"]`).classList.add('active');
+
+        // Отметить предыдущие шаги как выполненные
+        document.querySelectorAll('.step').forEach(stepEl => {
+        const stepNum = parseInt(stepEl.dataset.step);
+        if (stepNum < currentStep) {
+        stepEl.classList.add('completed');
+        } else if (stepNum > currentStep) {
+        stepEl.classList.remove('completed');
+        }
+        });
+        }
+
+        // Инициализация карточек ролей
+        function initRoleCards() {
+        const container = document.getElementById('role-options');
+        container.innerHTML = '';
+
+        roles.forEach(role => {
+        const card = document.createElement('div');
+        card.className = `role-card ${role.level === selectedRoleLevel ? 'selected' : ''}`;
+        card.dataset.level = role.level;
+        card.onclick = () => selectRole(role.level);
+
+        card.innerHTML = `
+        <div class="role-header">
+        <span class="role-icon">${role.icon}</span>
+        <span class="role-name">${role.name}</span>
+        <span class="role-level">Уровень ${role.level}</span>
+        </div>
+        <div class="role-description">${role.description}</div>
+        <div class="role-access">${role.access}</div>
+        `;
+
+        container.appendChild(card);
+        });
+        }
+
+        // Выбор роли
+        function selectRole(level) {
+        selectedRoleLevel = level;
+
+        // Обновить визуальное выделение
+        document.querySelectorAll('.role-card').forEach(card => {
+        if (parseInt(card.dataset.level) === level) {
+        card.classList.add('selected');
+        } else {
+        card.classList.remove('selected');
+        }
+        });
+        }
+
+        // Сохранение настроек директории
+        async function saveDirectorySettings() {
+        const path = document.getElementById('folder-path').value.trim();
+        if (!path) {
+        alert('Пожалуйста, укажите путь к папке');
+        return;
+        }
+
+        const result = await makeRequest('/api/downloader/settings/folder', 'PUT', { Path: path });
+
+        if (result.success) {
+        goToStep(2);
+        } else {
+        alert('Ошибка сохранения: ' + result.message);
+        }
+        }
+
+        // Сохранение настроек загрузчика
+        async function saveDownloaderSettings() {
+        const size = parseInt(document.getElementById('file-size').value);
+        if (isNaN(size) || size < 50 || size > 1024) {
+        alert('Размер файла должен быть от 50 до 1024 MB');
+        return;
+        }
+
+        const website = document.getElementById('website-address').value.trim();
+        const prefix = document.getElementById('path-prefix').value.trim();
+
+        if (!website || !prefix) {
+        // Автозаполнение рекомендуемых значений
+        if (!website && !prefix) {
+        document.getElementById('website-address').value = 'catboy.best';
+        document.getElementById('path-prefix').value = '/d/';
+        } else {
+        alert('Пожалуйста, заполните оба поля источника загрузки');
+        return;
+        }
+        }
+
+        // Сохраняем размер файла
+        const sizeResult = await makeRequest('/api/downloader/settings/max_file_size', 'PUT', {
+        FileSize: size
+        });
+
+        // Сохраняем источник
+        const sourceResult = await makeRequest('/api/downloader/settings/resourse_and_prefix', 'PUT', {
+        Resourse: website || 'catboy.best',
+        Prefix: prefix || '/d/'
+        });
+
+        if (sizeResult.success && sourceResult.success) {
+        goToStep(3);
+        } else {
+        alert('Ошибка сохранения настроек загрузчика');
+        }
+        }
+
+        // Подключение к чату
+        async function connectToChat() {
+        const room = document.getElementById('chat-room').value.trim();
+        if (!room) {
+        alert('Пожалуйста, введите название чата');
+        return;
+        }
+
+        const delay = parseInt(document.getElementById('reconnect-delay').value);
+
+        // Сохраняем настройки переподключения
+        await makeRequest('/api/irc_client/settings/set_reconnect_timeout', 'PUT', {
+        ReconnectTimeout: delay
+        });
+
+        const btn = document.getElementById('connect-btn');
+        btn.innerHTML = '<span class="loading-dots"></span> Подключение...';
+        btn.disabled = true;
+
+        // Обновляем статус
+        updateConnectionStatus('connecting', 'Подключение...');
+
+        const result = await makeRequest('/api/irc_client/join', 'POST', {
+        Channel: room
+        });
+
+        if (result.success) {
+        isConnected = true;
+        updateConnectionStatus('connected', `Подключено к ${room}`);
+        goToStep(4);
+        } else {
+        updateConnectionStatus('disconnected', 'Ошибка подключения');
+        alert('Ошибка подключения: ' + result.message);
+        }
+
+        btn.innerHTML = 'Подключиться';
+        btn.disabled = false;
+        }
+
+        // Обновление статуса подключения
+        function updateConnectionStatus(status, text) {
+        const dot = document.getElementById('connection-status');
+        const textEl = document.getElementById('connection-text');
+
+        dot.className = 'status-dot';
+        dot.classList.add(status);
+        textEl.textContent = text;
+        }
+
+        // Управление пользователями
+        async function allowUser(button) {
+        const username = document.getElementById('allow-user').value.trim();
+        if (!username) {
+        alert('Введите имя пользователя');
+        return;
+        }
+
+        setLoading(button, true);
+        const result = await makeRequest('/api/white_list/users', 'PUT', {
+        UserName: username
+        });
+
+        if (result.success) {
+        alert(`Пользователь ${username} добавлен в белый список`);
+        document.getElementById('allow-user').value = '';
+        } else {
+        alert('Ошибка: ' + result.message);
+        }
+        setLoading(button, false);
+        }
+
+        async function removeAllowedUser(button) {
+        const username = document.getElementById('allow-user').value.trim();
+        if (!username) {
+        alert('Введите имя пользователя');
+        return;
+        }
+
+        setLoading(button, true);
+        const result = await makeRequest('/api/white_list/users', 'DELETE', {
+        UserName: username
+        });
+
+        if (result.success) {
+        alert(`Пользователь ${username} удален из белого списка`);
+        document.getElementById('allow-user').value = '';
+        } else {
+        alert('Ошибка: ' + result.message);
+        }
+        setLoading(button, false);
+        }
+
+        async function blockUser(button) {
+        const username = document.getElementById('block-user').value.trim();
+        if (!username) {
+        alert('Введите имя пользователя');
+        return;
+        }
+
+        setLoading(button, true);
+        const result = await makeRequest('/api/black_list/users', 'PUT', {
+        UserName: username
+        });
+
+        if (result.success) {
+        alert(`Пользователь ${username} заблокирован`);
+        document.getElementById('block-user').value = '';
+        } else {
+        alert('Ошибка: ' + result.message);
+        }
+        setLoading(button, false);
+        }
+
+        async function removeBlockedUser(button) {
+        const username = document.getElementById('block-user').value.trim();
+        if (!username) {
+        alert('Введите имя пользователя');
+        return;
+        }
+
+        setLoading(button, true);
+        const result = await makeRequest('/api/black_list/users', 'DELETE', {
+        UserName: username
+        });
+
+        if (result.success) {
+        alert(`Пользователь ${username} разблокирован`);
+        document.getElementById('block-user').value = '';
+        } else {
+        alert('Ошибка: ' + result.message);
+        }
+        setLoading(button, false);
+        }
+
+        // Сохранение всех настроек
+        async function saveAllSettings() {
+        const trustedOnly = document.getElementById('trusted-only').value === 'true';
+
+        // Сохраняем уровень доступа
+        const levelResult = await makeRequest('/api/validator/settings/role_filter_level', 'PUT', {
+        RoleFilterLevel: selectedRoleLevel
+        });
+
+        // Сохраняем режим доверенных пользователей
+        const trustedResult = await makeRequest('/api/validator/settings/set_whitelist_only', 'PUT', {
+        IsOn: trustedOnly
+        });
+
+        // Сохраняем все настройки
+        const saveResult = await makeRequest('/api/settings/save', 'POST');
+
+        if (levelResult.success && trustedResult.success && saveResult.success) {
+        alert('Все настройки успешно сохранены!');
+        } else {
+        alert('Произошла ошибка при сохранении настроек');
+        }
+        }
+
+        // Вспомогательные функции
+        function setLoading(button, isLoading) {
+        if (isLoading) {
+        button.innerHTML = '<span class="loading-dots"></span> Обработка...';
+        button.disabled = true;
+        } else {
+        const originalText = button.textContent.replace('Обработка...', '').trim();
+        button.innerHTML = originalText;
+        button.disabled = false;
+        }
+        }
+
+        async function makeRequest(endpoint, method, data = null) {
+        try {
+        const options = {
+        method: method,
+        headers: {
+        'Content-Type': 'application/json'
+        }
+        };
+
+        if (data) {
+        options.body = JSON.stringify(data);
+        }
+
+        const response = await fetch(SERVER_URL + endpoint, options);
+        const result = await response.text();
+
+        return {
+        success: response.ok,
+        message: result,
+        status: response.status
+        };
+        } catch (error) {
+        return {
+        success: false,
+        message: 'Ошибка соединения: ' + error.message
+        };
+        }
+        }
+    </script>
+</body>
+</html>
