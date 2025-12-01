@@ -70,7 +70,7 @@ namespace commands {
             std::string_view cut = url.substr(OSU_BEATMAPS_URL.size());
             size_t start = cut.find_first_of("#") + 1;
             size_t end = cut.find_first_of("/");
-            return url.substr(start, end - start) == OSU_GAME_MODE;
+            return cut.substr(start, end - start) == OSU_GAME_MODE;
         }
 
         std::string GetOsuMapID(std::string_view message) {
