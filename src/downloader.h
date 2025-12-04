@@ -36,16 +36,22 @@ namespace downloader {
         void SetUserAgent(std::string_view user_agent);
         void SetUriPrefix(std::string_view uri_prefix);
         void SetResourse(std::string_view resourse);
-        void SetDownloadsFolder(std::string_view path);
+        void SetDownloadsDirectory(std::string_view path);
         std::shared_ptr<http_domain::Client> SetupNonSecuredConnection();
         std::shared_ptr<http_domain::Client> SetupSecuredConnection();
         void SetMaxFileSize(size_t MiB);
+
+        std::optional<std::string> GetResourse() const;
+        std::optional<std::string> GetPrefix() const;
+        size_t GetMaxFileSize() const;
+        std::optional<std::filesystem::path> GetDownloadsDirectory() const;
+        std::string GetUserAgent() const;
 
     private:
         net::io_context& ioc_;
         Strand dl_strand;
         bool secured_ = true;
-        std::string user_agent_ = "OsuRequestFlow v0.1";
+        std::string user_agent_ = "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36";
 
         std::shared_ptr<file_manager::FileManager> file_manager_{ nullptr };
         std::optional<std::string> resourse_;

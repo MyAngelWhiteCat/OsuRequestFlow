@@ -71,7 +71,7 @@ namespace downloader {
         resourse_ = std::string(resourse);
     }
 
-    void Downloader::SetDownloadsFolder(std::string_view path) {
+    void Downloader::SetDownloadsDirectory(std::string_view path) {
         file_manager_ = std::make_shared<file_manager::FileManager>(std::filesystem::path(path));
     }
 
@@ -109,6 +109,29 @@ namespace downloader {
 
     void Downloader::SetMaxFileSize(size_t MiB) {
         max_file_size_MiB_ = MiB;
+    }
+
+    std::optional<std::string> Downloader::GetResourse() const {
+        return resourse_;
+    }
+
+    std::optional<std::string> Downloader::GetPrefix() const {
+        return uri_prefix_;
+    }
+
+    size_t Downloader::GetMaxFileSize() const {
+        return max_file_size_MiB_;
+    }
+
+    std::optional<std::filesystem::path> Downloader::GetDownloadsDirectory() const {
+        if (file_manager_) {
+            return file_manager_->GetRootDirectory();
+        }
+        return std::nullopt;
+    }
+
+    std::string Downloader::GetUserAgent() const {
+        return user_agent_;
     }
 
     std::string Downloader::GetEndpoint(std::string_view file) {
