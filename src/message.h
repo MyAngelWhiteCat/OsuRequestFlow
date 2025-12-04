@@ -57,6 +57,21 @@ namespace irc {
             return out;
         }
 
+        static std::string RoleToString(const Role& role) {
+            switch (role) {
+            case Role::VIP:
+                return "VIP";
+            case Role::BROADCASTER:
+                return "BROADCASTER";
+            case Role::MODERATOR:
+                return "MODERATOR";
+            case Role::EMPTY:
+                return "EMPTY";
+            case Role::SUBSCRIBER:
+                return "SUBSCRIBER";
+            }
+        }
+
     }
 
 }
