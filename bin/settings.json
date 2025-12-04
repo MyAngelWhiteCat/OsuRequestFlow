@@ -1,0 +1,10 @@
+{
+    "user_verificator": {
+        "blacklist": [],
+        "rolefilter_level": 2,
+        "whitelist": [
+            "ghghjhgjgh"
+        ],
+        "whitelist_only": false
+    }
+}

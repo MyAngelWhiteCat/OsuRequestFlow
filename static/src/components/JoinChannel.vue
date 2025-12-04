@@ -175,7 +175,7 @@ watch(currentConnetions, () => {
         top: 45%;
         left: -25px;
         border-radius: 50%;
-        background-color: #c30000;
+        background-color: #3ed80f;
     }
 
     svg {
