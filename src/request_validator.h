@@ -53,6 +53,9 @@ namespace request_validator {
         template <typename Body, typename Allocator, typename Send>
         std::optional<bool> ValidateSetWhiteListOnlyRequest(http::request<Body, http::basic_fields<Allocator>>& req, Send&& send);
 
+        template <typename Body, typename Allocator, typename Send>
+        std::optional<bool> ValidateShowChatRequest(http::request<Body, http::basic_fields<Allocator>>& req, Send&& send);
+        
         template<typename Body, typename Allocator, typename Send>
         void SendMethodNotAllowed(http::request<Body, http::basic_fields<Allocator>>& req, Send&& send, std::string_view allowed);
 
@@ -203,6 +206,20 @@ namespace request_validator {
         if (auto parsed_body = ParseJson(req, send)) {
             if (parsed_body->contains("IsOn") && (*parsed_body)["IsOn"].is_boolean()) {
                 return (*parsed_body)["IsOn"].get<bool>();
+            }
+        }
+        SendInvalidArgument(req, send, "Invalid status");
+        return std::nullopt;
+    }
+
+    template<typename Body, typename Allocator, typename Send>
+    inline std::optional<bool> RequestValidator::ValidateShowChatRequest(http::request<Body, http::basic_fields<Allocator>>& req, Send&& send) {
+        if (req.method() != http::verb::put) {
+            SendMethodNotAllowed(req, send, "PUT");
+        }
+        if (auto parsed_body = ParseJson(req, send)) {
+            if (parsed_body->contains("Enabled") && (*parsed_body)["Enabled"].is_boolean()) {
+                return (*parsed_body)["Enabled"].get<bool>();
             }
         }
         SendInvalidArgument(req, send, "Invalid status");
