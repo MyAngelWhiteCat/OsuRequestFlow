@@ -52,7 +52,7 @@ int main() {
     auto downloader = std::make_shared<downloader::Downloader>(ioc, ctx_dl);
     downloader->SetResourse(resourse);
     downloader->SetUriPrefix("/api/d/");
-    downloader->SetDownloadsFolder(std::filesystem::current_path().string() + "/downloads");
+    downloader->SetDownloadsDirectory(std::filesystem::current_path().string() + "/downloads");
     auto executor = std::make_shared<commands::CommandExecutor>(downloader);
     auto parser = std::make_shared<commands::CommandParser>(*executor);
     auto chat_bot = std::make_shared<chat_bot::ChatBot>(executor, parser);

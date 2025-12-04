@@ -37,7 +37,7 @@ namespace test_downloader {
         auto downloader = std::make_shared<downloader::Downloader>(ioc, ctx);
         downloader->SetResourse(resourse);
         downloader->SetUriPrefix("/d/");
-        downloader->SetDownloadsFolder(std::filesystem::current_path().string() + "/downloads");
+        downloader->SetDownloadsDirectory(std::filesystem::current_path().string() + "/downloads");
         TestDownloadIevanPolka(downloader);
     }
 
