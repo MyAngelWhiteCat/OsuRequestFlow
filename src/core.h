@@ -41,8 +41,6 @@ namespace core {
         static constexpr std::string_view DOWNLOADS_DIR = "DownloadsDirectory"sv;
         static constexpr std::string_view RESOURCE = "Resourse"sv;
         static constexpr std::string_view PREFIX = "Prefix"sv;
-        static constexpr std::string_view ROLEFILTER_LEVEL = "MaxFileSize"sv;
-        static constexpr std::string_view ROLEFILTER_LEVEL = "MaxFileSize"sv;
     };
 
     class Core {

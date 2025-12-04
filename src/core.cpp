@@ -86,7 +86,7 @@ namespace core {
             LoadUserVerificatorSettings(*it);
         }
         if (auto it = settings.find(SettingsKeys::IRC_CLIENT); it != settings.end()) {
-            LoadIRCClientSettings(*it)
+            LoadIRCClientSettings(*it);
         }
         if (auto it = settings.find(SettingsKeys::DOWNLOADER); it != settings.end()) {
             LoadDownloaderSettings(*it);
