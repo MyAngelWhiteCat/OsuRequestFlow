@@ -27,7 +27,6 @@
 #include "request_builder.h"
 #include "response_parser.h"
 #include "decode_url.h"
-#include <mutex>
 
 
 namespace http_domain {
@@ -69,10 +68,6 @@ namespace http_domain {
             , read_strand_(net::make_strand(ioc))
         {
 
-        }
-
-        ~Client() {
-            LOG_INFO("HTTP Client destructed");
         }
 
         void SetMaxFileSize(int file_size_MiB) {
@@ -152,10 +147,6 @@ namespace http_domain {
 
             }
 
-            ~ReadVisitor() {
-                LOG_INFO("ReadVisitor destructed");
-            }
-
             void operator()(beast::tcp_stream& stream) {
                 Read(stream);
             }
@@ -182,13 +173,11 @@ namespace http_domain {
 
             template <typename Stream>
             void ReadHeaders(Stream& stream) {
-                LOG_INFO("Start reading response");
                 http::async_read_header(stream, buffer_, response_parser_.GetParser()
                     , net::bind_executor(client_->read_strand_
                         , [self = this->shared_from_this(), &stream]
                         (const beast::error_code& ec, size_t bytes_readed) mutable
                         {
-                            LOG_INFO("Headers readed");
                             self->OnReadHeaders(ec, stream);
                         }));
             }
@@ -211,7 +200,7 @@ namespace http_domain {
                     ReadBody(stream);
                 }
                 else {
-                    LOG_ERROR("File size");
+                    LOG_ERROR("File size too big");
                 }
             }
 
@@ -224,23 +213,19 @@ namespace http_domain {
                         LOG_INFO("Read "s.append(std::to_string(bytes_readed).append(" bytes")));
                         self->OnReadBody(ec, stream);
                     });
-                MonitorDownloading(stream);
                 LOG_INFO("Start downloading");
+                MonitorDownloading(stream);
             }
 
             template <typename Stream>
             void OnReadBody(const beast::error_code& ec, Stream& stream) {
                 if (ec) {
                     if (ec == net::error::operation_aborted) {
-                        LOG_INFO("Download cancelled");
+                        LOG_ERROR("Download cancelled");
                         return;
                     }
                     CheckConnectionError(ec);
                     logging::ReportError(ec, "Reading http response");
-                    if (ec == http::error::need_more) {
-                        LOG_INFO("Get some body bytes. Need more.");
-                        ReadBody(stream);
-                    }
                 }
                 std::string file_name = response_parser_.GetFileName();
                 response_parser_.ParseResponseBody();
@@ -259,14 +244,17 @@ namespace http_domain {
 
             template <typename Stream>
             void MonitorDownloading(Stream& stream) {
-                downloading_monitoring_timer_.expires_after(std::chrono::milliseconds(500));
+                downloading_monitoring_timer_.expires_after(std::chrono::milliseconds(50));
                 downloading_monitoring_timer_.async_wait([self = this->weak_from_this(), &stream](auto ec) {
                     if (auto cli = self.lock(); !ec && cli->in_downloading_) {
                         double progress = cli->response_parser_.GetProgress();
-                        std::cout << std::setprecision(2) << progress << "%\n";
+                        if (progress != cli->last_knowed_progress_) {
+                            std::cout << std::setprecision(2) << progress << "%\n";
+                        }
+
                         if (progress == cli->last_knowed_progress_) {
                             cli->downloads_fasle_.push_back('c');
-                            if (cli->downloads_fasle_.size() == 10) {
+                            if (cli->downloads_fasle_.size() == 200) {
                                 auto& lowest_layer = beast::get_lowest_layer(stream);
                                 lowest_layer.cancel();
                             }
@@ -372,7 +360,7 @@ namespace http_domain {
             }
 
             void operator()(ssl::stream<beast::tcp_stream>& socket) {
-                tcp::resolver resolver(socket.get_executor()); // :(
+                tcp::resolver resolver(socket.get_executor());
                 auto endpoints = resolver.resolve(host_, port_, client_.ec_);
 
                 if (client_.ec_) {

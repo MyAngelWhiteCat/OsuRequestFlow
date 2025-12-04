@@ -51,6 +51,10 @@ namespace file_manager {
         return bytes;
     }
 
+    fs::path FileManager::GetRootDirectory() const {
+        return root_directory_;
+    }
+
     void FileManager::RemoveFile(const fs::path& path) {
         if (fs::remove(path)) {
             LOG_INFO("Deleted " + path.string());
