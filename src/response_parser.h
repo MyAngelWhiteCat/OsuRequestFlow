@@ -43,10 +43,6 @@ namespace http_domain {
             response_parser_.body_limit(max_file_size_);
         }
 
-        ~ResponseParser() {
-            LOG_INFO("Response Parser Destructed");
-        }
-
         bool IsOK() {
             auto& response = response_parser_.get();
             return response.reason() == Status::OK;
