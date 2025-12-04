@@ -64,7 +64,7 @@ int main() {
 
     auto address = net::ip::make_address("127.0.0.1");
     boost::asio::ip::tcp::endpoint localhost{ address, 8181 };
-    fs::path root = fs::current_path() / "../static";
+    fs::path root = fs::current_path() / "static";
 
     LOG_INFO("MAKE SURE YOU DONT HAVE ANY kirilic/arabic/chineese NAMED FOLDERS IN PATH TO THIS EXE");
     LOG_INFO("OR NOW YOU WILL SEE EPIC CRASH WITH 5+ ASSERTION");
