@@ -41,7 +41,6 @@ namespace http_domain {
         req.set(http::field::connection, connection);
         req.set(http::field::accept_encoding, "gzip, deflate, br");
         //req.set("Range", "bytes=0-1048576"); 
-        req.set(http::field::referer, "https://osu.ppy.sh/");
         return req;
     }
 
