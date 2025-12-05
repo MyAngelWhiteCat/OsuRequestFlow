@@ -82,9 +82,6 @@ namespace gui_http {
             else if (target == APITarget::PART_CHANNEL) {
                 HandlePartChannel(std::move(req), std::move(send));
             }
-            else if (target == APITarget::LAST_MESSAGES) {
-                HandleLastMessages(std::move(req), std::move(send));
-            }
             else if (target == APITarget::SHOW_CHAT) {
                 HandleShowChat(std::move(req), std::move(send));
             }
@@ -136,9 +133,6 @@ namespace gui_http {
         
         template <typename Body, typename Allocator, typename Send>
         void HandlePartChannel(http::request<Body, http::basic_fields<Allocator>>&& req, Send&& send);
-        
-        template <typename Body, typename Allocator, typename Send>
-        void HandleLastMessages(http::request<Body, http::basic_fields<Allocator>>&& req, Send&& send);
         
         template <typename Body, typename Allocator, typename Send>
         void HandleShowChat(http::request<Body, http::basic_fields<Allocator>>&& req, Send&& send);
@@ -339,20 +333,6 @@ namespace gui_http {
             core_.Part(*channel);
             SendOK(req, send, "Part " + std::string(*channel));
         }
-    }
-
-    template<typename Body, typename Allocator, typename Send>
-    inline void ApiRequestHandler::HandleLastMessages(http::request<Body, http::basic_fields<Allocator>>&& req, Send&& send) {
-        if (req.method() != http::verb::get) {
-            request_validator_.SendMethodNotAllowed(req, send, "GET");
-        }
-        json last_msgs = core_.GetLastMessages();
-        send(response_maker_.MakeStringResponse(
-            http::status::ok,
-            req.version(),
-            std::move(last_msgs),
-            req.keep_alive()
-        ));
     }
 
     template<typename Body, typename Allocator, typename Send>
