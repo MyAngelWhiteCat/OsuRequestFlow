@@ -24,39 +24,62 @@
                 Настройка директории
             </div>
             <p>Укажите путь для сохранения загруженных карт</p>
-            <form method="post">
+            <!-- <form method="post">
                 <label class="input-file">
-                    <span class="input-file-btn" @click="choosePath">Выберите файл</span>
+                    <span class="input-file-btn" @click="selectFolder">Выберите файл</span>
                     <span class="input-file-text" type="text">{{ selectedPath }}</span>
-                    <input type="file" name="file" ref="pathInput" @change="onPathChange">        
+                    <input type="file">        
                 </label>
-            </form>
+            </form> -->
+            <div class="directory__path">
+                <input id type="text" placeholder="Укажите путь к папке" class="directory__input-path" @input="onTypePath">
+                <div class="directory__path-bottom">
+                    <button class="directory__save-btn" @click="handleClickSave">Сохранить и продолжить</button>
+                    <span v-if="statusMessage" class="directory__status-message">{{ statusMessage }}</span>
+                </div>
+            </div>
+            <!-- <div style="height: 45px; margin-top: 20px;">
+                <div v-if="statusMessage" class="directory__status-message">{{ statusMessage }}</div>
+            </div> -->
         </div>
     </div>
 </template>
 
 <script setup>
 import { ref, watch } from 'vue';
+import axios from 'axios';
 
-const pathInput = ref(null)
 const selectedPath = ref('')
+const statusMessage = ref(null)
 
-const choosePath = () => {
-    pathInput.value.click();
+const onTypePath = (e) => {
+    selectedPath.value = e.target.value
 }
 
-const onPathChange = (e) => {
-    const file = e.target.files[0]
-    if (file) {
-        selectedPath.value = file.path
-        console.log(selectedPath.value)
+const handleClickSave = () => {
+    fetchSelectFolder()
+}
+
+const fetchSelectFolder = async () => {
+    try {
+        const res = await axios.put('http://localhost:8181/api/downloader/settings/folder', 
+        { 
+            Path: selectedPath.value
+        });
+        statusMessage.value = null
+        console.log(res);
+        
+
+    } catch (error) {
+        statusMessage.value = "Неверно указан путь к папке";
+        console.log('Ошибка при выборе папки:', error)     
     }
 }
 
-watch(pathInput, () => {
-    console.log(pathInput.value);
+watch(statusMessage, () => {
+    console.log(statusMessage.value);
+    
 })
-
 
 </script>
 
@@ -155,5 +178,66 @@ watch(pathInput, () => {
 	display: block;
 	width: 0;
 	height: 0;
+}
+
+.directory__path {
+    display: flex;
+    flex-direction: column;
+}
+
+.directory__input-path {
+    width: 60%;
+    padding: 10px;
+    border: 1px solid #ddd;
+    border-radius: 6px;
+
+    font-size: 14px;
+    color: rgb(255, 255, 255);
+    background-color: transparent;
+    transition: all 0.4s;
+
+
+    &::placeholder {
+        color: rgb(255, 255, 255, 0.3);
+    }
+
+    &:focus {
+        box-shadow: 0 1px 10px 4px rgba(45, 91, 255, 0.4);
+        outline: none;
+    }
+}
+
+.directory__save-btn {  
+    width: 300px;
+    background: linear-gradient(45deg, #202abe 0%, #0960d1 100%);
+    color: #ffffff;
+    font-weight: 600;
+    border: none;
+    box-shadow: 0 4px 15px rgba(0, 0, 0, 0.2);
+    transition: all 0.3s ease;
+
+    &:hover {
+        transform: translateY(-2px);
+        box-shadow: 0 6px 20px rgba(45, 91, 255, 0.4);
+    }
+}
+
+.directory__path-bottom {
+    display: flex;
+    flex-direction: row;
+    margin-top: 30px;
+}
+
+.directory__status-message {
+    margin-left: 30px;
+    border-radius: 8px;
+    font-weight: 500;
+    width: 230px;
+    text-align: center;
+    transition: all 0.3s ease; 
+    color: #dd6868;
+    display: flex;
+    align-items: center;
+    justify-content: center;
 }
 </style>
