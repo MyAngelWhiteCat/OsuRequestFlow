@@ -134,7 +134,7 @@ namespace core {
     }
 
     void Core::ShowChat(bool toggle) {
-        chat_bot_->ToggleChatHistory(toggle);
+        // init websocket server 
     }
 
     // downloader
@@ -164,20 +164,6 @@ namespace core {
 
     void Core::SetReconnectTimeout(int seconds) {
         client_->SetReconnectTimeout(seconds);
-    }
-
-    json Core::GetLastMessages() {
-        json arr = json::array();
-        auto last_msgs = chat_bot_->GetLastMessages();
-        for (const auto& msg : last_msgs) {
-            json obj;
-            obj[SettingsKeys::NAME] = msg.name;
-            obj[SettingsKeys::COLOR] = msg.colour;
-            obj[SettingsKeys::BADGE] = msg.badge;
-            obj[SettingsKeys::MESSAGE] = msg.message;
-            arr.push_back(obj);
-        }
-        return arr;
     }
 
     // private
