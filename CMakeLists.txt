@@ -45,7 +45,7 @@ target_include_directories(Logger PUBLIC
     ${fmt_INCLUDE_DIRS}
 )
 
-##########################################
+########################################## ssl serts loader
 
 add_library(SSLCertsLoader STATIC 
     src/ca_sertificates_loader.h 
@@ -69,7 +69,7 @@ if(WIN32)
     target_link_libraries(SSLCertsLoader PUBLIC ws2_32 crypt32 user32)
 endif()
 
-##########################################
+########################################## http server
 
 add_library(HTTPServer STATIC 
     src/decode_url.h 
@@ -78,12 +78,12 @@ add_library(HTTPServer STATIC
     src/root_directory.h 
     src/root_directory.cpp
     src/domain_fields.h
+    src/tcp_listener.h
 )
 
 target_include_directories(HTTPServer PUBLIC
     ${Boost_INCLUDE_DIRS}
     ${OPENSSL_INCLUDE_DIR}
-    Logger
 )
 
 target_link_libraries(HTTPServer PUBLIC
@@ -95,7 +95,8 @@ target_link_libraries(HTTPServer PUBLIC
     Logger
 )
 
-##########################################
+
+########################################## Connection
 
 add_library(Connection STATIC 
     src/connection.h
@@ -111,7 +112,7 @@ target_link_libraries(Connection PUBLIC
     ZLIB::ZLIB
 )
 
-##########################################
+########################################## Chat bot
 
 add_library(ChatBot STATIC 
     src/command.h 
@@ -129,7 +130,7 @@ target_link_libraries(ChatBot PUBLIC
     Logger 
 )
 
-##########################################
+########################################## irc client
 
 add_library(IRCClient STATIC
     src/irc_client.h
@@ -151,7 +152,7 @@ target_link_libraries(IRCClient PUBLIC
     Logger
 )
 
-##########################################
+########################################## http client
 
 add_library(HTTPClient STATIC
     tests/http_client/main.cpp 
@@ -184,7 +185,7 @@ target_link_libraries(HTTPClient PUBLIC
     ZLIB::ZLIB
 )
 
-##########################################
+########################################## file manager
 
 add_library(FileManager STATIC 
     src/file_manager.h
@@ -194,7 +195,7 @@ target_link_libraries(FileManager PUBLIC
     Logger
 )
 
-##########################################
+########################################## downloader
 
 add_library(Downloader STATIC
     src/downloader.h 
@@ -206,7 +207,39 @@ target_link_libraries(Downloader PUBLIC
     FileManager
 )
 
-##########################################
+########################################## WebSocket server
+
+add_library(WebSocketServer STATIC 
+    src/websoc_server.h 
+)
+
+target_include_directories(WebSocketServer PUBLIC
+    ${Boost_INCLUDE_DIRS}
+    ${OPENSSL_INCLUDE_DIR}
+    Logger
+)
+
+target_link_libraries(WebSocketServer PUBLIC
+    OpenSSL::SSL
+    OpenSSL::Crypto
+    Boost::system
+    Boost::thread
+    ZLIB::ZLIB
+    Logger
+)
+
+########################################## ChatWidget
+
+add_library(ChatWidget STATIC
+    src/chat_widget.h
+    src/chat_widget.cpp
+)
+
+target_link_libraries(ChatWidget PUBLIC 
+    WebSocketServer
+)
+
+########################################## core
 
 add_library(Core STATIC
     src/core.h 
@@ -294,6 +327,7 @@ add_executable(TestCommandParser
     tests/command_parser/main.cpp 
     tests/command_parser/test_command_parser.h
 )
+
 target_link_libraries(TestCommandParser PUBLIC
     IRCClient
 )
@@ -308,7 +342,7 @@ target_link_libraries(TestUserVerificator PUBLIC
     FileManager
 )
 
-###########################################
+########################################### Main
 
 add_executable(GUI
     src/response_maker.h
