@@ -26,9 +26,9 @@
             <p>Укажите путь для сохранения загруженных карт</p>
             <form method="post">
                 <label class="input-file">
-                    <span class="input-file-btn">Выберите файл</span>
-                    <span class="input-file-text" type="text"></span>
-                    <input type="file" name="file">        
+                    <span class="input-file-btn" @click="choosePath">Выберите файл</span>
+                    <span class="input-file-text" type="text">{{ selectedPath }}</span>
+                    <input type="file" name="file" ref="pathInput" @change="onPathChange">        
                 </label>
             </form>
         </div>
@@ -36,6 +36,27 @@
 </template>
 
 <script setup>
+import { ref, watch } from 'vue';
+
+const pathInput = ref(null)
+const selectedPath = ref('')
+
+const choosePath = () => {
+    pathInput.value.click();
+}
+
+const onPathChange = (e) => {
+    const file = e.target.files[0]
+    if (file) {
+        selectedPath.value = file.path
+        console.log(selectedPath.value)
+    }
+}
+
+watch(pathInput, () => {
+    console.log(pathInput.value);
+})
+
 
 </script>
 
@@ -95,8 +116,9 @@
 
 .input-file {
 	position: relative;
-	display: inline-block;
+	display: inline-flex;
     width: 100%;
+    flex-direction: row;
 }
 .input-file-text {
 	padding: 0 10px;
@@ -104,8 +126,10 @@
 	height: 40px;
 	display: inline-flex;
 	width: 100%;
-	border-radius: 6px;
 	border: 1px solid #ddd;
+    border-left: none;
+    border-top-right-radius: 6px;
+    border-bottom-right-radius: 6px;
 }
 
 .input-file-btn {
@@ -115,12 +139,14 @@
 	font-size: 14px;
 	color: rgb(255 255 255);
 	text-align: center;
-	border-radius: 4px;
-	background-color: #419152;
+	background-color: #2267c2;
 	line-height: 22px;
 	padding: 10px 20px;
 	transition: background-color 0.2s;
     margin-left: auto;
+    flex-shrink: 0;
+    border-top-left-radius: 6px;
+    border-bottom-left-radius: 6px;
 }
 .input-file input[type=file] {
 	position: absolute;
