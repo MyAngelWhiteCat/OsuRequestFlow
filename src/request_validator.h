@@ -2,11 +2,16 @@
 
 #include "response_maker.h"
 
-#include <boost/beast.hpp>
+#include <boost/beast/http/fields.hpp>
+#include <boost/beast/http/message.hpp>
+#include <boost/beast/http/status.hpp>
+#include <boost/beast/http/verb.hpp>
 #include <nlohmann/json.hpp>
 
 #include <optional>
 #include <string_view>
+#include <utility>
+#include <string>
 
 namespace request_validator {
 
@@ -23,11 +28,23 @@ namespace request_validator {
         {
         }
 
+        // Settings
+
         template <typename Body, typename Allocator, typename Send>
         bool ValidateSettingsRequest(http::request<Body, http::basic_fields<Allocator>>& req, Send&& send);
 
         template <typename Body, typename Allocator, typename Send>
         std::optional<size_t> ValidateFileSizeRequest(http::request<Body, http::basic_fields<Allocator>>& req, Send&& send);
+
+        // User Verificator
+
+        template <typename Body, typename Allocator, typename Send>
+        std::optional<int> ValidateSetRoleFilterRequest(http::request<Body, http::basic_fields<Allocator>>& req, Send&& send);
+
+        template <typename Body, typename Allocator, typename Send>
+        std::optional<bool> ValidateSetWhiteListOnlyRequest(http::request<Body, http::basic_fields<Allocator>>& req, Send&& send);
+
+        // Downloader
 
         template <typename Body, typename Allocator, typename Send>
         std::optional<std::string> ValidateDownloadsFolderRequest(http::request<Body, http::basic_fields<Allocator>>& req, Send&& send);
@@ -36,26 +53,24 @@ namespace request_validator {
         std::optional<std::string> ValidateListEditRequest(http::request<Body, http::basic_fields<Allocator>>& req, Send&& send);
 
         template <typename Body, typename Allocator, typename Send>
+        std::optional<std::pair<std::string, std::string>> ValidateSetResourseRequest(http::request<Body, http::basic_fields<Allocator>>& req, Send&& send);
+
+        // IRC Client
+
+        template <typename Body, typename Allocator, typename Send>
         std::optional<std::string> ValidateJoinRequest(http::request<Body, http::basic_fields<Allocator>>& req, Send&& send);
 
         template <typename Body, typename Allocator, typename Send>
         std::optional<std::string> ValidatePartRequest(http::request<Body, http::basic_fields<Allocator>>& req, Send&& send);
 
         template <typename Body, typename Allocator, typename Send>
-        std::optional<std::pair<std::string, std::string>> ValidateSetResourseRequest(http::request<Body, http::basic_fields<Allocator>>& req, Send&& send);
-
-        template <typename Body, typename Allocator, typename Send>
-        std::optional<int> ValidateSetRoleFilterRequest(http::request<Body, http::basic_fields<Allocator>>& req, Send&& send);
-
-        template <typename Body, typename Allocator, typename Send>
         std::optional<int> ValidateReconnectTimeoutRequest(http::request<Body, http::basic_fields<Allocator>>& req, Send&& send);
-
-        template <typename Body, typename Allocator, typename Send>
-        std::optional<bool> ValidateSetWhiteListOnlyRequest(http::request<Body, http::basic_fields<Allocator>>& req, Send&& send);
+        
+        // Chat Widget
 
         template <typename Body, typename Allocator, typename Send>
         std::optional<bool> ValidateShowChatRequest(http::request<Body, http::basic_fields<Allocator>>& req, Send&& send);
-        
+
         template<typename Body, typename Allocator, typename Send>
         void SendMethodNotAllowed(http::request<Body, http::basic_fields<Allocator>>& req, Send&& send, std::string_view allowed);
 
