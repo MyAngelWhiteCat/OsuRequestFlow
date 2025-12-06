@@ -347,6 +347,7 @@ target_link_libraries(TestUserVerificator PUBLIC
 add_executable(GUI
     src/response_maker.h
     src/response_maker.cpp
+    src/request_domain_names.h
     src/request_handler.h 
     src/request_validator.h 
     src/request_validator.cpp 
