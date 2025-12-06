@@ -70,13 +70,18 @@
 - создать защиту для дубликатов.
 
 ### HTTP-loopback server
-- Проектирование класса сервера, продумыть вспомогательные классы.
-  - Какие нужны эндпоинты?
+-
+
+### RequestValidator
+- 
+
+### FileRequestHandler
+
+### ApiRequestHandler
+- Добавить метод для отправки json (обертка над response_maker.MakeStringResponse)
 - Эндпоинты:
 - Основа:
-   - ник для подключения к чату.
    - авторизация через твич
-   - путь к директории osu
    - скачивать сразу / просить подтверждение / игнорировать - все чаттеры / белый список / бан лист
    - включение / отключение
 
@@ -202,13 +207,13 @@
   - Response: `ok` / `error` (уровень вне диапазона)
   - Description: Установить уровень фильтрации по ролям
 
-- **PUT** `/api/validator/settings/set_whitelist_only`
+- **PUT** `/api/validator/settings/whitelist_only`
   - Body: `{"IsOn": boolean}`
   - Response: `ok` / `error`
   - Description: Включить/выключить режим только белого списка
 
 ### IRC Client Settings
-- **PUT** `/api/irc_client/settings/set_reconnect_timeout`
+- **PUT** `/api/irc_client/settings/reconnect_timeout`
   - Body: `{"ReconnectTimeout": number}` (секунды)
   - Response: `ok` / `error`
   - Description: Установить таймаут переподключения IRC клиента
