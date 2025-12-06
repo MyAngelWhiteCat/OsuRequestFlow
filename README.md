@@ -140,7 +140,7 @@
   - Response: `ok` / `error`
   - Description: Установить максимальный размер файла для загрузки
   
-- WIP **GET** `/api/downloader/settings/max_file_size` 
+- **GET** `/api/downloader/settings/max_file_size` 
   - Body: `{"FileSize": number}` (unsigned int)
   - Response: `ok` / `error`
   - Description: Узнать максимальный размер файла для загрузки
@@ -150,18 +150,18 @@
   - Response: `ok` / `error` (проверка существования пути)
   - Description: Установить папку для загрузок
 
-- WIP **GET** `/api/downloader/settings/folder`
+- **GET** `/api/downloader/settings/folder`
   - Body: `{"Path": "string"}` (путь к папке)
   - Response: `ok` / `error` 
   - Description: Узнать папку для загрузок
 
-- **PUT** `/api/downloader/settings/resourse_and_prefix`
-  - Body: `{"Resourse": "string", "Prefix": "string"}`
+- **PUT** `/api/downloader/settings/resource_and_prefix`
+  - Body: `{"Resource": "string", "Prefix": "string"}`
   - Response: `ok` / `error` (ресурс недоступен | не найден)
   - Description: Настроить ресурс и префикс для загрузки
 
-- WIP **GET** `/api/downloader/settings/resourse_and_prefix`
-  - Body: `{"Resourse": "string", "Prefix": "string"}`
+- **GET** `/api/downloader/settings/resource_and_prefix`
+  - Body: `{"Resource": "string", "Prefix": "string"}`
   - Response: `ok` / `error`
   - Description: Посмотреть ресурс и префикс для загрузки
 
@@ -218,9 +218,14 @@
   - Description: Узнать уровень фильтрации по ролям
 
 - **PUT** `/api/validator/settings/whitelist_only`
-  - Body: `{"IsOn": boolean}`
+  - Body: `{"Enabled": boolean}`
   - Response: `ok` / `error`
   - Description: Включить/выключить режим только белого списка
+
+- **GET** `/api/validator/settings/whitelist_only`
+  - Body: `{"Enabled": boolean}`
+  - Response: `ok` / `error`
+  - Description: Узнать статус режима только белого списка
 
 ### IRC Client Settings
 - **PUT** `/api/irc_client/settings/reconnect_timeout`
