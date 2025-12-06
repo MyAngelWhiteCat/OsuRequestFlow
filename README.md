@@ -32,9 +32,8 @@
 ## Current Task 
 
 Выделить 2 типа сервров - HTTP и WebSocket
-Выбор пути открытием папки по запросу
-Выделить сессию в отдельный файл
-Внутри сессии сделать определение WebSocket
+Выбор пути открытием папки по запросу -> Добавить статический метод в FileManager fs::path GetAnyPath() -> Открывает проводник для выбора папки / файла. принимает в себя параметр для проверки (файл \ папка \ неважно)
+Добавить мониторинг получения заголовков и добавить таймаут отсутсвия данных заголовков
 
 ---
 
@@ -47,22 +46,28 @@
 ### IRC Client
  - [Always] Рефакторинг. Анализ багов. Написать тесты.
  - Сделать авторизацию OAuth 2.0 flow взаимодействующую с GUI
- - полный переход Connetion на ассинхронные операции.
- - сделать ассинхронное подключение
- - Проверка соединения.
- - Тестирование.
- - вынести реализацию Connection за его объявление
- - сделать ассинхронную запись
- - доделать парсинг бейджей пользователя. 
+
+### ChatBot
+-
+
+### Connection
+- полный переход на ассинхронные операции.
+- сделать ассинхронную запись
+- асинхронное подключение
 
 
 ### Downloader
-- Сделать загрузчик через file body
- 
 - Обработать ошибку записи на диск. 
+
+### HTTP Client
+- Сделать найти как сделать через file body не лишая возможностей текущей реализации.
 - Обработка редиректов
 - ConnectionPool, RequestBuilder, ResponseParser, ErrorHandler
-
+ 
+### FileManager
+- Просто добавлять в историю без дальнейшей записи на диск
+- Реализовать отдачу итераторов для произвольного удаления. Придумать как их хранить чтобы взаимодействовать с фронтом.
+- создать защиту для дубликатов.
 
 ### HTTP-loopback server
 - Проектирование класса сервера, продумыть вспомогательные классы.
@@ -74,10 +79,22 @@
    - путь к директории osu
    - скачивать сразу / просить подтверждение / игнорировать - все чаттеры / белый список / бан лист
    - включение / отключение
- 
-### FileManager
-- Реализовать отдачу итераторов для произвольного удаления. Придумать как их хранить чтобы взаимодействовать с фронтом.
-- создать защиту для дубликатов.
+
+### Collection Manager
+- Понять как создаются коллекции (считается MD5 osu файла сложности)
+- Создать парсер карт, проходимся по всем картам, записываем большой JSON array JSON dict и отправляем на фронт
+- На фронте галочками выбираем нужные карты и нажимаем добавить в коллекцию либо создать новую.
+- Карты создаем считая MD5 самостоятельно. В osu.db не лезем.
+- запись в collection.db SQLite
+- разобраться в SQLite
+
+### ChatWidget
+- отправлять полученные из чата сообщения.
+- Найти связь как связать получение сообщений и их передачу WebSocket серверу.
+
+### WebSocketServer
+- Написать WebSocket сервер.
+- Создание сессии.
 
 ### Core
 - Сериализация настроек всей системы
@@ -98,7 +115,9 @@
    - кнопка поделиться коллекцией
 
 
-Эндпоинты: 
+Эндпоинты:
+
+## Settings
 
 - **POST** `/api/setting/load`
   - Body: `empty`
@@ -115,16 +134,31 @@
   - Body: `{"FileSize": number}` (unsigned int)
   - Response: `ok` / `error`
   - Description: Установить максимальный размер файла для загрузки
+  
+- WIP **GET** `/api/downloader/settings/max_file_size` 
+  - Body: `{"FileSize": number}` (unsigned int)
+  - Response: `ok` / `error`
+  - Description: Узнать максимальный размер файла для загрузки
 
 - **PUT** `/api/downloader/settings/folder`
   - Body: `{"Path": "string"}` (путь к папке)
   - Response: `ok` / `error` (проверка существования пути)
   - Description: Установить папку для загрузок
 
+- WIP **GET** `/api/downloader/settings/folder`
+  - Body: `{"Path": "string"}` (путь к папке)
+  - Response: `ok` / `error` 
+  - Description: Узнать папку для загрузок
+
 - **PUT** `/api/downloader/settings/resourse_and_prefix`
   - Body: `{"Resourse": "string", "Prefix": "string"}`
   - Response: `ok` / `error` (ресурс недоступен | не найден)
   - Description: Настроить ресурс и префикс для загрузки
+
+- WIP **GET** `/api/downloader/settings/resourse_and_prefix`
+  - Body: `{"Resourse": "string", "Prefix": "string"}`
+  - Response: `ok` / `error`
+  - Description: Посмотреть ресурс и префикс для загрузки
 
 ### User Lists Management
 - **PUT** `/api/white_list/users`
@@ -132,6 +166,11 @@
   - Response: `ok` / `error` (пользователь уже в белом списке | пользователь в черном списке, требуется подтверждение)
   - Description: Добавить пользователя в белый список
 
+- **GET** `/api/white_list/users`
+  - Body: `[{"UserName": "string"}]`
+  - Response: `ok` / `error` 
+  - Description: Посмотреть белый список
+  
 - **DELETE** `/api/white_list/users`
   - Body: `{"UserName": "string"}`
   - Response: `ok` / `error` (пользователь не найден в белом списке)
@@ -146,6 +185,11 @@
   - Body: `{"UserName": "string"}`
   - Response: `ok` / `error` (пользователь не найден в черном списке)
   - Description: Удалить пользователя из черного списка
+
+- **GET** `/api/black_list/users`
+  - Body: `[{"UserName": "string"}]`
+  - Response: `ok` / `error` 
+  - Description: Посмотреть черный список
 
 ### Validator Settings
 - **PUT** `/api/validator/settings/role_filter_level`
@@ -174,20 +218,21 @@
   - Response: `ok` / `error` (ошибка сети | неверное имя канала)
   - Description: Подключиться к IRC каналу
 
+- **GET** `/api/irc_client/join`
+  - Body: `[{"Channel": "string"}]` (название каналов)
+  - Response: `ok` / `error` (ошибка сети | неверное имя канала)
+  - Description: Получить список подключенных каналов
+
 - **POST** `/api/irc_client/part`
   - Body: `{"Channel": "string"}` (название канала)
   - Response: `ok` / `error` (ошибка сети | не подключен к каналу)
   - Description: Отключиться от IRC канала
 
-- **PUT** `/api/vidget/chat/show`
+- WIP **PUT** `/api/vidget/chat/show`
   - Body: `{"Enabled": bool}` 
   - Response: `ok` / `error` (ошибка формата JSON)
-  - Description: Включить сохранение истории чата. Обязательно считывать!
+  - Description: Включить / Выключить виджет чата
 
-- **GET** `/api/vidget/chat/last_messages`
-  - Body: (без тела)
-  - Response: `ok` / `error` (ошибка формата JSON)
-  - Description: Отключиться от IRC канала
 
 ---
 
