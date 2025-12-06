@@ -32,8 +32,8 @@ namespace gui_http {
         static constexpr std::string_view WHITELIST = "/api/white_list/users"sv;
         static constexpr std::string_view BLACKLIST = "/api/black_list/users"sv;
         static constexpr std::string_view ROLE_FILTER_LVL = "/api/validator/settings/role_filter_level"sv;
-        static constexpr std::string_view WHITELIST_ONLY = "/api/validator/settings/set_whitelist_only"sv;
-        static constexpr std::string_view SET_RECONNECT_TIMEOUT = "/api/irc_client/settings/set_reconnect_timeout"sv;
+        static constexpr std::string_view WHITELIST_ONLY = "/api/validator/settings/whitelist_only"sv;
+        static constexpr std::string_view SET_RECONNECT_TIMEOUT = "/api/irc_client/settings/reconnect_timeout"sv;
         static constexpr std::string_view JOIN_CHANNEL = "/api/irc_client/join"sv;
         static constexpr std::string_view PART_CHANNEL = "/api/irc_client/part"sv;
         static constexpr std::string_view LAST_MESSAGES = "/api/vidget/chat/last_messages"sv;
@@ -312,6 +312,16 @@ namespace gui_http {
 
     template <typename Body, typename Allocator, typename Send>
     inline void ApiRequestHandler::HandleSetRoleFilterLevel(http::request<Body, http::basic_fields<Allocator>>&& req, Send&& send) {
+        if (req.method() == http::verb::get) {
+            json role_filter;
+            role_filter["RoleFilterLevel"] = core_.GetRoleLevelFilter();
+            send(response_maker_.MakeStringResponse(
+                http::status::ok,
+                req.version(),
+                std::move(role_filter),
+                req.keep_alive()
+            ));
+        }
         if (auto level = request_validator_.ValidateSetRoleFilterRequest(req, send)) {
             core_.SetRoleLevelFilter(*level);
             SendOK(req, send, "Role filter level setted");
