@@ -35,13 +35,13 @@ namespace downloader {
         void Download(std::string_view file);
         void SetUserAgent(std::string_view user_agent);
         void SetUriPrefix(std::string_view uri_prefix);
-        void SetResourse(std::string_view resourse);
+        void SetResource(std::string_view resource);
         void SetDownloadsDirectory(std::string_view path);
         std::shared_ptr<http_domain::Client> SetupNonSecuredConnection();
         std::shared_ptr<http_domain::Client> SetupSecuredConnection();
         void SetMaxFileSize(size_t MiB);
 
-        std::optional<std::string> GetResourse() const;
+        std::optional<std::string> GetResource() const;
         std::optional<std::string> GetPrefix() const;
         size_t GetMaxFileSize() const;
         std::optional<std::filesystem::path> GetDownloadsDirectory() const;
@@ -54,7 +54,7 @@ namespace downloader {
         std::string user_agent_ = "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36";
 
         std::shared_ptr<file_manager::FileManager> file_manager_{ nullptr };
-        std::optional<std::string> resourse_;
+        std::optional<std::string> resource_;
         std::optional<std::string> uri_prefix_;
         size_t max_file_size_MiB_ = 100;
 

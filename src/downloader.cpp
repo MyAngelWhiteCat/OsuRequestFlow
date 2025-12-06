@@ -27,7 +27,7 @@ namespace downloader {
     using namespace std::literals;
 
     using Strand = net::strand<net::io_context::executor_type>;
-    using ResoursesAccess = std::unordered_map<std::string, std::vector<std::shared_ptr<http_domain::Client>>>;
+    using ResourcesAccess = std::unordered_map<std::string, std::vector<std::shared_ptr<http_domain::Client>>>;
 
 
     Downloader::Downloader(net::io_context& ioc, bool secured)
@@ -73,8 +73,8 @@ namespace downloader {
         uri_prefix_ = std::string(uri_prefix);
     }
 
-    void Downloader::SetResourse(std::string_view resourse) {
-        resourse_ = std::string(resourse);
+    void Downloader::SetResource(std::string_view resource) {
+        resource_ = std::string(resource);
     }
 
     void Downloader::SetDownloadsDirectory(std::string_view path) {
@@ -95,21 +95,21 @@ namespace downloader {
     }
 
     std::shared_ptr<http_domain::Client> Downloader::SetupNonSecuredConnection() {
-        if (!resourse_) {
-            throw std::runtime_error("Resourse doesnt setted");
+        if (!resource_) {
+            throw std::runtime_error("Resource doesnt setted");
         }
         auto client = std::make_shared<http_domain::Client>(ioc_);
-        client->Connect(*resourse_, http_domain::Port::NON_SECURED);
+        client->Connect(*resource_, http_domain::Port::NON_SECURED);
         return client;
     }
 
     std::shared_ptr<http_domain::Client> Downloader::SetupSecuredConnection() {
-        if (!resourse_) {
-            throw std::runtime_error("Resourse doesnt setted");
+        if (!resource_) {
+            throw std::runtime_error("Resource doesnt setted");
         }
         auto client = std::make_shared<http_domain::Client>(ioc_, connection::GetSSLContext());
         client->SetMaxFileSize(max_file_size_MiB_);
-        client->Connect(*resourse_, http_domain::Port::SECURED);
+        client->Connect(*resource_, http_domain::Port::SECURED);
         return client;
     }
 
@@ -117,8 +117,8 @@ namespace downloader {
         max_file_size_MiB_ = MiB;
     }
 
-    std::optional<std::string> Downloader::GetResourse() const {
-        return resourse_;
+    std::optional<std::string> Downloader::GetResource() const {
+        return resource_;
     }
 
     std::optional<std::string> Downloader::GetPrefix() const {
