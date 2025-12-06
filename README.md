@@ -207,6 +207,16 @@
   - Response: `ok` / `error` (уровень вне диапазона)
   - Description: Установить уровень фильтрации по ролям
 
+- **GET** `/api/validator/settings/role_filter_level`
+  - Body: `{"RoleFilterLevel": number}` (0-4)
+  - EMPTY = 0,
+  - SUBSCRIBER = 1,
+  - VIP = 2,
+  - MODERATOR = 3,
+  - BROADCASTER = 4
+  - Response: `ok` / `error` (уровень вне диапазона)
+  - Description: Узнать уровень фильтрации по ролям
+
 - **PUT** `/api/validator/settings/whitelist_only`
   - Body: `{"IsOn": boolean}`
   - Response: `ok` / `error`
