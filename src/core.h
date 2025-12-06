@@ -39,7 +39,7 @@ namespace core {
         static constexpr std::string_view MAX_FILESIZE = "MaxFileSize"sv;
         static constexpr std::string_view USER_AGENT = "UserAgent"sv;
         static constexpr std::string_view DOWNLOADS_DIR = "DownloadsDirectory"sv;
-        static constexpr std::string_view RESOURCE = "Resourse"sv;
+        static constexpr std::string_view RESOURCE = "Resource"sv;
         static constexpr std::string_view PREFIX = "Prefix"sv;
     };
 
@@ -52,7 +52,7 @@ namespace core {
         }
 
         void SetupConnection(bool secured);
-        void SetupDownloader(bool secured, std::string_view resourse
+        void SetupDownloader(bool secured, std::string_view resource
             , std::string_view uri_prefix, std::string_view downloads_directory);
         void SetupDownloader(bool secured);
         void SetupChatBot();
@@ -83,11 +83,11 @@ namespace core {
 
         // downloader
 
-        void SetDownloadResourseAndPrefix(std::string_view resourse, std::string_view prefix);
+        void SetDownloadResourceAndPrefix(std::string_view resource, std::string_view prefix);
         void SetDownloadsDirectory(std::string_view path);
         void SetMaxFileSize(size_t MiB);
 
-        std::optional<std::string_view> GetDownloadResourse();
+        std::optional<std::string_view> GetDownloadResource();
         std::optional<std::string_view> GetDownloadPrefix();
         std::optional<std::filesystem::path> GetDownloadsDirectory();
         size_t GetMaxFileSize();

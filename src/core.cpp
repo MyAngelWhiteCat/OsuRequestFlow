@@ -25,10 +25,10 @@ namespace core {
         }
     }
 
-    void Core::SetupDownloader(bool secured, std::string_view resourse
+    void Core::SetupDownloader(bool secured, std::string_view resource
         , std::string_view uri_prefix, std::string_view downloads_directory) {
         downloader_ = std::make_shared<downloader::Downloader>(ioc_, secured);
-        downloader_->SetResourse(resourse);
+        downloader_->SetResource(resource);
         downloader_->SetUriPrefix(uri_prefix);
         downloader_->SetDownloadsDirectory(downloads_directory);
         SetupChatBot();
@@ -147,8 +147,8 @@ namespace core {
 
     // downloader
 
-    void Core::SetDownloadResourseAndPrefix(std::string_view resourse, std::string_view prefix) {
-        downloader_->SetResourse(resourse);
+    void Core::SetDownloadResourceAndPrefix(std::string_view resource, std::string_view prefix) {
+        downloader_->SetResource(resource);
         downloader_->SetUriPrefix(prefix);
     }
 
@@ -160,8 +160,8 @@ namespace core {
         downloader_->SetMaxFileSize(MiB);
     }
 
-    std::optional<std::string_view> Core::GetDownloadResourse() {
-        return downloader_->GetResourse();
+    std::optional<std::string_view> Core::GetDownloadResource() {
+        return downloader_->GetResource();
     }
 
     std::optional<std::string_view> Core::GetDownloadPrefix() {
@@ -311,7 +311,7 @@ namespace core {
         if (auto dir = downloader_->GetDownloadsDirectory()) {
             settings[SettingsKeys::DOWNLOADS_DIR] = *dir;
         }
-        if (auto res = downloader_->GetResourse()) {
+        if (auto res = downloader_->GetResource()) {
             settings[SettingsKeys::RESOURCE] = *res;
         }
         if (auto prefix = downloader_->GetPrefix()) {
@@ -334,7 +334,7 @@ namespace core {
             downloader_->SetDownloadsDirectory(it->get<std::string_view>());
         }
         if (auto it = settings.find(SettingsKeys::RESOURCE); it != settings.end()) {
-            downloader_->SetResourse(it->get<std::string>());
+            downloader_->SetResource(it->get<std::string>());
         }
         if (auto it = settings.find(SettingsKeys::PREFIX); it != settings.end()) {
             downloader_->SetUriPrefix(it->get<std::string>());
