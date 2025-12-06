@@ -11,6 +11,10 @@
 #include <boost/beast/http/fields.hpp>
 #include <nlohmann/json.hpp>
 #include <unordered_set>
+#include <boost/beast/http/status.hpp>
+#include <exception>
+#include <boost/beast/http/verb.hpp>
+#include "domain_fields.h"
 
 namespace gui_http {
 
@@ -98,12 +102,30 @@ namespace gui_http {
         template <typename Body, typename Allocator, typename Send>
         void HandleWrongEndPoint(http::request<Body, http::basic_fields<Allocator>>&& req, Send&& send);
         
+        // Settings
+
         template <typename Body, typename Allocator, typename Send>
         void HandleLoadSetting(http::request<Body, http::basic_fields<Allocator>>&& req, Send&& send);
         
         template <typename Body, typename Allocator, typename Send>
         void HandleSaveSetting(http::request<Body, http::basic_fields<Allocator>>&& req, Send&& send);
         
+        // User Verificator
+
+        template <typename Body, typename Allocator, typename Send>
+        void HandleWhiteList(http::request<Body, http::basic_fields<Allocator>>&& req, Send&& send);
+
+        template <typename Body, typename Allocator, typename Send>
+        void HandleBlackList(http::request<Body, http::basic_fields<Allocator>>&& req, Send&& send);
+
+        template <typename Body, typename Allocator, typename Send>
+        void HandleSetRoleFilterLevel(http::request<Body, http::basic_fields<Allocator>>&& req, Send&& send);
+
+        template <typename Body, typename Allocator, typename Send>
+        void HandleWhitelistOnly(http::request<Body, http::basic_fields<Allocator>>&& req, Send&& send);
+
+        // Downloader
+
         template <typename Body, typename Allocator, typename Send>
         void HandleSetMaxFileSize(http::request<Body, http::basic_fields<Allocator>>&& req, Send&& send);
         
@@ -113,18 +135,8 @@ namespace gui_http {
         template <typename Body, typename Allocator, typename Send>
         void HandleSetDownloadsResourse(http::request<Body, http::basic_fields<Allocator>>&& req, Send&& send);
         
-        template <typename Body, typename Allocator, typename Send>
-        void HandleWhiteList(http::request<Body, http::basic_fields<Allocator>>&& req, Send&& send);
-        
-        template <typename Body, typename Allocator, typename Send>
-        void HandleBlackList(http::request<Body, http::basic_fields<Allocator>>&& req, Send&& send);
-       
-        template <typename Body, typename Allocator, typename Send>
-        void HandleSetRoleFilterLevel(http::request<Body, http::basic_fields<Allocator>>&& req, Send&& send);
-        
-        template <typename Body, typename Allocator, typename Send>
-        void HandleWhitelistOnly(http::request<Body, http::basic_fields<Allocator>>&& req, Send&& send);
-        
+        // IRC Client
+
         template <typename Body, typename Allocator, typename Send>
         void HandleSetReconnectTimeout(http::request<Body, http::basic_fields<Allocator>>&& req, Send&& send);
         
@@ -134,8 +146,12 @@ namespace gui_http {
         template <typename Body, typename Allocator, typename Send>
         void HandlePartChannel(http::request<Body, http::basic_fields<Allocator>>&& req, Send&& send);
         
+        // Chat Widget
+
         template <typename Body, typename Allocator, typename Send>
         void HandleShowChat(http::request<Body, http::basic_fields<Allocator>>&& req, Send&& send);
+
+        // Domain 
 
         template <typename Body, typename Allocator, typename Send>
         void SendWarning(http::request<Body, http::basic_fields<Allocator>>& req, Send&& send, std::string_view warning);
@@ -148,7 +164,6 @@ namespace gui_http {
 
         template <typename Body, typename Allocator, typename Send>
         void SendServerError(http::request<Body, http::basic_fields<Allocator>>& req, Send&& send, std::string_view info);
-
     };
 
     template <typename Body, typename Allocator, typename Send>
