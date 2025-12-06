@@ -52,11 +52,17 @@ namespace downloader {
                 client = self->SetupNonSecuredConnection();
             }
             client->SetMaxFileSize(self->max_file_size_MiB_);
-            client->Get(self->GetEndpoint(file), self->user_agent_, [self, client]
-            (std::string&& file_name, std::vector<char>&& body) {
-                    self->OnDownload(std::move(file_name), std::move(body));
-                });
+            try {
+                client->Get(self->GetEndpoint(file), self->user_agent_, [self, client]
+                (std::string&& file_name, std::vector<char>&& body) {
+                        self->OnDownload(std::move(file_name), std::move(body));
+                    });
+            }
+            catch (const std::exception& e) {
+                LOG_CRITICAL(e.what());
+            }
             });
+            
     }
 
     void Downloader::SetUserAgent(std::string_view user_agent) {
