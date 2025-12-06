@@ -133,6 +133,14 @@ namespace core {
         command_executor_->GetUserVerificator()->SetWhiteListOnly(on);
     }
 
+    int Core::GetRoleLevelFilter() {
+        return command_executor_->GetUserVerificator()->GetRoleLevel();
+    }
+
+    bool Core::GetWhiteListOnly() {
+        return command_executor_->GetUserVerificator()->GetWhiteListOnly();
+    }
+
     void Core::ShowChat(bool toggle) {
         // init websocket server 
     }
@@ -152,6 +160,22 @@ namespace core {
         downloader_->SetMaxFileSize(MiB);
     }
 
+    std::optional<std::string_view> Core::GetDownloadResourse() {
+        return downloader_->GetResourse();
+    }
+
+    std::optional<std::string_view> Core::GetDownloadPrefix() {
+        return downloader_->GetPrefix();
+    }
+
+    std::optional<std::filesystem::path> Core::GetDownloadsDirectory() {
+        return downloader_->GetDownloadsDirectory();
+    }
+
+    size_t Core::GetMaxFileSize() {
+        return downloader_->GetMaxFileSize();
+    }
+
     // irc client
 
     void Core::Join(std::string_view channel) {
@@ -164,6 +188,18 @@ namespace core {
 
     void Core::SetReconnectTimeout(int seconds) {
         client_->SetReconnectTimeout(seconds);
+    }
+
+    std::vector<std::string_view> Core::GetJoinedChannels() {
+        auto jc = client_->GetJoinedChannels();
+        std::vector<std::string_view> joined_channels;
+        joined_channels.reserve(jc.size());
+
+        for (const auto& channel : jc) {
+            joined_channels.push_back(channel);
+        }
+
+        return joined_channels;
     }
 
     // private

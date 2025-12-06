@@ -77,7 +77,9 @@ namespace core {
         void RemoveUserFromBlackList(std::string_view user);
         void SetRoleLevelFilter(int level);
         void SetWhiteListOnly(bool on);
-        void ShowChat(bool toggle);
+
+        int GetRoleLevelFilter();
+        bool GetWhiteListOnly();
 
         // downloader
 
@@ -85,8 +87,9 @@ namespace core {
         void SetDownloadsDirectory(std::string_view path);
         void SetMaxFileSize(size_t MiB);
 
-        std::pair<std::string_view, std::string_view> GetDownloadResourseAndPrefix();
-        std::string_view GetDownloadsDirectory();
+        std::optional<std::string_view> GetDownloadResourse();
+        std::optional<std::string_view> GetDownloadPrefix();
+        std::optional<std::filesystem::path> GetDownloadsDirectory();
         size_t GetMaxFileSize();
 
         // irc client
@@ -94,6 +97,12 @@ namespace core {
         void Join(std::string_view channel);
         void Part(std::string_view channel);
         void SetReconnectTimeout(int seconds);
+        
+        std::vector<std::string_view> GetJoinedChannels();
+
+        // Chat Widget
+
+        void ShowChat(bool toggle);
 
     private:
         net::io_context& ioc_;
