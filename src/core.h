@@ -85,13 +85,15 @@ namespace core {
         void SetDownloadsDirectory(std::string_view path);
         void SetMaxFileSize(size_t MiB);
 
+        std::pair<std::string_view, std::string_view> GetDownloadResourseAndPrefix();
+        std::string_view GetDownloadsDirectory();
+        size_t GetMaxFileSize();
+
         // irc client
 
         void Join(std::string_view channel);
         void Part(std::string_view channel);
         void SetReconnectTimeout(int seconds);
-
-        json GetLastMessages();
 
     private:
         net::io_context& ioc_;
