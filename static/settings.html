@@ -1,0 +1,1069 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Настройки</title>
+    <style>
+        :root {
+            --primary: #667eea;
+            --primary-light: #7c93ff;
+            --success: #48bb78;
+            --warning: #ed8936;
+            --error: #f56565;
+            --text: #e2e8f0;
+            --text-light: #a0aec0;
+            --background: #0f172a;
+            --card: #1e293b;
+            --card-hover: #2d3748;
+            --border: #334155;
+            --shadow: rgba(0, 0, 0, 0.4);
+        }
+
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+            background: var(--background);
+            color: var(--text);
+            line-height: 1.6;
+            padding: 20px;
+            min-height: 100vh;
+        }
+
+        .container {
+            max-width: 1400px;
+            margin: 0 auto;
+        }
+
+        .header {
+            text-align: center;
+            margin-bottom: 40px;
+            padding-bottom: 20px;
+            border-bottom: 1px solid var(--border);
+        }
+
+        .header h1 {
+            font-size: 2.5rem;
+            margin-bottom: 10px;
+            background: linear-gradient(135deg, var(--primary), var(--primary-light));
+            -webkit-background-clip: text;
+            background-clip: text;
+            -webkit-text-fill-color: transparent;
+        }
+
+        .header p {
+            color: var(--text-light);
+            font-size: 1.1rem;
+        }
+
+        .section {
+            margin-bottom: 40px;
+        }
+
+        .section-title {
+            font-size: 1.8rem;
+            margin-bottom: 20px;
+            color: var(--primary-light);
+            padding-bottom: 10px;
+            border-bottom: 2px solid var(--border);
+        }
+
+        .cards-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(380px, 1fr));
+            gap: 25px;
+            margin-bottom: 40px;
+        }
+
+        .card {
+            background: var(--card);
+            border-radius: 16px;
+            padding: 25px;
+            border: 1px solid var(--border);
+            transition: all 0.3s ease;
+            box-shadow: 0 10px 25px var(--shadow);
+        }
+
+        .card:hover {
+            transform: translateY(-5px);
+            background: var(--card-hover);
+            box-shadow: 0 15px 35px var(--shadow);
+        }
+
+        .card-header {
+            display: flex;
+            align-items: center;
+            gap: 15px;
+            margin-bottom: 20px;
+            padding-bottom: 15px;
+            border-bottom: 1px solid var(--border);
+        }
+
+        .card-icon {
+            font-size: 1.8rem;
+        }
+
+        .card-title {
+            font-size: 1.3rem;
+            font-weight: 600;
+            color: var(--text);
+        }
+
+        .card-description {
+            color: var(--text-light);
+            margin-bottom: 25px;
+            font-size: 0.95rem;
+            line-height: 1.5;
+        }
+
+        .control-group {
+            margin-bottom: 20px;
+        }
+
+        .control-label {
+            display: block;
+            margin-bottom: 8px;
+            color: var(--text);
+            font-weight: 500;
+            font-size: 0.95rem;
+        }
+
+        .control-input {
+            width: 100%;
+            padding: 14px 16px;
+            background: rgba(255, 255, 255, 0.05);
+            border: 1px solid var(--border);
+            border-radius: 10px;
+            color: var(--text);
+            font-size: 1rem;
+            transition: all 0.3s ease;
+        }
+
+        .control-input:focus {
+            outline: none;
+            border-color: var(--primary);
+            box-shadow: 0 0 0 3px rgba(102, 126, 234, 0.1);
+        }
+
+        .control-input::placeholder {
+            color: var(--text-light);
+        }
+
+        .action-buttons {
+            display: flex;
+            gap: 15px;
+            margin-top: 30px;
+        }
+
+        .action-btn {
+            flex: 1;
+            padding: 16px;
+            background: linear-gradient(135deg, var(--primary), var(--primary-light));
+            color: white;
+            border: none;
+            border-radius: 12px;
+            font-size: 1rem;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            position: relative;
+            overflow: hidden;
+        }
+
+        .action-btn:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 10px 20px rgba(102, 126, 234, 0.3);
+        }
+
+        .action-btn:active {
+            transform: translateY(0);
+        }
+
+        .action-btn:disabled {
+            opacity: 0.6;
+            cursor: not-allowed;
+            transform: none !important;
+        }
+
+        .btn-secondary {
+            background: transparent;
+            border: 2px solid var(--border);
+        }
+
+        .btn-secondary:hover {
+            background: rgba(255, 255, 255, 0.05);
+        }
+
+        .role-card {
+            padding: 15px;
+            margin-bottom: 10px;
+            background: rgba(255, 255, 255, 0.03);
+            border-radius: 10px;
+            border: 1px solid transparent;
+            cursor: pointer;
+            transition: all 0.3s ease;
+        }
+
+        .role-card:hover {
+            background: rgba(255, 255, 255, 0.05);
+            border-color: var(--primary);
+        }
+
+        .role-card.selected {
+            background: rgba(102, 126, 234, 0.15);
+            border-color: var(--primary);
+        }
+
+        .role-header {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            margin-bottom: 8px;
+        }
+
+        .role-icon {
+            font-size: 1.2rem;
+        }
+
+        .role-name {
+            font-weight: 600;
+            color: var(--text);
+        }
+
+        .role-level {
+            margin-left: auto;
+            color: var(--text-light);
+            font-size: 0.9rem;
+        }
+
+        .role-description {
+            color: var(--text-light);
+            font-size: 0.9rem;
+            margin-bottom: 5px;
+        }
+
+        .role-access {
+            font-size: 0.85rem;
+            color: var(--success);
+        }
+
+        .connection-status {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            padding: 12px 20px;
+            background: var(--card);
+            border-radius: 12px;
+            border: 1px solid var(--border);
+            margin-bottom: 20px;
+        }
+
+        .status-dot {
+            width: 12px;
+            height: 12px;
+            border-radius: 50%;
+            background: var(--success);
+            box-shadow: 0 0 10px var(--success);
+            animation: pulse 2s infinite;
+        }
+
+        .status-dot.connecting {
+            background: var(--warning);
+            box-shadow: 0 0 10px var(--warning);
+        }
+
+        .status-dot.disconnected {
+            background: var(--error);
+            box-shadow: 0 0 10px var(--error);
+        }
+
+        @keyframes pulse {
+            0%, 100% {
+                opacity: 1;
+            }
+            50% {
+                opacity: 0.5;
+            }
+        }
+
+        .loading-dots {
+            display: inline-block;
+            width: 20px;
+            height: 20px;
+            position: relative;
+        }
+
+        .loading-dots::after {
+            content: '';
+            position: absolute;
+            width: 20px;
+            height: 20px;
+            top: 0;
+            left: 0;
+            border: 2px solid transparent;
+            border-top-color: white;
+            border-radius: 50%;
+            animation: spin 1s linear infinite;
+        }
+
+        @keyframes spin {
+            0% {
+                transform: rotate(0deg);
+            }
+            100% {
+                transform: rotate(360deg);
+            }
+        }
+
+        .save-all-btn {
+            position: fixed;
+            bottom: 30px;
+            right: 30px;
+            padding: 18px 36px;
+            background: linear-gradient(135deg, var(--success), #38a169);
+            color: white;
+            border: none;
+            border-radius: 12px;
+            font-size: 1.1rem;
+            font-weight: 600;
+            cursor: pointer;
+            box-shadow: 0 10px 25px rgba(72, 187, 120, 0.3);
+            transition: all 0.3s ease;
+            z-index: 1000;
+        }
+
+        .save-all-btn:hover {
+            transform: translateY(-3px);
+            box-shadow: 0 15px 35px rgba(72, 187, 120, 0.4);
+        }
+
+        @media (max-width: 768px) {
+            .cards-grid {
+                grid-template-columns: 1fr;
+            }
+            .save-all-btn {
+                bottom: 20px;
+                right: 20px;
+                padding: 14px 28px;
+                font-size: 1rem;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="header">
+            <h1>Настройки</h1>
+            <p>Управление настройками</p>
+        </div>
+
+        <!-- Section 1: Directory Settings -->
+        <div class="section">
+            <h2 class="section-title">📂 Директория</h2>
+            <div class="cards-grid">
+                <div class="card">
+                    <div class="card-header">
+                        <span class="card-icon">📂</span>
+                        <span class="card-title">Путь к папке Songs</span>
+                    </div>
+                    <p class="card-description">
+                        Укажите путь для сохранения загруженных карт
+                    </p>
+                    <div class="control-group">
+                        <label class="control-label">Путь к папке Songs</label>
+                        <input type="text" class="control-input" id="folder-path"
+                               value="D:\osu!\Songs"
+                               placeholder="Введите полный путь...">
+                    </div>
+                    <div class="action-buttons">
+                        <button class="action-btn" onclick="saveDirectorySettings()">
+                            Сохранить
+                        </button>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Section 2: Downloader Settings -->
+        <div class="section">
+            <h2 class="section-title">📥 Загрузчик</h2>
+            <div class="cards-grid">
+                <div class="card">
+                    <div class="card-header">
+                        <span class="card-icon">📏</span>
+                        <span class="card-title">Ограничение размера</span>
+                    </div>
+                    <p class="card-description">
+                        Максимальный размер скачиваемых файлов
+                    </p>
+                    <div class="control-group">
+                        <label class="control-label">Максимальный размер (MB)</label>
+                        <input type="number" class="control-input" id="file-size"
+                               value="350" min="50" max="1024">
+                    </div>
+                    <div class="action-buttons">
+                        <button class="action-btn" onclick="saveFileSize()">
+                            Сохранить
+                        </button>
+                    </div>
+                </div>
+
+                <div class="card">
+                    <div class="card-header">
+                        <span class="card-icon">🔗</span>
+                        <span class="card-title">Источник загрузки</span>
+                    </div>
+                    <p class="card-description">
+                        Выберите источник для загрузки карт
+                    </p>
+                    <div class="control-group">
+                        <label class="control-label">Вебсайт</label>
+                        <input type="text" class="control-input" id="website-address"
+                               placeholder="catboy.best">
+                    </div>
+                    <div class="control-group">
+                        <label class="control-label">Префикс пути</label>
+                        <input type="text" class="control-input" id="path-prefix"
+                               placeholder="/d/">
+                    </div>
+                    <div class="action-buttons">
+                        <button class="action-btn" onclick="saveDownloaderSource()">
+                            Сохранить
+                        </button>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Section 3: Chat Connection -->
+        <div class="section">
+            <h2 class="section-title">💬 Чат</h2>
+            <div class="connection-status">
+                <div class="status-dot disconnected" id="connection-status"></div>
+                <span id="connection-text">Не подключено</span>
+            </div>
+            <div class="cards-grid">
+                <div class="card">
+                    <div class="card-header">
+                        <span class="card-icon">🔄</span>
+                        <span class="card-title">Автопереподключение</span>
+                    </div>
+                    <p class="card-description">
+                        Настройки восстановления соединения
+                    </p>
+                    <div class="control-group">
+                        <label class="control-label">Задержка (секунды)</label>
+                        <input type="number" class="control-input" id="reconnect-delay"
+                               value="30" min="10" max="120">
+                    </div>
+                    <div class="action-buttons">
+                        <button class="action-btn" onclick="saveReconnectTimeout()">
+                            Сохранить
+                        </button>
+                    </div>
+                </div>
+
+                <div class="card">
+                    <div class="card-header">
+                        <span class="card-icon">💬</span>
+                        <span class="card-title">Подключение к чату</span>
+                    </div>
+                    <p class="card-description">
+                        Введите название чата для подключения
+                    </p>
+                    <div class="control-group">
+                        <label class="control-label">Название чата</label>
+                        <input type="text" class="control-input" id="chat-room"
+                               placeholder="darkyisoffline">
+                    </div>
+                    <div class="action-buttons">
+                        <button class="action-btn" onclick="connectToChat()" id="connect-btn">
+                            Подключиться
+                        </button>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Section 4: User Management -->
+        <div class="section">
+            <h2 class="section-title">👥 Пользователи</h2>
+            <div class="cards-grid">
+                <div class="card">
+                    <div class="card-header">
+                        <span class="card-icon">🎖️</span>
+                        <span class="card-title">Уровень доступа</span>
+                    </div>
+                    <p class="card-description">
+                        Минимальная роль для доступа к командам
+                    </p>
+                    <div class="control-group">
+                        <label class="control-label">Выберите уровень:</label>
+                        <div id="role-options">
+                            <!-- Roles will be populated by JavaScript -->
+                        </div>
+                    </div>
+                    <div class="control-group">
+                        <label class="control-label">Только доверенные пользователи</label>
+                        <select class="control-input" id="trusted-only">
+                            <option value="false">❌ Выключено - доступ по ролям (рекомендуется)</option>
+                            <option value="true">✅ Включено - только из списка Allowed Users</option>
+                        </select>
+                    </div>
+                    <div class="action-buttons">
+                        <button class="action-btn" onclick="saveAccessSettings()">
+                            Сохранить
+                        </button>
+                    </div>
+                </div>
+
+                <div class="card">
+                    <div class="card-header">
+                        <span class="card-icon">✅</span>
+                        <span class="card-title">Разрешенные пользователи</span>
+                    </div>
+                    <p class="card-description">
+                        Добавьте пользователей в белый список
+                    </p>
+                    <div class="control-group">
+                        <label class="control-label">Имя пользователя</label>
+                        <input type="text" class="control-input" id="allow-user"
+                               placeholder="Введите username...">
+                    </div>
+                    <div class="action-buttons">
+                        <button class="action-btn" onclick="allowUser(this)">
+                            Добавить
+                        </button>
+                        <button class="action-btn btn-secondary" onclick="removeAllowedUser(this)">
+                            Удалить
+                        </button>
+                    </div>
+                </div>
+
+                <div class="card">
+                    <div class="card-header">
+                        <span class="card-icon">❌</span>
+                        <span class="card-title">Заблокированные пользователи</span>
+                    </div>
+                    <p class="card-description">
+                        Пользователи без доступа
+                    </p>
+                    <div class="control-group">
+                        <label class="control-label">Имя пользователя</label>
+                        <input type="text" class="control-input" id="block-user"
+                               placeholder="Введите username...">
+                    </div>
+                    <div class="action-buttons">
+                        <button class="action-btn" onclick="blockUser(this)">
+                            Заблокировать
+                        </button>
+                        <button class="action-btn btn-secondary" onclick="removeBlockedUser(this)">
+                            Разблокировать
+                        </button>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <button class="save-all-btn" onclick="saveAllSettings()">
+        💾 Сохранить все настройки
+    </button>
+
+    <script>
+        const SERVER_URL = 'http://127.0.0.1:23140';
+        let selectedRoleLevel = 2; // По умолчанию VIP
+        let isConnected = false;
+
+        // Данные о ролях
+        const roles = [
+            {
+                level: 0,
+                icon: '🔓',
+                name: 'Все пользователи',
+                description: 'Любой пользователь чата',
+                access: 'Кто имеет доступ: любой пользователь чата',
+                when: 'Когда использовать: для открытых стримов'
+            },
+            {
+                level: 1,
+                icon: '⭐',
+                name: 'Подписчики и выше',
+                description: 'Подписчики, VIP, модераторы, стример',
+                access: 'Кто имеет доступ: подписчики, VIP, модераторы, стример',
+                when: 'Когда использовать: для стримов с подписчиками'
+            },
+            {
+                level: 2,
+                icon: '🎖️',
+                name: 'VIP пользователи и выше',
+                description: 'VIP, модераторы, стример',
+                access: 'Кто имеет доступ: VIP, модераторы, стример',
+                when: 'Когда использовать: по умолчанию, хороший баланс'
+            },
+            {
+                level: 3,
+                icon: '👮',
+                name: 'Модераторы и стример',
+                description: 'Только модераторы и стример',
+                access: 'Кто имеет доступ: модераторы и стример',
+                when: 'Когда использовать: для ограниченного доступа'
+            },
+            {
+                level: 4,
+                icon: '👑',
+                name: 'Только стример',
+                description: 'Только стример',
+                access: 'Кто имеет доступ: только стример',
+                when: 'Когда использовать: для тестирования или приватных стримов'
+            }
+        ];
+
+        // Инициализация
+        document.addEventListener('DOMContentLoaded', function() {
+            try {
+                initRoleCards();
+                loadAllSettings();
+                console.log('Инициализация завершена');
+            } catch (error) {
+                console.error('Ошибка при инициализации:', error);
+            }
+        });
+
+        // Загрузка всех настроек с сервера
+        async function loadAllSettings() {
+            try {
+                // Загружаем настройки из файла (это загрузит их в память на сервере)
+                await makeRequest('/api/settings/load', 'POST');
+                
+                // Пытаемся загрузить settings.json напрямую
+                await loadSettingsFromFile();
+                
+                // Загружаем списки пользователей
+                await loadUserLists();
+                
+            } catch (error) {
+                console.error('Ошибка при загрузке настроек:', error);
+            }
+        }
+
+        // Загрузка настроек из файла settings.json
+        async function loadSettingsFromFile() {
+            try {
+                const response = await fetch(SERVER_URL + '/settings.json');
+                if (response.ok) {
+                    const settings = await response.json();
+                    console.log('Настройки загружены из файла:', settings);
+                    
+                    // Заполняем поля настройками из файла
+                    if (settings.Downloader) {
+                        if (settings.Downloader.MaxFileSize) {
+                            document.getElementById('file-size').value = settings.Downloader.MaxFileSize;
+                        }
+                        if (settings.Downloader.DownloadsDirectory) {
+                            document.getElementById('folder-path').value = settings.Downloader.DownloadsDirectory;
+                        }
+                        if (settings.Downloader.Resourse) {
+                            document.getElementById('website-address').value = settings.Downloader.Resourse;
+                        }
+                        if (settings.Downloader.Prefix) {
+                            document.getElementById('path-prefix').value = settings.Downloader.Prefix;
+                        }
+                    }
+                    
+                    if (settings.IRCClient) {
+                        if (settings.IRCClient.ReconnectTimeout) {
+                            document.getElementById('reconnect-delay').value = settings.IRCClient.ReconnectTimeout;
+                        }
+                        if (settings.IRCClient.JoinedChannels && settings.IRCClient.JoinedChannels.length > 0) {
+                            // Берем первый канал
+                            document.getElementById('chat-room').value = settings.IRCClient.JoinedChannels[0];
+                        }
+                    }
+                    
+                    if (settings.UserVerificator) {
+                        if (settings.UserVerificator.RolefilterLevel !== undefined) {
+                            selectedRoleLevel = settings.UserVerificator.RolefilterLevel;
+                            selectRole(selectedRoleLevel);
+                            initRoleCards();
+                        }
+                        if (settings.UserVerificator.WhiteListOnly !== undefined) {
+                            document.getElementById('trusted-only').value = settings.UserVerificator.WhiteListOnly.toString();
+                        }
+                    }
+                } else {
+                    console.log('Файл settings.json не найден, используем значения по умолчанию');
+                }
+            } catch (error) {
+                console.error('Ошибка при загрузке settings.json:', error);
+            }
+        }
+
+        // Загрузка списков пользователей
+        async function loadUserLists() {
+            try {
+                const whiteListResult = await makeRequest('/api/white_list/users', 'GET');
+                const blackListResult = await makeRequest('/api/black_list/users', 'GET');
+                
+                if (whiteListResult.success) {
+                    try {
+                        const whiteList = JSON.parse(whiteListResult.message);
+                        console.log('Белый список:', whiteList);
+                        // Можно отобразить список, если нужно
+                    } catch (e) {
+                        console.error('Ошибка парсинга белого списка:', e);
+                    }
+                }
+                
+                if (blackListResult.success) {
+                    try {
+                        const blackList = JSON.parse(blackListResult.message);
+                        console.log('Черный список:', blackList);
+                        // Можно отобразить список, если нужно
+                    } catch (e) {
+                        console.error('Ошибка парсинга черного списка:', e);
+                    }
+                }
+            } catch (error) {
+                console.error('Ошибка при загрузке списков пользователей:', error);
+            }
+        }
+
+        // Инициализация карточек ролей
+        function initRoleCards() {
+            const container = document.getElementById('role-options');
+            container.innerHTML = '';
+
+            roles.forEach(role => {
+                const card = document.createElement('div');
+                card.className = `role-card ${role.level === selectedRoleLevel ? 'selected' : ''}`;
+                card.dataset.level = role.level;
+                card.onclick = () => selectRole(role.level);
+
+                card.innerHTML = `
+                    <div class="role-header">
+                        <span class="role-icon">${role.icon}</span>
+                        <span class="role-name">${role.name}</span>
+                        <span class="role-level">Уровень ${role.level}</span>
+                    </div>
+                    <div class="role-description">${role.description}</div>
+                    <div class="role-access">${role.access}</div>
+                `;
+
+                container.appendChild(card);
+            });
+        }
+
+        // Выбор роли
+        function selectRole(level) {
+            selectedRoleLevel = level;
+
+            document.querySelectorAll('.role-card').forEach(card => {
+                if (parseInt(card.dataset.level) === level) {
+                    card.classList.add('selected');
+                } else {
+                    card.classList.remove('selected');
+                }
+            });
+        }
+
+        // Сохранение настроек директории
+        async function saveDirectorySettings() {
+            const path = document.getElementById('folder-path').value.trim();
+            if (!path) {
+                alert('Пожалуйста, укажите путь к папке');
+                return;
+            }
+
+            const result = await makeRequest('/api/downloader/settings/folder', 'PUT', { Path: path });
+
+            if (result.success) {
+                alert('Настройки директории сохранены!');
+            } else {
+                alert('Ошибка сохранения: ' + result.message);
+            }
+        }
+
+        // Сохранение размера файла
+        async function saveFileSize() {
+            const size = parseInt(document.getElementById('file-size').value);
+            if (isNaN(size) || size < 50 || size > 1024) {
+                alert('Размер файла должен быть от 50 до 1024 MB');
+                return;
+            }
+
+            const result = await makeRequest('/api/downloader/settings/max_file_size', 'PUT', {
+                FileSize: size
+            });
+
+            if (result.success) {
+                alert('Размер файла сохранен!');
+            } else {
+                alert('Ошибка сохранения: ' + result.message);
+            }
+        }
+
+        // Сохранение источника загрузки
+        async function saveDownloaderSource() {
+            const website = document.getElementById('website-address').value.trim();
+            const prefix = document.getElementById('path-prefix').value.trim();
+
+            if (!website || !prefix) {
+                alert('Пожалуйста, заполните оба поля');
+                return;
+            }
+
+            const result = await makeRequest('/api/downloader/settings/resourse_and_prefix', 'PUT', {
+                Resourse: website,
+                Prefix: prefix
+            });
+
+            if (result.success) {
+                alert('Источник загрузки сохранен!');
+            } else {
+                alert('Ошибка сохранения: ' + result.message);
+            }
+        }
+
+        // Сохранение таймаута переподключения
+        async function saveReconnectTimeout() {
+            const delay = parseInt(document.getElementById('reconnect-delay').value);
+            if (isNaN(delay) || delay < 10 || delay > 120) {
+                alert('Задержка должна быть от 10 до 120 секунд');
+                return;
+            }
+
+            const result = await makeRequest('/api/irc_client/settings/set_reconnect_timeout', 'PUT', {
+                ReconnectTimeout: delay
+            });
+
+            if (result.success) {
+                alert('Таймаут переподключения сохранен!');
+            } else {
+                alert('Ошибка сохранения: ' + result.message);
+            }
+        }
+
+        // Подключение к чату
+        async function connectToChat() {
+            const room = document.getElementById('chat-room').value.trim();
+            if (!room) {
+                alert('Пожалуйста, введите название чата');
+                return;
+            }
+
+            const btn = document.getElementById('connect-btn');
+            btn.innerHTML = '<span class="loading-dots"></span> Подключение...';
+            btn.disabled = true;
+
+            updateConnectionStatus('connecting', 'Подключение...');
+
+            const result = await makeRequest('/api/irc_client/join', 'POST', {
+                Channel: room
+            });
+
+            if (result.success) {
+                isConnected = true;
+                updateConnectionStatus('connected', `Подключено к ${room}`);
+                alert('Успешно подключено к ' + room);
+            } else {
+                updateConnectionStatus('disconnected', 'Ошибка подключения');
+                alert('Ошибка подключения: ' + result.message);
+            }
+
+            btn.innerHTML = 'Подключиться';
+            btn.disabled = false;
+        }
+
+        // Обновление статуса подключения
+        function updateConnectionStatus(status, text) {
+            const dot = document.getElementById('connection-status');
+            const textEl = document.getElementById('connection-text');
+
+            dot.className = 'status-dot';
+            dot.classList.add(status);
+            textEl.textContent = text;
+        }
+
+        // Сохранение настроек доступа
+        async function saveAccessSettings() {
+            const trustedOnly = document.getElementById('trusted-only').value === 'true';
+
+            const levelResult = await makeRequest('/api/validator/settings/role_filter_level', 'PUT', {
+                RoleFilterLevel: selectedRoleLevel
+            });
+
+            const trustedResult = await makeRequest('/api/validator/settings/set_whitelist_only', 'PUT', {
+                IsOn: trustedOnly
+            });
+
+            if (levelResult.success && trustedResult.success) {
+                alert('Настройки доступа сохранены!');
+            } else {
+                alert('Ошибка сохранения настроек доступа');
+            }
+        }
+
+        // Управление пользователями
+        async function allowUser(button) {
+            const username = document.getElementById('allow-user').value.trim();
+            if (!username) {
+                alert('Введите имя пользователя');
+                return;
+            }
+
+            setLoading(button, true);
+            const result = await makeRequest('/api/white_list/users', 'PUT', {
+                UserName: username
+            });
+
+            if (result.success) {
+                alert(`Пользователь ${username} добавлен в белый список`);
+                document.getElementById('allow-user').value = '';
+            } else {
+                alert('Ошибка: ' + result.message);
+            }
+            setLoading(button, false);
+        }
+
+        async function removeAllowedUser(button) {
+            const username = document.getElementById('allow-user').value.trim();
+            if (!username) {
+                alert('Введите имя пользователя');
+                return;
+            }
+
+            setLoading(button, true);
+            const result = await makeRequest('/api/white_list/users', 'DELETE', {
+                UserName: username
+            });
+
+            if (result.success) {
+                alert(`Пользователь ${username} удален из белого списка`);
+                document.getElementById('allow-user').value = '';
+            } else {
+                alert('Ошибка: ' + result.message);
+            }
+            setLoading(button, false);
+        }
+
+        async function blockUser(button) {
+            const username = document.getElementById('block-user').value.trim();
+            if (!username) {
+                alert('Введите имя пользователя');
+                return;
+            }
+
+            setLoading(button, true);
+            const result = await makeRequest('/api/black_list/users', 'PUT', {
+                UserName: username
+            });
+
+            if (result.success) {
+                alert(`Пользователь ${username} заблокирован`);
+                document.getElementById('block-user').value = '';
+            } else {
+                alert('Ошибка: ' + result.message);
+            }
+            setLoading(button, false);
+        }
+
+        async function removeBlockedUser(button) {
+            const username = document.getElementById('block-user').value.trim();
+            if (!username) {
+                alert('Введите имя пользователя');
+                return;
+            }
+
+            setLoading(button, true);
+            const result = await makeRequest('/api/black_list/users', 'DELETE', {
+                UserName: username
+            });
+
+            if (result.success) {
+                alert(`Пользователь ${username} разблокирован`);
+                document.getElementById('block-user').value = '';
+            } else {
+                alert('Ошибка: ' + result.message);
+            }
+            setLoading(button, false);
+        }
+
+        // Сохранение всех настроек
+        async function saveAllSettings() {
+            const btn = document.querySelector('.save-all-btn');
+            const originalText = btn.innerHTML;
+            btn.innerHTML = '<span class="loading-dots"></span> Сохранение...';
+            btn.disabled = true;
+
+            try {
+                const result = await makeRequest('/api/settings/save', 'POST');
+
+                if (result.success) {
+                    alert('Все настройки успешно сохранены!');
+                } else {
+                    alert('Произошла ошибка при сохранении настроек: ' + result.message);
+                }
+            } catch (error) {
+                alert('Ошибка: ' + error.message);
+            } finally {
+                btn.innerHTML = originalText;
+                btn.disabled = false;
+            }
+        }
+
+        // Вспомогательные функции
+        function setLoading(button, isLoading) {
+            if (isLoading) {
+                button.innerHTML = '<span class="loading-dots"></span> Обработка...';
+                button.disabled = true;
+            } else {
+                const originalText = button.textContent.replace('Обработка...', '').trim();
+                button.innerHTML = originalText;
+                button.disabled = false;
+            }
+        }
+
+        async function makeRequest(endpoint, method, data = null) {
+            try {
+                const url = SERVER_URL + endpoint;
+                console.log(`Отправка запроса: ${method} ${url}`, data);
+
+                const options = {
+                    method: method,
+                    headers: {
+                        'Content-Type': 'application/json'
+                    }
+                };
+
+                if (data) {
+                    options.body = JSON.stringify(data);
+                }
+
+                const response = await fetch(url, options);
+                const result = await response.text();
+
+                console.log(`Ответ от сервера:`, { status: response.status, result });
+
+                return {
+                    success: response.ok,
+                    message: result,
+                    status: response.status
+                };
+            } catch (error) {
+                console.error('Ошибка при выполнении запроса:', error);
+                return {
+                    success: false,
+                    message: 'Ошибка соединения: ' + error.message
+                };
+            }
+        }
+    </script>
+</body>
+</html>
+

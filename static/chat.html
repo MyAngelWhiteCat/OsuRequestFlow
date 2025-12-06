@@ -1,0 +1,910 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Twitch Chat Overlay</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+            font-family: 'Segoe UI', 'Helvetica', 'Arial', sans-serif;
+        }
+        
+        body {
+            background: transparent;
+            color: white;
+            overflow: hidden;
+            height: 100vh;
+            width: 100vw;
+        }
+        
+        .chat-container {
+            height: 100vh;
+            display: flex;
+            flex-direction: column;
+            background: rgba(10, 10, 10, 0.85);
+            border: 1px solid rgba(145, 70, 255, 0.3);
+            border-radius: 8px;
+        }
+        
+        /* Сообщения */
+        .messages {
+            flex: 1;
+            overflow-y: auto;
+            padding: 10px;
+            display: flex;
+            flex-direction: column;
+            gap: 8px;
+        }
+        
+        .message {
+            display: flex;
+            align-items: flex-start;
+            gap: 10px;
+            padding: 10px 14px;
+            background: rgba(30, 30, 35, 0.9);
+            border-radius: 8px;
+            border-left: 4px solid;
+            animation: slideIn 0.3s ease-out;
+            transition: all 0.2s ease;
+        }
+        
+        .message:hover {
+            background: rgba(40, 40, 45, 0.95);
+            transform: translateX(2px);
+        }
+        
+        @keyframes slideIn {
+            from {
+                opacity: 0;
+                transform: translateY(10px);
+            }
+            to {
+                opacity: 1;
+                transform: translateY(0);
+            }
+        }
+        
+        /* Ник + бейдж */
+        .user-info {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            min-width: 150px;
+            flex-shrink: 0;
+        }
+        
+        .username {
+            font-weight: 700;
+            font-size: 15px;
+            white-space: nowrap;
+            overflow: hidden;
+            text-overflow: ellipsis;
+            max-width: 120px;
+            text-shadow: 0 1px 2px rgba(0,0,0,0.5);
+        }
+        
+        /* Бейджи */
+        .badge {
+            font-size: 11px;
+            font-weight: 800;
+            padding: 3px 8px;
+            border-radius: 4px;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+            white-space: nowrap;
+        }
+        
+        .badge.NONE {
+            display: none;
+        }
+        
+        .badge.VIP {
+            background: linear-gradient(45deg, #FFD700, #FFAA00);
+            color: #000;
+            border: 1px solid #FFAA00;
+            box-shadow: 0 2px 4px rgba(255, 170, 0, 0.3);
+        }
+        
+        .badge.MOD {
+            background: linear-gradient(45deg, #00FF7F, #00CC66);
+            color: #000;
+            border: 1px solid #00CC66;
+            box-shadow: 0 2px 4px rgba(0, 204, 102, 0.3);
+        }
+        
+        .badge.BROADCASTER {
+            background: linear-gradient(45deg, #FF0000, #CC0000);
+            color: white;
+            border: 1px solid #FF4444;
+            text-shadow: 0 1px 2px rgba(0,0,0,0.5);
+            box-shadow: 0 2px 4px rgba(255, 0, 0, 0.3);
+        }
+        
+        /* Сообщение */
+        .message-text {
+            font-size: 15px;
+            line-height: 1.4;
+            word-wrap: break-word;
+            padding-top: 1px;
+            flex: 1;
+            min-width: 0; /* Для корректного обрезания текста */
+        }
+        
+        /* Простая прокрутка */
+        .messages::-webkit-scrollbar {
+            width: 6px;
+        }
+        
+        .messages::-webkit-scrollbar-track {
+            background: rgba(255, 255, 255, 0.05);
+            border-radius: 3px;
+        }
+        
+        .messages::-webkit-scrollbar-thumb {
+            background: linear-gradient(to bottom, #9146ff, #6441a5);
+            border-radius: 3px;
+        }
+        
+        .messages::-webkit-scrollbar-thumb:hover {
+            background: linear-gradient(to bottom, #a366ff, #7550c7);
+        }
+        
+        /* Индикатор подключения */
+        .connection-status {
+            position: fixed;
+            bottom: 10px;
+            right: 10px;
+            background: rgba(0, 0, 0, 0.8);
+            padding: 8px 16px;
+            border-radius: 6px;
+            font-size: 12px;
+            font-weight: 600;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            border: 1px solid;
+            backdrop-filter: blur(4px);
+            z-index: 1000;
+            transition: all 0.3s ease;
+        }
+        
+        .connection-status:hover {
+            transform: scale(1.05);
+        }
+        
+        .status-connected {
+            color: #00FF7F;
+            border-color: #00FF7F;
+            box-shadow: 0 0 15px rgba(0, 255, 127, 0.2);
+        }
+        
+        .status-disconnected {
+            color: #FF5555;
+            border-color: #FF5555;
+            box-shadow: 0 0 15px rgba(255, 85, 85, 0.2);
+        }
+        
+        .status-dot {
+            width: 10px;
+            height: 10px;
+            border-radius: 50%;
+        }
+        
+        .status-connected .status-dot {
+            background: #00FF7F;
+            box-shadow: 0 0 10px #00FF7F;
+            animation: pulse 2s infinite;
+        }
+        
+        .status-disconnected .status-dot {
+            background: #FF5555;
+            box-shadow: 0 0 10px #FF5555;
+        }
+        
+        @keyframes pulse {
+            0%, 100% { opacity: 1; }
+            50% { opacity: 0.5; }
+        }
+        
+        /* Информация о сообщениях */
+        .message-count {
+            position: fixed;
+            top: 10px;
+            right: 10px;
+            background: rgba(0, 0, 0, 0.8);
+            padding: 8px 16px;
+            border-radius: 6px;
+            font-size: 12px;
+            font-weight: 600;
+            color: white;
+            backdrop-filter: blur(4px);
+            border: 1px solid rgba(145, 70, 255, 0.3);
+            z-index: 1000;
+        }
+        
+        /* Настройки */
+        .settings-btn {
+            position: fixed;
+            top: 10px;
+            left: 10px;
+            background: rgba(145, 70, 255, 0.8);
+            color: white;
+            border: none;
+            width: 36px;
+            height: 36px;
+            border-radius: 50%;
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 18px;
+            transition: all 0.3s ease;
+            z-index: 1000;
+        }
+        
+        .settings-btn:hover {
+            background: rgba(145, 70, 255, 1);
+            transform: scale(1.1);
+        }
+        
+        .settings-panel {
+            position: fixed;
+            top: 50px;
+            left: 10px;
+            background: rgba(20, 20, 25, 0.95);
+            padding: 20px;
+            border-radius: 8px;
+            border: 1px solid rgba(145, 70, 255, 0.5);
+            display: none;
+            flex-direction: column;
+            gap: 15px;
+            min-width: 250px;
+            backdrop-filter: blur(10px);
+            z-index: 1000;
+            animation: slideDown 0.3s ease;
+        }
+        
+        @keyframes slideDown {
+            from {
+                opacity: 0;
+                transform: translateY(-10px);
+            }
+            to {
+                opacity: 1;
+                transform: translateY(0);
+            }
+        }
+        
+        .settings-panel.show {
+            display: flex;
+        }
+        
+        .settings-title {
+            color: #9146ff;
+            font-size: 16px;
+            font-weight: 700;
+            margin-bottom: 5px;
+        }
+        
+        .setting-group {
+            display: flex;
+            flex-direction: column;
+            gap: 10px;
+        }
+        
+        .setting-item {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+        }
+        
+        .setting-item label {
+            font-size: 14px;
+            font-weight: 500;
+        }
+        
+        .setting-item input[type="number"] {
+            background: rgba(255, 255, 255, 0.1);
+            border: 1px solid rgba(145, 70, 255, 0.5);
+            color: white;
+            padding: 5px 10px;
+            border-radius: 4px;
+            width: 80px;
+            text-align: center;
+        }
+        
+        .btn {
+            background: #9146ff;
+            color: white;
+            border: none;
+            padding: 8px 16px;
+            border-radius: 4px;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.3s ease;
+        }
+        
+        .btn:hover {
+            background: #7a36e0;
+            transform: translateY(-2px);
+        }
+        
+        .btn-clear {
+            background: #ff5555;
+        }
+        
+        .btn-clear:hover {
+            background: #cc4444;
+        }
+        
+        /* Пустой чат */
+        .empty-state {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            height: 100%;
+            padding: 40px;
+            text-align: center;
+            opacity: 0.5;
+        }
+        
+        .empty-state i {
+            font-size: 48px;
+            color: #9146ff;
+            margin-bottom: 15px;
+        }
+        
+        .empty-state p {
+            font-size: 14px;
+            max-width: 200px;
+            line-height: 1.5;
+        }
+        
+        /* Эмодзи в сообщениях */
+        .emoji {
+            font-size: 1.2em;
+            vertical-align: middle;
+        }
+        
+        /* Ссылки в сообщениях */
+        .message-link {
+            color: #64b5f6;
+            text-decoration: none;
+            font-weight: 500;
+        }
+        
+        .message-link:hover {
+            text-decoration: underline;
+        }
+    </style>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+</head>
+<body>
+    <button class="settings-btn" id="settingsBtn" title="Настройки">
+        <i class="fas fa-cog"></i>
+    </button>
+    
+    <div class="settings-panel" id="settingsPanel">
+        <div class="settings-title">
+            <i class="fas fa-sliders-h"></i>
+            Настройки чата
+        </div>
+        
+        <div class="setting-group">
+            <div class="setting-item">
+                <label for="maxMessages">Макс. сообщений:</label>
+                <input type="number" id="maxMessages" value="100" min="10" max="500">
+            </div>
+            
+            <div class="setting-item">
+                <label for="pollInterval">Интервал (мс):</label>
+                <input type="number" id="pollInterval" value="100" min="50" max="5000">
+            </div>
+        </div>
+        
+        <button class="btn" id="testBtn">
+            <i class="fas fa-vial"></i>
+            Тестовое сообщение
+        </button>
+        
+        <button class="btn btn-clear" id="clearBtn">
+            <i class="fas fa-trash"></i>
+            Очистить чат
+        </button>
+    </div>
+    
+    <div class="chat-container">
+        <div class="messages" id="messages">
+            <div class="empty-state" id="emptyState">
+                <i class="fas fa-comments"></i>
+                <p>Ожидание сообщений...</p>
+            </div>
+        </div>
+    </div>
+    
+    <div class="message-count" id="messageCount">0 сообщений</div>
+    <div class="connection-status status-disconnected" id="connectionStatus">
+        <div class="status-dot"></div>
+        <span>Отключен</span>
+    </div>
+
+    <script>
+        class TwitchChat {
+            constructor() {
+                this.messages = [];
+                this.maxMessages = 100;
+                this.pollInterval = 100;
+                this.serverUrl = 'http://localhost:8181';
+                this.lastMessageId = null;
+                this.isConnected = false;
+                this.pollTimer = null;
+                this.totalMessages = 0;
+                
+                this.init();
+            }
+            
+            init() {
+                console.log('Twitch Chat Overlay инициализирован');
+                console.log(`Подключение к ${this.serverUrl}/api/last_messages`);
+                
+                this.loadSettings();
+                this.setupEventListeners();
+                this.startPolling();
+                this.updateUI();
+                
+                // Обновляем счетчик каждую секунду
+                setInterval(() => this.updateMessageCount(), 1000);
+            }
+            
+            async fetchMessages() {
+                try {
+                    const timestamp = new Date().getTime();
+                    const response = await fetch(`${this.serverUrl}/api/last_messages?_=${timestamp}`, {
+                        method: 'GET',
+                        headers: {
+                            'Accept': 'application/json',
+                            'Cache-Control': 'no-cache',
+                            'Pragma': 'no-cache'
+                        },
+                        mode: 'cors'
+                    });
+                    
+                    if (!response.ok) {
+                        throw new Error(`HTTP ${response.status}: ${response.statusText}`);
+                    }
+                    
+                    const data = await response.json();
+                    
+                    if (!Array.isArray(data)) {
+                        throw new Error('Ожидался массив сообщений');
+                    }
+                    
+                    if (data.length > 0) {
+                        this.processMessages(data);
+                        this.setConnected(true);
+                    } else {
+                        this.setConnected(true);
+                    }
+                    
+                } catch (error) {
+                    console.warn('Ошибка получения сообщений:', error.message);
+                    this.setConnected(false);
+                }
+            }
+            
+            processMessages(newMessages) {
+                let hasNew = false;
+                
+                // Обрабатываем в обратном порядке (новые вначале)
+                for (let i = newMessages.length - 1; i >= 0; i--) {
+                    const msg = newMessages[i];
+                    
+                    // Создаем уникальный ID сообщения
+                    const msgId = `${msg.Name}|${msg.message}|${msg.Color}|${msg.Badge || 'NONE'}`;
+                    
+                    if (msgId !== this.lastMessageId) {
+                        this.addMessage(msg);
+                        hasNew = true;
+                        this.lastMessageId = msgId;
+                    }
+                }
+                
+                if (hasNew) {
+                    this.renderMessages();
+                }
+            }
+            
+            addMessage(msgData) {
+                // Очищаем и валидируем данные
+                const message = {
+                    id: Date.now() + Math.random(),
+                    name: (msgData.Name || 'User').trim().substring(0, 25),
+                    color: this.validateColor(msgData.Color) || '#FFFFFF',
+                    badge: (msgData.Badge || 'NONE').toUpperCase().trim(),
+                    text: (msgData.message || '').trim()
+                };
+                
+                // Проверяем валидность бейджа
+                const validBadges = ['VIP', 'MOD', 'BROADCASTER', 'NONE'];
+                if (!validBadges.includes(message.badge)) {
+                    message.badge = 'NONE';
+                }
+                
+                // Проверяем, нет ли уже такого сообщения (дубликат)
+                const isDuplicate = this.messages.some(msg => 
+                    msg.name === message.name && 
+                    msg.text === message.text && 
+                    Math.abs(msg.id - message.id) < 1000
+                );
+                
+                if (!isDuplicate) {
+                    // Добавляем в начало
+                    this.messages.unshift(message);
+                    this.totalMessages++;
+                    
+                    // Ограничиваем количество
+                    if (this.messages.length > this.maxMessages) {
+                        this.messages = this.messages.slice(0, this.maxMessages);
+                    }
+                }
+            }
+            
+            validateColor(color) {
+                if (!color) return '#FFFFFF';
+                
+                // Проверяем HEX формат
+                const hexRegex = /^#([A-Fa-f0-9]{6}|[A-Fa-f0-9]{3})$/;
+                if (hexRegex.test(color)) {
+                    return color;
+                }
+                
+                // Пробуем конвертировать RGB
+                if (color.startsWith('rgb(') || color.startsWith('rgba(')) {
+                    return color;
+                }
+                
+                // Цвет по умолчанию
+                const defaultColors = [
+                    '#FF0000', '#00FF00', '#0000FF', '#FFFF00', 
+                    '#FF00FF', '#00FFFF', '#FF8000', '#FF0080',
+                    '#9146FF', '#00FF7F', '#FFD700', '#FF69B4'
+                ];
+                
+                // Генерируем цвет из имени
+                let hash = 0;
+                for (let i = 0; i < color.length; i++) {
+                    hash = color.charCodeAt(i) + ((hash << 5) - hash);
+                }
+                
+                const index = Math.abs(hash) % defaultColors.length;
+                return defaultColors[index];
+            }
+            
+            renderMessages() {
+                const container = document.getElementById('messages');
+                const emptyState = document.getElementById('emptyState');
+                
+                if (this.messages.length === 0) {
+                    container.innerHTML = '';
+                    container.appendChild(emptyState);
+                    emptyState.style.display = 'flex';
+                    return;
+                }
+                
+                emptyState.style.display = 'none';
+                container.innerHTML = '';
+                
+                this.messages.forEach(msg => {
+                    const messageEl = this.createMessageElement(msg);
+                    container.appendChild(messageEl);
+                });
+                
+                // Плавная прокрутка к верху
+                container.scrollTop = 0;
+            }
+            
+            createMessageElement(msg) {
+                const messageEl = document.createElement('div');
+                messageEl.className = 'message';
+                messageEl.style.borderLeftColor = msg.color;
+                messageEl.dataset.id = msg.id;
+                
+                // Форматируем ник (если слишком длинный, обрезаем)
+                const displayName = msg.name.length > 15 ? msg.name.substring(0, 15) + '...' : msg.name;
+                
+                messageEl.innerHTML = `
+                    <div class="user-info">
+                        <span class="username" style="color: ${msg.color}" title="${msg.name}">
+                            ${this.escapeHtml(displayName)}
+                        </span>
+                        ${msg.badge !== 'NONE' ? 
+                            `<span class="badge ${msg.badge}" title="${msg.badge}">${msg.badge}</span>` : 
+                            ''
+                        }
+                    </div>
+                    <div class="message-text">
+                        ${this.parseMessage(msg.text)}
+                    </div>
+                `;
+                
+                return messageEl;
+            }
+            
+            parseMessage(text) {
+                if (!text) return '';
+                
+                // Экранирование HTML
+                text = this.escapeHtml(text);
+                
+                // Простые эмодзи
+                const emojiMap = {
+                    ':)': '🙂', ':-)': '🙂',
+                    ':(': '🙁', ':-(': '🙁',
+                    ':D': '😀', ':-D': '😀',
+                    ';)': '😉', ';-)': '😉',
+                    ':P': '😛', ':-P': '😛', ':p': '😛',
+                    ':O': '😮', ':-O': '😮', ':o': '😮',
+                    ':|': '😐', ':-|': '😐',
+                    ':*': '😘', ':-*': '😘',
+                    ':з': '😊', ':З': '😊',
+                    '<3': '❤️', '</3': '💔',
+                    '^^': '😊', '^_^': '😊',
+                    'xD': '😆', 'XD': '😆',
+                    ':/': '😕', ':-/': '😕'
+                };
+                
+                // Заменяем эмодзи
+                Object.keys(emojiMap).forEach(key => {
+                    const regex = new RegExp(this.escapeRegExp(key), 'g');
+                    text = text.replace(regex, `<span class="emoji">${emojiMap[key]}</span>`);
+                });
+                
+                // Обработка ссылок
+                text = text.replace(
+                    /(https?:\/\/[^\s]+)/g, 
+                    '<a href="$1" target="_blank" class="message-link">$1</a>'
+                );
+                
+                // Обработка упоминаний
+                text = text.replace(
+                    /@(\w+)/g, 
+                    '<span style="color: #9146ff; font-weight: 600;">@$1</span>'
+                );
+                
+                return text;
+            }
+            
+            escapeHtml(text) {
+                const div = document.createElement('div');
+                div.textContent = text;
+                return div.innerHTML;
+            }
+            
+            escapeRegExp(string) {
+                return string.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
+            }
+            
+            setConnected(connected) {
+                if (this.isConnected === connected) return;
+                
+                this.isConnected = connected;
+                const statusEl = document.getElementById('connectionStatus');
+                
+                if (connected) {
+                    statusEl.className = 'connection-status status-connected';
+                    statusEl.innerHTML = `
+                        <div class="status-dot"></div>
+                        <span>Подключен</span>
+                    `;
+                    
+                    // Скрываем через 3 секунды
+                    setTimeout(() => {
+                        if (this.isConnected) {
+                            statusEl.style.opacity = '0.5';
+                        }
+                    }, 3000);
+                    
+                } else {
+                    statusEl.className = 'connection-status status-disconnected';
+                    statusEl.innerHTML = `
+                        <div class="status-dot"></div>
+                        <span>Отключен</span>
+                    `;
+                    statusEl.style.opacity = '1';
+                }
+            }
+            
+            startPolling() {
+                // Останавливаем предыдущий таймер, если есть
+                if (this.pollTimer) {
+                    clearInterval(this.pollTimer);
+                }
+                
+                // Первый запрос
+                this.fetchMessages();
+                
+                // Запускаем интервал
+                this.pollTimer = setInterval(() => {
+                    this.fetchMessages();
+                }, this.pollInterval);
+                
+                console.log(`Polling запущен с интервалом ${this.pollInterval}мс`);
+            }
+            
+            updateMessageCount() {
+                document.getElementById('messageCount').textContent = 
+                    `${this.totalMessages} сообщений`;
+            }
+            
+            updateUI() {
+                this.renderMessages();
+                this.updateMessageCount();
+            }
+            
+            clearChat() {
+                if (confirm('Очистить весь чат?')) {
+                    this.messages = [];
+                    this.totalMessages = 0;
+                    this.updateUI();
+                }
+            }
+            
+            addTestMessage() {
+                const testMessages = [
+                    {
+                        Name: 'TestStreamer',
+                        Color: '#FF0000',
+                        Badge: 'BROADCASTER',
+                        message: 'Добро пожаловать на стрим! Не забудьте подписаться!'
+                    },
+                    {
+                        Name: 'ChatModerator',
+                        Color: '#00FF00',
+                        Badge: 'MOD',
+                        message: 'Пожалуйста, соблюдайте правила чата :)'
+                    },
+                    {
+                        Name: 'VIPViewer',
+                        Color: '#FFD700',
+                        Badge: 'VIP',
+                        message: 'Отличный контент! Смотрю каждый день!'
+                    },
+                    {
+                        Name: 'RegularUser',
+                        Color: '#9146FF',
+                        Badge: 'NONE',
+                        message: 'Привет всем! Как дела? :)'
+                    },
+                    {
+                        Name: 'Donator',
+                        Color: '#FF69B4',
+                        Badge: 'NONE',
+                        message: 'Только что задонатил 100 рублей! <3'
+                    }
+                ];
+                
+                const randomMsg = testMessages[Math.floor(Math.random() * testMessages.length)];
+                this.addMessage(randomMsg);
+                this.updateUI();
+            }
+            
+            loadSettings() {
+                try {
+                    const maxMessages = localStorage.getItem('twitchChatMaxMessages');
+                    const pollInterval = localStorage.getItem('twitchChatPollInterval');
+                    
+                    if (maxMessages) this.maxMessages = parseInt(maxMessages);
+                    if (pollInterval) this.pollInterval = parseInt(pollInterval);
+                    
+                    document.getElementById('maxMessages').value = this.maxMessages;
+                    document.getElementById('pollInterval').value = this.pollInterval;
+                    
+                } catch (e) {
+                    console.warn('Не удалось загрузить настройки:', e);
+                }
+            }
+            
+            saveSettings() {
+                try {
+                    localStorage.setItem('twitchChatMaxMessages', this.maxMessages.toString());
+                    localStorage.setItem('twitchChatPollInterval', this.pollInterval.toString());
+                    console.log('Настройки сохранены');
+                } catch (e) {
+                    console.warn('Не удалось сохранить настройки:', e);
+                }
+            }
+            
+            setupEventListeners() {
+                // Кнопка настроек
+                document.getElementById('settingsBtn').addEventListener('click', (e) => {
+                    e.stopPropagation();
+                    document.getElementById('settingsPanel').classList.toggle('show');
+                });
+                
+                // Закрытие настроек при клике вне
+                document.addEventListener('click', (e) => {
+                    const panel = document.getElementById('settingsPanel');
+                    const btn = document.getElementById('settingsBtn');
+                    
+                    if (panel.classList.contains('show') && 
+                        !panel.contains(e.target) && 
+                        !btn.contains(e.target)) {
+                        panel.classList.remove('show');
+                    }
+                });
+                
+                // Тестовое сообщение
+                document.getElementById('testBtn').addEventListener('click', () => {
+                    this.addTestMessage();
+                });
+                
+                // Очистка чата
+                document.getElementById('clearBtn').addEventListener('click', () => {
+                    this.clearChat();
+                    document.getElementById('settingsPanel').classList.remove('show');
+                });
+                
+                // Изменение максимального количества сообщений
+                document.getElementById('maxMessages').addEventListener('change', (e) => {
+                    const value = parseInt(e.target.value);
+                    if (value >= 10 && value <= 500) {
+                        this.maxMessages = value;
+                        this.saveSettings();
+                        
+                        // Обрезаем сообщения если нужно
+                        if (this.messages.length > this.maxMessages) {
+                            this.messages = this.messages.slice(0, this.maxMessages);
+                            this.updateUI();
+                        }
+                    }
+                });
+                
+                // Изменение интервала опроса
+                document.getElementById('pollInterval').addEventListener('change', (e) => {
+                    const value = parseInt(e.target.value);
+                    if (value >= 50 && value <= 5000) {
+                        this.pollInterval = value;
+                        this.saveSettings();
+                        this.startPolling();
+                    }
+                });
+                
+                // Горячие клавиши
+                document.addEventListener('keydown', (e) => {
+                    // Ctrl+Shift+T - тестовое сообщение
+                    if (e.ctrlKey && e.shiftKey && e.key === 'T') {
+                        this.addTestMessage();
+                        e.preventDefault();
+                    }
+                    
+                    // Ctrl+Shift+C - очистка
+                    if (e.ctrlKey && e.shiftKey && e.key === 'C') {
+                        this.clearChat();
+                        e.preventDefault();
+                    }
+                    
+                    // Ctrl+Shift+S - настройки
+                    if (e.ctrlKey && e.shiftKey && e.key === 'S') {
+                        document.getElementById('settingsPanel').classList.toggle('show');
+                        e.preventDefault();
+                    }
+                });
+            }
+        }
+        
+        // Инициализация при загрузке страницы
+        document.addEventListener('DOMContentLoaded', () => {
+            window.twitchChat = new TwitchChat();
+            
+            console.log('Twitch Chat Overlay готов');
+            console.log('Доступ к объекту чата: window.twitchChat');
+            console.log('Доступные методы: addTestMessage(), clearChat()');
+            console.log('Endpoint: http://localhost:8181/api/last_messages');
+        });
+    </script>
+</body>
+</html>

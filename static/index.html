@@ -480,8 +480,13 @@
 <body>
     <div class="container">
         <div class="header">
-            <h1>Настройки программы</h1>
-            <p>Пошаговая настройка программы для osu!</p>
+            <h1>Настройки</h1>
+            <p>Настройка параметров</p>
+            <div style="margin-top: 20px; display: flex; justify-content: center;">
+                <button class="action-btn" onclick="loadAndContinue()" style="max-width: 400px;">
+                    Продолжить с загруженными настройками
+                </button>
+            </div>
         </div>
 
         <!-- Stepper -->
@@ -772,7 +777,7 @@
     </div>
 
     <script>
-        const SERVER_URL = 'http://127.0.0.1:8181';
+        const SERVER_URL = 'http://127.0.0.1:23140';
         let currentStep = 1;
         let selectedRoleLevel = 2; // По умолчанию VIP
         let isConnected = false;
@@ -823,7 +828,26 @@
 
         // Инициализация
         document.addEventListener('DOMContentLoaded', function() {
+        try {
         initRoleCards();
+        // Проверяем доступность всех функций
+        console.log('Инициализация завершена');
+        console.log('Доступные функции:', {
+        goToStep: typeof goToStep,
+        saveDirectorySettings: typeof saveDirectorySettings,
+        saveDownloaderSettings: typeof saveDownloaderSettings,
+        connectToChat: typeof connectToChat,
+        loadAndContinue: typeof loadAndContinue,
+        showMainSettingsPage: typeof showMainSettingsPage
+        });
+        } catch (error) {
+        console.error('Ошибка при инициализации:', error);
+        }
+        });
+
+        // Глобальная обработка ошибок
+        window.addEventListener('error', function(event) {
+        console.error('Глобальная ошибка:', event.error);
         });
 
         // Навигация по шагам
@@ -1099,6 +1123,8 @@
 
         if (levelResult.success && trustedResult.success && saveResult.success) {
         alert('Все настройки успешно сохранены!');
+        // Перенаправляем на главную страницу настроек
+        window.location.href = 'settings.html';
         } else {
         alert('Произошла ошибка при сохранении настроек');
         }
@@ -1118,6 +1144,9 @@
 
         async function makeRequest(endpoint, method, data = null) {
         try {
+        const url = SERVER_URL + endpoint;
+        console.log(`Отправка запроса: ${method} ${url}`, data);
+        
         const options = {
         method: method,
         headers: {
@@ -1129,8 +1158,10 @@
         options.body = JSON.stringify(data);
         }
 
-        const response = await fetch(SERVER_URL + endpoint, options);
+        const response = await fetch(url, options);
         const result = await response.text();
+
+        console.log(`Ответ от сервера:`, { status: response.status, result });
 
         return {
         success: response.ok,
@@ -1138,10 +1169,28 @@
         status: response.status
         };
         } catch (error) {
+        console.error('Ошибка при выполнении запроса:', error);
         return {
         success: false,
         message: 'Ошибка соединения: ' + error.message
         };
+        }
+        }
+
+        // Загрузка настроек и переход на главную страницу настроек
+        async function loadAndContinue() {
+        try {
+        const result = await makeRequest('/api/settings/load', 'POST');
+        
+        if (result.success) {
+        // Перенаправляем на главную страницу настроек
+        window.location.href = 'settings.html';
+        } else {
+        alert('Ошибка загрузки настроек: ' + result.message);
+        }
+        } catch (error) {
+        console.error('Ошибка в loadAndContinue:', error);
+        alert('Ошибка: ' + error.message);
         }
         }
     </script>
