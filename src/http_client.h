@@ -20,13 +20,10 @@
 #include <optional>
 #include <fstream>
 #include <iomanip>
-#include <thread>
-#include <syncstream>
 
 #include "logging.h"
 #include "request_builder.h"
 #include "response_parser.h"
-#include "decode_url.h"
 
 
 namespace http_domain {
@@ -258,6 +255,7 @@ namespace http_domain {
                                 auto& lowest_layer = beast::get_lowest_layer(stream);
                                 lowest_layer.cancel();
                             }
+
                         }
                         else {
                             if (!cli->downloads_fasle_.empty()) { cli->downloads_fasle_.pop_back(); }
