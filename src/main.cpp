@@ -51,8 +51,16 @@ bool OpenBrowserAtPort23140() {
 }
 
 int main() {
-    logging::Logger::Init();
+    SetConsoleOutputCP(1251);
+    SetConsoleCP(1251);
     setlocale(LC_ALL, "Russian_Russia.1251");
+    std::ios_base::sync_with_stdio(false);
+    std::locale loc("Russian_Russia.1251");
+    std::cout.imbue(loc);
+    std::cerr.imbue(loc);
+    std::cin.imbue(loc);
+    
+    logging::Logger::Init();
 
     net::io_context ioc;
     LOG_INFO("Carefully look at this path ");
