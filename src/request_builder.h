@@ -40,7 +40,7 @@ namespace http_domain {
 
     private:
         std::string accept_ = "*/*";
-        std::string connection_ = "close";
+        std::string connection_ = "keep-alive";
 
     };
 
