@@ -85,14 +85,9 @@ namespace file_manager {
             if (save_history) {
                 AddAction(std::move(act));
                 size_t bytes_writen = fs::file_size(actions_history_.back().GetFilePath());
-                LOG_INFO("Successfuly write "
-                    + std::to_string(bytes_writen) + " / " + std::to_string(bytes.size())
-                    + " bytes to " + root_directory_.string());
             }
-            else {
-                LOG_INFO("Successfuly write " + std::to_string(bytes.size())
-                    + " bytes to " + root_directory_.string());
-            }
+            LOG_INFO("Successfuly write " + std::to_string(bytes.size())
+                + " bytes to " + root_directory_.string());
         }
         catch (const std::exception& e) {
             LOG_CRITICAL(e.what());
@@ -101,6 +96,10 @@ namespace file_manager {
 
     void FileManager::AddAction(ActionType type, std::string&& file_name, const fs::path& path) {
         actions_history_.emplace_back(type, std::move(file_name), path);
+    }
+
+    void FileManager::AddAction(ActionType type, std::string&& file_name) {
+        actions_history_.emplace_back(type, std::move(file_name), root_directory_);
     }
 
     void FileManager::AddAction(Action&& act) {
