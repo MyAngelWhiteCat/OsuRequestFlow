@@ -63,19 +63,16 @@ namespace file_manager {
         fs::path GetRootDirectory() const;
         void RemoveFile(const fs::path& path);
         void DeleteAllWritedFilesFromHistory();
+        void AddAction(ActionType type, std::string&& file_name);
 
     private:
         fs::path root_directory_;
         std::list<Action> actions_history_;
 
         std::vector<char> ReadFromRoot(std::ifstream& in, std::string_view file_name);
-
         void WriteInRoot(std::ofstream& out, std::string&& file_name, std::vector<char>&& bytes, bool save_history);
-
         void AddAction(ActionType type, std::string&& file_name, const fs::path& path);
-
         void AddAction(Action&& act);
-
         fs::path GetPathToFileInRoot(std::string_view file_name) const;
     };
 
