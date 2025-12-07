@@ -30,8 +30,6 @@ namespace downloader {
     public:
         Downloader(net::io_context& ioc, bool secured = true);
 
-        ~Downloader(); // debug only;
-
         void Download(std::string_view file);
         void SetUserAgent(std::string_view user_agent);
         void SetUriPrefix(std::string_view uri_prefix);
@@ -58,9 +56,9 @@ namespace downloader {
         std::optional<std::string> uri_prefix_;
         size_t max_file_size_MiB_ = 100;
 
-        void OnDownload(std::string&& file_name, std::vector<char>&& body);
+        void OnDownload(std::string&& file_name, size_t bytes_downloaded);
 
-        void WriteOnDisk(std::string&& file_name, std::vector<char>&& bytes);
+        void SaveAction(std::string&& file_name);
 
         std::string GetEndpoint(std::string_view file);
 

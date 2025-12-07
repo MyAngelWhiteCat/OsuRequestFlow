@@ -37,10 +37,6 @@ namespace downloader {
     {
     }
 
-    Downloader::~Downloader() { // Debug only
-        LOG_INFO("Downloader destructed");
-    }
-
     void Downloader::Download(std::string_view file) {
         LOG_INFO("Downdload "s.append(file));
         net::dispatch(dl_strand, [self = this->shared_from_this(), file = std::string(file)]() {
@@ -53,9 +49,10 @@ namespace downloader {
             }
             client->SetMaxFileSize(self->max_file_size_MiB_);
             try {
+                client->SetRootDirectory(self->file_manager_->GetRootDirectory());
                 client->Get(self->GetEndpoint(file), self->user_agent_, [self, client]
-                (std::string&& file_name, std::vector<char>&& body) {
-                        self->OnDownload(std::move(file_name), std::move(body));
+                (std::string&& file_name, size_t bytes_downloaded) {
+                        self->OnDownload(std::move(file_name), bytes_downloaded);
                     });
             }
             catch (const std::exception& e) {
@@ -81,16 +78,14 @@ namespace downloader {
         file_manager_ = std::make_shared<file_manager::FileManager>(std::filesystem::path(path));
     }
 
-    void Downloader::OnDownload(std::string&& file_name, std::vector<char>&& body) {
-        LOG_INFO("Successfuly download "s.append(std::to_string(body.size())).append(" bytes"));
-        WriteOnDisk(std::move(file_name), std::move(body));
+    void Downloader::OnDownload(std::string&& file_name, size_t bytes_downloaded) {
+        LOG_INFO("Successfuly download "s.append(std::to_string(bytes_downloaded)).append(" bytes"));
+        SaveAction(std::move(file_name));
     }
 
-    void Downloader::WriteOnDisk(std::string&& file_name, std::vector<char>&& bytes) {
-        LOG_INFO("Start writing "s.append(std::to_string(bytes.size()).append(" bytes")));
-        net::post([self = this->shared_from_this() //does not require consistent execution btw
-            , bytes = std::move(bytes), file_name = std::move(file_name)]() mutable {
-                self->file_manager_->WriteBinaryInRoot(std::move(file_name), std::move(bytes));
+    void Downloader::SaveAction(std::string&& file_name) {
+        net::post([self = this->shared_from_this(), file_name = std::move(file_name)]() mutable {
+                self->file_manager_->AddAction(file_manager::ActionType::Write, std::move(file_name));
             });
     }
 
