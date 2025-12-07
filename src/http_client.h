@@ -120,17 +120,28 @@ namespace http_domain {
             SendRequest(std::move(req), std::forward<ResponseHandler>(handler));
         }
 
+        void SetRootDirectory(const std::filesystem::path& path) {
+            root_directory_ = path;
+        }
+
     private:
         std::variant<beast::tcp_stream, ssl::stream<beast::tcp_stream>> stream_;
         std::shared_ptr<ssl::context> ctx_{ nullptr };
+
         Strand write_strand_;
         Strand read_strand_;
+
         beast::error_code ec_;
+
         bool ssl_connected_ = false;
         bool connected_ = false;
+
         std::optional<std::string> host_;
+
         RequestBuilder request_builder_;
         int max_file_size_MiB_ = 200;
+
+        std::optional<std::filesystem::path> root_directory_;
 
 
         template <typename Handler>
@@ -139,9 +150,9 @@ namespace http_domain {
             ReadVisitor(std::shared_ptr<Client> client, Handler&& handler)
                 : client_(client)
                 , handler_(std::forward<Handler>(handler))
-                , response_parser_(client->max_file_size_MiB_)
+                , response_parser_(*client_->root_directory_, client->max_file_size_MiB_)
             {
-
+                // FATAL
             }
 
             void operator()(beast::tcp_stream& stream) {
@@ -157,7 +168,7 @@ namespace http_domain {
             Handler handler_;
 
             beast::flat_buffer buffer_;
-            ResponseParser response_parser_;
+            FileResponseParser response_parser_;
             bool in_downloading_ = false;
             net::steady_timer downloading_monitoring_timer_{client_->write_strand_.get_inner_executor().context()};
             std::vector<char> downloads_fasle_;
@@ -204,30 +215,31 @@ namespace http_domain {
             template <typename Stream>
             void ReadBody(Stream& stream) {
                 in_downloading_ = true;
+                if (!response_parser_.OpenFile()) {
+                    LOG_INFO("Cant open file for download: "s.append(std::string(response_parser_.GetFileName())));
+                }
                 http::async_read(stream, buffer_, response_parser_.GetParser()
                     , [self = this->shared_from_this(), &stream](const beast::error_code& ec, size_t bytes_readed) mutable {
                         self->in_downloading_ = true;
                         LOG_INFO("Read "s.append(std::to_string(bytes_readed).append(" bytes")));
-                        self->OnReadBody(ec, stream);
+                        self->OnReadBody(ec, bytes_readed);
                     });
                 LOG_INFO("Start downloading");
                 MonitorDownloading(stream);
             }
 
-            template <typename Stream>
-            void OnReadBody(const beast::error_code& ec, Stream& stream) {
+            void OnReadBody(const beast::error_code& ec, size_t bytes_readed) {
                 if (ec) {
                     if (ec == net::error::operation_aborted) {
-                        LOG_ERROR("Download cancelled");
+                        LOG_ERROR("Download cancelled.");
                         return;
                     }
                     CheckConnectionError(ec);
                     logging::ReportError(ec, "Reading http response");
                 }
-                std::string file_name = response_parser_.GetFileName();
-                response_parser_.ParseResponseBody();
+                auto file_name = response_parser_.GetFileName();
                 LOG_INFO("Body readed");
-                handler_(std::move(file_name), std::move(response_parser_.GetBodyBytes()));
+                handler_(std::move(std::string(file_name)), bytes_readed);
             }
 
             void CheckConnectionError(const beast::error_code& ec) {
