@@ -66,7 +66,7 @@ namespace gui_http {
             }
             else if (target == APITarget::JOIN_CHANNEL) {
                 HandleJoinChannel(std::move(req), std::move(send));
-            } 
+            }
             else if (target == APITarget::PART_CHANNEL) {
                 HandlePartChannel(std::move(req), std::move(send));
             }
@@ -82,18 +82,18 @@ namespace gui_http {
         core::Core& core_;
         response_maker::ResponseMaker response_maker_;
         request_validator::RequestValidator request_validator_{ response_maker_ };
-        
+
         template <typename Body, typename Allocator, typename Send>
         void HandleWrongEndPoint(http::request<Body, http::basic_fields<Allocator>>&& req, Send&& send);
-        
+
         // Settings
 
         template <typename Body, typename Allocator, typename Send>
         void HandleLoadSetting(http::request<Body, http::basic_fields<Allocator>>&& req, Send&& send);
-        
+
         template <typename Body, typename Allocator, typename Send>
         void HandleSaveSetting(http::request<Body, http::basic_fields<Allocator>>&& req, Send&& send);
-        
+
         // User Verificator
 
         template <typename Body, typename Allocator, typename Send>
@@ -112,24 +112,24 @@ namespace gui_http {
 
         template <typename Body, typename Allocator, typename Send>
         void HandleMaxFileSize(http::request<Body, http::basic_fields<Allocator>>&& req, Send&& send);
-        
+
         template <typename Body, typename Allocator, typename Send>
         void HandleDownloadsFolder(http::request<Body, http::basic_fields<Allocator>>&& req, Send&& send);
-        
+
         template <typename Body, typename Allocator, typename Send>
         void HandleDownloadsResource(http::request<Body, http::basic_fields<Allocator>>&& req, Send&& send);
-        
+
         // IRC Client
 
         template <typename Body, typename Allocator, typename Send>
         void HandleSetReconnectTimeout(http::request<Body, http::basic_fields<Allocator>>&& req, Send&& send);
-        
+
         template <typename Body, typename Allocator, typename Send>
         void HandleJoinChannel(http::request<Body, http::basic_fields<Allocator>>&& req, Send&& send);
-        
+
         template <typename Body, typename Allocator, typename Send>
         void HandlePartChannel(http::request<Body, http::basic_fields<Allocator>>&& req, Send&& send);
-        
+
         // Chat Widget
 
         template <typename Body, typename Allocator, typename Send>
@@ -139,16 +139,16 @@ namespace gui_http {
 
         template <typename Body, typename Allocator, typename Send>
         void SendWarning(http::request<Body, http::basic_fields<Allocator>>& req, Send&& send, std::string_view warning);
-        
+
         template <typename Body, typename Allocator, typename Send>
         void SendOK(http::request<Body, http::basic_fields<Allocator>>& req, Send&& send, std::string_view info);
-        
+
         template <typename Body, typename Allocator, typename Send>
         void SendList(http::request<Body, http::basic_fields<Allocator>>& req, Send&& send, std::unordered_set<std::string>* list);
 
         template <typename Body, typename Allocator, typename Send>
         void SendServerError(http::request<Body, http::basic_fields<Allocator>>& req, Send&& send, std::string_view info);
-        
+
         template <typename Body, typename Allocator, typename Send>
         void SendJSONWithStatus200(http::request<Body, http::basic_fields<Allocator>>& req, Send&& send, json&& body);
 
@@ -162,10 +162,10 @@ namespace gui_http {
     template <typename Body, typename Allocator, typename Send>
     inline void ApiRequestHandler::HandleWrongEndPoint(http::request<Body, http::basic_fields<Allocator>>&& req, Send&& send) {
         send(response_maker_.MakeStringResponse(
-                http::status::not_found,
-                req.version(),
-                response_maker_.MakeBadRequest(fields::RequestError::BAD_REQUEST, "Not Found"),
-                req.keep_alive())
+            http::status::not_found,
+            req.version(),
+            response_maker_.MakeBadRequest(fields::RequestError::BAD_REQUEST, "Not Found"),
+            req.keep_alive())
         );
     }
 
@@ -201,10 +201,11 @@ namespace gui_http {
     template <typename Body, typename Allocator, typename Send>
     inline void ApiRequestHandler::HandleMaxFileSize(http::request<Body, http::basic_fields<Allocator>>&& req, Send&& send) {
         if (req.method() == http::verb::get) {
-            json max[Settings::FILE_SIZE] = core_.GetMaxFileSize();
+            json max;
+            max[Settings::FILE_SIZE] = core_.GetMaxFileSize();
+            SendJSONWithStatus200(req, send, std::move(max));
         }
-        
-        if (auto new_size = request_validator_.ValidateFileSizeRequest(req, send)) {
+        else if (auto new_size = request_validator_.ValidateFileSizeRequest(req, send)) {
             try {
                 core_.SetMaxFileSize(*new_size);
             }
@@ -228,14 +229,15 @@ namespace gui_http {
         if (req.method() == http::verb::get) {
             json data;
             if (auto resource = core_.GetDownloadResource()) {
-                data[Settings::Resource] = resource;
+                data[Settings::Resource] = *resource;
             }
             if (auto prefix = core_.GetDownloadPrefix()) {
-                data[Settings::PREFIX] = prefix;
+                data[Settings::PREFIX] = *prefix;
             }
             SendJSONWithStatus200(req, send, std::move(data));
+            return;
         }
-        if (auto resource = request_validator_.ValidateSetResourceRequest(req, send)) {
+        else if (auto resource = request_validator_.ValidateSetResourceRequest(req, send)) {
             try {
                 core_.SetDownloadResourceAndPrefix(resource->first, resource->second);
             }
@@ -311,9 +313,9 @@ namespace gui_http {
         if (req.method() == http::verb::get) {
             json role_filter;
             role_filter[Settings::ROLE_FILTER_LEVEL] = core_.GetRoleLevelFilter();
-            SendJSONWithStatus200(std::move(role_filter));
+            SendJSONWithStatus200(req, send, std::move(role_filter));
         }
-        if (auto level = request_validator_.ValidateSetRoleFilterRequest(req, send)) {
+        else if (auto level = request_validator_.ValidateSetRoleFilterRequest(req, send)) {
             core_.SetRoleLevelFilter(*level);
             SendOK(req, send, "Role filter level setted");
         }
@@ -322,10 +324,11 @@ namespace gui_http {
     template <typename Body, typename Allocator, typename Send>
     inline void ApiRequestHandler::HandleWhitelistOnly(http::request<Body, http::basic_fields<Allocator>>&& req, Send&& send) {
         if (req.method() == http::verb::get) {
-            json wlo[Settings::ENABLED] = core_.GetWhiteListOnly();
+            json wlo;
+            wlo[Settings::ENABLED] = core_.GetWhiteListOnly();
             SendJSONWithStatus200(req, send, std::move(wlo));
         }
-        if (auto is_on = request_validator_.ValidateSetWhiteListOnlyRequest(req, send)) {
+        else if (auto is_on = request_validator_.ValidateSetWhiteListOnlyRequest(req, send)) {
             try {
                 core_.SetWhiteListOnly(*is_on);
             }
@@ -394,7 +397,7 @@ namespace gui_http {
         for (auto it = list->begin(); it != list->end(); ++it) {
             serialized.push_back(*it);
         }
-        SendJSONWithStatus200(std::move(serialized));
+        SendJSONWithStatus200(req, send, std::move(serialized));
     }
 
     template<typename Body, typename Allocator, typename Send>
@@ -422,9 +425,9 @@ namespace gui_http {
         send(response_maker_.MakeStringResponse(
             status,
             req.version(),
-            std::move(body)
+            std::move(body),
             req.keep_alive())
-        )
+        );
     }
 
 }
