@@ -34,10 +34,6 @@ namespace gui_http {
         static constexpr std::string_view PREFIX = "Prefix"sv;
         static constexpr std::string_view RECONNECT_TIMEOUT = "ReconnectTimeout"sv;
         static constexpr std::string_view ENABLED = "Enabled"sv;
-        static constexpr std::string_view PATH = "Path"sv;
-        static constexpr std::string_view PATH = "Path"sv;
-        static constexpr std::string_view PATH = "Path"sv;
-        static constexpr std::string_view PATH = "Path"sv;
 
 
     };
