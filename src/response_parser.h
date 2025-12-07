@@ -3,6 +3,7 @@
 #include <string>
 #include <string_view>
 #include <iostream>
+#include <filesystem>
 
 #include <boost/asio/io_context.hpp>
 #include <boost/asio/ip/tcp.hpp>
@@ -34,11 +35,14 @@ namespace http_domain {
         static constexpr std::string_view OK = "OK"sv;
     };
 
-    class ResponseParser {
+    class FileResponseParser {
     public:
 
-        ResponseParser(int max_file_size_MiB)
-            : max_file_size_(MiB * max_file_size_MiB)
+        using FileResponse = http::response<http::file_body>;
+
+        FileResponseParser(const std::filesystem::path& root_dir, int max_file_size_MiB)
+            : root_directory_(root_dir)
+            , max_file_size_(MiB* max_file_size_MiB)
         {
             response_parser_.body_limit(max_file_size_);
         }
@@ -59,7 +63,7 @@ namespace http_domain {
             log_request << "\n\n";
         }
 
-        std::string GetFileName() {
+        std::string_view GetFileName() {
             auto& response = response_parser_.get();
             auto it = response.find(Fields::CONTENT_DISPOSITION);
             if (it != response.end()) {
@@ -94,27 +98,8 @@ namespace http_domain {
             return false;
         }
 
-        http::response_parser<http::dynamic_body>& GetParser() {
+        http::response_parser<http::file_body>& GetParser() {
             return response_parser_;
-        }
-
-        auto& GetBody() {
-            return response_parser_.get().body();
-        }
-
-        std::vector<char> GetBodyBytes() {
-            return std::move(body_bytes_);
-        }
-
-        void ParseResponseBody() {
-            dynamic_response_ = response_parser_.release();
-            body_bytes_.clear();
-            auto buffers = dynamic_response_.body().data();
-            for (auto it = buffers.begin(); it != buffers.end(); ++it) {
-                auto buffer = *it;
-                const char* data = static_cast<const char*>(buffer.data());
-                body_bytes_.insert(body_bytes_.end(), data, data + buffer.size());
-            }
         }
 
         void SetMaxFileSize(size_t new_max_file_size) {
@@ -122,29 +107,41 @@ namespace http_domain {
             response_parser_.body_limit(max_file_size_);
         }
 
-        size_t GetFileSize() {
+        size_t GetFileSize() const {
             return file_size_;
         }
 
         double GetProgress() {
-            return static_cast<double>(response_parser_.get().body().size()) / static_cast<double>(file_size_) * 100;
+            return static_cast<double>(std::filesystem::file_size(GetFilePath())) / static_cast<double>(file_size_) * 100;
+        }
+
+        bool OpenFile() {
+            beast::error_code ec;
+            GetFileName();
+            response_parser_.get().body().open(GetFilePath().string().c_str(), beast::file_mode::write, ec);
+            return !ec;
         }
 
     private:
-        http::response_parser<http::dynamic_body> response_parser_;
-        DynamicResponse dynamic_response_;
-        std::vector<char> body_bytes_;
+        std::filesystem::path root_directory_;
+        http::response_parser<http::file_body> response_parser_;
+        FileResponse file_response_;
         size_t file_size_ = 0;
         size_t max_file_size_ = 200 * MiB;
+        std::string file_name_ = "JohnDoe";
 
 
-        std::string ParseFileName(std::string_view content) {
+        std::string_view ParseFileName(std::string_view content) {
             size_t start_pos = content.find_first_of('"') + 1;
             size_t end_pos = content.find_last_of('"');
             if (start_pos != std::string::npos && end_pos != std::string::npos) {
-                return DecodeURL(content.substr(start_pos, end_pos - start_pos));
+                file_name_ = DecodeURL(content.substr(start_pos, end_pos - start_pos));
             }
-            return "JohnDoe";
+            return file_name_;
+        }
+
+        std::filesystem::path GetFilePath() const {
+            return std::filesystem::path(root_directory_ / file_name_);
         }
 
     };
