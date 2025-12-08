@@ -367,7 +367,7 @@ namespace gui_http {
     inline void ApiRequestHandler::HandleShowChat(http::request<Body, http::basic_fields<Allocator>>&& req, Send&& send) {
         if (auto toggle = request_validator_.ValidateShowChatRequest(req, send)) {
             core_.ShowChat(*toggle);
-            SendOK(req, send, "OK");
+            SendOK(req, send, "Coming soon");
         }
     }
 
