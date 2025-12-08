@@ -24,10 +24,7 @@ namespace irc {
         std::vector<domain::Message> MessageProcessor::GetMessagesFromRawBytes(const std::vector<char>& raw_bytes) {
             std::vector<domain::Message> read_result;
             std::string raw_message;
-            for (const auto ch : raw_bytes) {
-                std::cout << ch;
-            }
-            std::cout << "\n";
+
             if (!last_read_incomplete_message_.empty()) {
                 raw_message = last_read_incomplete_message_;
                 last_read_incomplete_message_.clear();

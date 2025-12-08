@@ -1,10 +1,18 @@
+#pragma once 
+
 #include "command.h"
 #include "command_parser.h"
 #include "command_executor.h"
-#include "user_validator.h"
 
 
 namespace chat_bot {
+
+    struct PrintableMessage {
+        std::string name;
+        std::string badge;
+        std::string colour;
+        std::string message;
+    };
 
     class ChatBot {
     public:

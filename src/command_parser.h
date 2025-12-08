@@ -32,7 +32,8 @@ namespace commands {
             if (auto id = CheckForLOsuMapURLAndGetID(line)) {
                 std::ofstream log_request("LogRequest.txt", std::ios::app);
                 log_request << message.GetNick() << message.GetContent() << "\n";
-                Command osu_request(CommandType::OsuRequest, std::string(message.GetNick()), std::move(*id));
+                Command osu_request(CommandType::OsuRequest
+                    , std::string(message.GetNick()), std::move(*id), std::move(message.GetRole()));
                 LOG_INFO("Osu map find");
                 return osu_request;
             }
@@ -69,7 +70,7 @@ namespace commands {
             std::string_view cut = url.substr(OSU_BEATMAPS_URL.size());
             size_t start = cut.find_first_of("#") + 1;
             size_t end = cut.find_first_of("/");
-            return url.substr(start, end - start) == OSU_GAME_MODE;
+            return cut.substr(start, end - start) == OSU_GAME_MODE;
         }
 
         std::string GetOsuMapID(std::string_view message) {

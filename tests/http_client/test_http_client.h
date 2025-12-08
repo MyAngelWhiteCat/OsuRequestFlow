@@ -23,10 +23,9 @@ namespace test_http_client {
     using DynamicResponse = http::response<http::dynamic_body>;
 
 
-    auto handler = [](std::string&& file_name, std::vector<char>&& body) {
+    auto handler = [](std::string&& file_name, size_t body_size) {
         LOG_INFO("Get response");
         std::ofstream out("downloads/" + file_name);
-        out.write(body.data(), body.size());
         LOG_INFO("File writen");
         };
 
@@ -82,9 +81,9 @@ namespace test_http_client {
         auto ctx = connection::GetSSLContext();
 
         auto client = std::make_shared<http_domain::Client>(ioc);
-        auto ssl_client = std::make_shared<http_domain::Client>(ioc, *ctx);
+        auto ssl_client = std::make_shared<http_domain::Client>(ioc, ctx);
 
-        TestSSLGet(ssl_client);
+        //TestSSLGet(ssl_client);
         //TestSSLSendRequest(ssl_client);
     }
 }

@@ -1,52 +1,99 @@
-#include "auth_data.h"
+﻿#include "auth_data.h"
 #include "irc_client.h"
 #include "logging.h"
-#include "connection.h"
-#include "downloader.h"
 #include "core.h"
+#include "http_server.h"
+#include "request_handler.h"
 
-
-#include <boost/asio/executor_work_guard.hpp>
 #include <boost/asio/impl/io_context.ipp>
 #include <boost/asio/io_context.hpp>
-#include <boost/asio/post.hpp>
-#include <boost/asio/strand.hpp>
 
 #include <clocale>
 
-#include <memory>
 #include <thread>
 #include <vector>
-#include <string_view>
-#include <exception>
+#include <windows.h>
+#include <shellapi.h>
+#include <Lmcons.h>
+#include <filesystem>
 
 using namespace irc;
 namespace fs = std::filesystem;
 
+namespace net = boost::asio;
+namespace sys = boost::system;
+namespace ssl = net::ssl;
+using net::ip::tcp;
+using namespace std::literals;
+
+using Strand = net::strand<net::io_context::executor_type>;
+
+template <typename Fn>
+void RunWorkers(unsigned num_workers, const Fn& fn) {
+    std::vector<std::jthread> threads;
+    for (unsigned i = 0; i < num_workers - 1; ++i) {
+        threads.emplace_back(fn);
+    }
+    fn();
+}
+
+bool OpenBrowserAtPort23140() {
+    std::string url = "http://127.0.0.1:23140";
+    HINSTANCE result = ShellExecuteA(
+        nullptr,
+        "open",
+        url.c_str(),
+        nullptr,
+        nullptr,
+        SW_SHOWNORMAL
+    );
+    return reinterpret_cast<int>(result) > 32;
+}
 
 int main() {
-    logging::Logger::Init();
+    SetConsoleOutputCP(1251);
+    SetConsoleCP(1251);
     setlocale(LC_ALL, "Russian_Russia.1251");
+    std::ios_base::sync_with_stdio(false);
+    std::locale loc("Russian_Russia.1251");
+    std::cout.imbue(loc);
+    std::cerr.imbue(loc);
+    std::cin.imbue(loc);
+    
+    logging::Logger::Init();
 
-    std::string resourse = "osu.direct";
-    std::string streamer = "myangelwhitecat";
-    std::string uri_prefix = "/api/d/";
-    std::string downloads_path = std::filesystem::current_path().string() + "/downloads";
+    net::io_context ioc;
+    LOG_INFO("Carefully look at this path ");
+    LOG_INFO(fs::current_path().string());
+    LOG_INFO("If this path have something like йцукенгшщзхъфывапролджячсмитьбю");
+    LOG_INFO("replace .exe to eng only folders path");
+    LOG_INFO("if path is OK Press ENTER.");
 
-    core::Core core(2);
+    std::cin.get();
+
+    core::Core core(ioc);
     core.SetupConnection(true);
-    core.SetupDownloader(true, resourse, uri_prefix, downloads_path);
-    core.SetupChatBot();
+    core.SetupDownloader(true);
     core.SetupIRCClient(true);
-    core.AddUserInBlackList("Nigger");
-    core.AddUserInWhiteList("myangelwhitecat");
-    core.SetRoleLevelFilter(2);
-    core.SetWhiteListOnly(true);
-    core.SaveSettings();
     core.Start();
+    core.LoadSettings();
 
-    core.Join(streamer);
-    core.Run(2);
+    auto address = net::ip::make_address("127.0.0.1");
+    boost::asio::ip::tcp::endpoint localhost{ address, 23140 };
+    fs::path root = fs::current_path() / "../static";
+
+    
+    Strand api_strand = net::make_strand(ioc);
+    auto handler = std::make_shared<gui_http::RequestHandler>(core, root, api_strand);
+    http_server::ServeHttp(ioc, localhost, [handler](auto&& req, auto&& send) mutable {
+        (*handler)(std::move(req), std::move(send));
+        });
+
+    OpenBrowserAtPort23140();
+    LOG_INFO("GO TO http://localhost:23140");
+    RunWorkers(6, [&ioc]() {
+        ioc.run();
+        });
     logging::Logger::Shutdown();
 }
 

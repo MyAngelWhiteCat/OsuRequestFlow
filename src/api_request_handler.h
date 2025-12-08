@@ -3,6 +3,7 @@
 #include "core.h"
 #include "response_maker.h"
 #include "request_validator.h"
+#include "request_domain_names.h"
 
 #include <string>
 #include <string_view>
@@ -10,6 +11,10 @@
 #include <boost/beast/http/fields.hpp>
 #include <nlohmann/json.hpp>
 #include <unordered_set>
+#include <boost/beast/http/status.hpp>
+#include <exception>
+#include <boost/beast/http/verb.hpp>
+#include "domain_fields.h"
 
 namespace gui_http {
 
@@ -18,20 +23,6 @@ namespace gui_http {
     namespace http = beast::http;
     using json = nlohmann::json;
 
-    struct ApiEps {
-        static constexpr std::string_view LOAD_SETTINGS = "/api/settings/load"sv;
-        static constexpr std::string_view SAVE_SETTINGS = "/api/settings/save"sv;
-        static constexpr std::string_view SET_MAX_FILESIZE = "/api/downloader/settings/max_file_size"sv;
-        static constexpr std::string_view SET_DOWNLOADS_FOLDER = "/api/downloader/settings/folder"sv;
-        static constexpr std::string_view SET_DL_RESOURSE = "/api/downloader/settings/resourse_and_prefix"sv;
-        static constexpr std::string_view WHITELIST = "/api/white_list/users"sv;
-        static constexpr std::string_view BLACKLIST = "/api/black_list/users"sv;
-        static constexpr std::string_view ROLE_FILTER_LVL = "/api/validator/settings/role_filter_level"sv;
-        static constexpr std::string_view WHITELIST_ONLY = "/api/validator/settings/set_whitelist_only"sv;
-        static constexpr std::string_view SET_RECONNECT_TIMEOUT = "/api/irc_client/settings/set_reconnect_timeout"sv;
-        static constexpr std::string_view JOIN_CHANNEL = "/api/irc_client/join"sv;
-        static constexpr std::string_view PART_CHANNEL = "/api/irc_client/part"sv;
-    };
 
     class ApiRequestHandler {
     public:
@@ -43,41 +34,44 @@ namespace gui_http {
         template <typename Body, typename Allocator, typename Send>
         void operator()(http::request<Body, http::basic_fields<Allocator>>&& req, Send&& send) {
             std::string_view target = req.target();
-            if (target == ApiEps::LOAD_SETTINGS) {
+            if (target == APITarget::LOAD_SETTINGS) {
                 HandleLoadSetting(std::move(req), std::move(send));
             }
-            else if (target == ApiEps::SAVE_SETTINGS) {
+            else if (target == APITarget::SAVE_SETTINGS) {
                 HandleSaveSetting(std::move(req), std::move(send));
             }
-            else if (target == ApiEps::SET_MAX_FILESIZE) {
-                HandleSetMaxFileSize(std::move(req), std::move(send));
+            else if (target == APITarget::MAX_FILESIZE) {
+                HandleMaxFileSize(std::move(req), std::move(send));
             }
-            else if (target == ApiEps::SET_DOWNLOADS_FOLDER) {
-                HandleSetDownloadsFolder(std::move(req), std::move(send));
+            else if (target == APITarget::DOWNLOADS_FOLDER) {
+                HandleDownloadsFolder(std::move(req), std::move(send));
             }
-            else if (target == ApiEps::SET_DL_RESOURSE) {
-                HandleSetDownloadsResourse(std::move(req), std::move(send));
+            else if (target == APITarget::DL_RESOURCE) {
+                HandleDownloadsResource(std::move(req), std::move(send));
             }
-            else if (target == ApiEps::WHITELIST) {
+            else if (target == APITarget::WHITELIST) {
                 HandleWhiteList(std::move(req), std::move(send));
             }
-            else if (target == ApiEps::BLACKLIST) {
+            else if (target == APITarget::BLACKLIST) {
                 HandleBlackList(std::move(req), std::move(send));
             }
-            else if (target == ApiEps::ROLE_FILTER_LVL) {
-                HandleSetRoleFilterLevel(std::move(req), std::move(send));
+            else if (target == APITarget::ROLE_FILTER_LVL) {
+                HandleRoleFilterLevel(std::move(req), std::move(send));
             }
-            else if (target == ApiEps::WHITELIST_ONLY) {
+            else if (target == APITarget::WHITELIST_ONLY) {
                 HandleWhitelistOnly(std::move(req), std::move(send));
             }
-            else if (target == ApiEps::SET_RECONNECT_TIMEOUT) {
+            else if (target == APITarget::RECONNECT_TIMEOUT) {
                 HandleSetReconnectTimeout(std::move(req), std::move(send));
             }
-            else if (target == ApiEps::JOIN_CHANNEL) {
+            else if (target == APITarget::JOIN_CHANNEL) {
                 HandleJoinChannel(std::move(req), std::move(send));
-            } 
-            else if (target == ApiEps::PART_CHANNEL) {
+            }
+            else if (target == APITarget::PART_CHANNEL) {
                 HandlePartChannel(std::move(req), std::move(send));
+            }
+            else if (target == APITarget::SHOW_CHAT) {
+                HandleShowChat(std::move(req), std::move(send));
             }
             else {
                 HandleWrongEndPoint(std::move(req), std::move(send));
@@ -88,67 +82,90 @@ namespace gui_http {
         core::Core& core_;
         response_maker::ResponseMaker response_maker_;
         request_validator::RequestValidator request_validator_{ response_maker_ };
-        // done
+
         template <typename Body, typename Allocator, typename Send>
         void HandleWrongEndPoint(http::request<Body, http::basic_fields<Allocator>>&& req, Send&& send);
-        // done
+
+        // Settings
+
         template <typename Body, typename Allocator, typename Send>
         void HandleLoadSetting(http::request<Body, http::basic_fields<Allocator>>&& req, Send&& send);
-        // done
+
         template <typename Body, typename Allocator, typename Send>
         void HandleSaveSetting(http::request<Body, http::basic_fields<Allocator>>&& req, Send&& send);
-        // done
-        template <typename Body, typename Allocator, typename Send>
-        void HandleSetMaxFileSize(http::request<Body, http::basic_fields<Allocator>>&& req, Send&& send);
-        // done
-        template <typename Body, typename Allocator, typename Send>
-        void HandleSetDownloadsFolder(http::request<Body, http::basic_fields<Allocator>>&& req, Send&& send);
-        // done
-        template <typename Body, typename Allocator, typename Send>
-        void HandleSetDownloadsResourse(http::request<Body, http::basic_fields<Allocator>>&& req, Send&& send);
-        // done
+
+        // User Verificator
+
         template <typename Body, typename Allocator, typename Send>
         void HandleWhiteList(http::request<Body, http::basic_fields<Allocator>>&& req, Send&& send);
-        // done
+
         template <typename Body, typename Allocator, typename Send>
         void HandleBlackList(http::request<Body, http::basic_fields<Allocator>>&& req, Send&& send);
-        // done
+
         template <typename Body, typename Allocator, typename Send>
-        void HandleSetRoleFilterLevel(http::request<Body, http::basic_fields<Allocator>>&& req, Send&& send);
-        // done
+        void HandleRoleFilterLevel(http::request<Body, http::basic_fields<Allocator>>&& req, Send&& send);
+
         template <typename Body, typename Allocator, typename Send>
         void HandleWhitelistOnly(http::request<Body, http::basic_fields<Allocator>>&& req, Send&& send);
-        // todo
+
+        // Downloader
+
+        template <typename Body, typename Allocator, typename Send>
+        void HandleMaxFileSize(http::request<Body, http::basic_fields<Allocator>>&& req, Send&& send);
+
+        template <typename Body, typename Allocator, typename Send>
+        void HandleDownloadsFolder(http::request<Body, http::basic_fields<Allocator>>&& req, Send&& send);
+
+        template <typename Body, typename Allocator, typename Send>
+        void HandleDownloadsResource(http::request<Body, http::basic_fields<Allocator>>&& req, Send&& send);
+
+        // IRC Client
+
         template <typename Body, typename Allocator, typename Send>
         void HandleSetReconnectTimeout(http::request<Body, http::basic_fields<Allocator>>&& req, Send&& send);
-        // done
+
         template <typename Body, typename Allocator, typename Send>
         void HandleJoinChannel(http::request<Body, http::basic_fields<Allocator>>&& req, Send&& send);
-        // done
+
         template <typename Body, typename Allocator, typename Send>
         void HandlePartChannel(http::request<Body, http::basic_fields<Allocator>>&& req, Send&& send);
-        // done
+
+        // Chat Widget
+
+        template <typename Body, typename Allocator, typename Send>
+        void HandleShowChat(http::request<Body, http::basic_fields<Allocator>>&& req, Send&& send);
+
+        // Domain 
+
         template <typename Body, typename Allocator, typename Send>
         void SendWarning(http::request<Body, http::basic_fields<Allocator>>& req, Send&& send, std::string_view warning);
-        // done
+
         template <typename Body, typename Allocator, typename Send>
         void SendOK(http::request<Body, http::basic_fields<Allocator>>& req, Send&& send, std::string_view info);
-        // done
+
         template <typename Body, typename Allocator, typename Send>
         void SendList(http::request<Body, http::basic_fields<Allocator>>& req, Send&& send, std::unordered_set<std::string>* list);
 
         template <typename Body, typename Allocator, typename Send>
         void SendServerError(http::request<Body, http::basic_fields<Allocator>>& req, Send&& send, std::string_view info);
 
+        template <typename Body, typename Allocator, typename Send>
+        void SendJSONWithStatus200(http::request<Body, http::basic_fields<Allocator>>& req, Send&& send, json&& body);
+
+        template <typename Body, typename Allocator, typename Send>
+        void SendJSONWithStatus500(http::request<Body, http::basic_fields<Allocator>>& req, Send&& send, json&& body);
+
+        template <typename Body, typename Allocator, typename Send>
+        void SendJSONWithStatus(http::request<Body, http::basic_fields<Allocator>>& req, Send&& send, json&& body, http::status status);
     };
 
     template <typename Body, typename Allocator, typename Send>
     inline void ApiRequestHandler::HandleWrongEndPoint(http::request<Body, http::basic_fields<Allocator>>&& req, Send&& send) {
         send(response_maker_.MakeStringResponse(
-                http::status::not_found,
-                req.version(),
-                response_maker_.MakeBadRequest(fields::RequestError::BAD_REQUEST, "Not Found"),
-                req.keep_alive())
+            http::status::not_found,
+            req.version(),
+            response_maker_.MakeBadRequest(fields::RequestError::BAD_REQUEST, "Not Found"),
+            req.keep_alive())
         );
     }
 
@@ -157,17 +174,11 @@ namespace gui_http {
         if (!request_validator_.ValidateSettingsRequest(req, send)) {
             return;
         }
-
         try {
             core_.LoadSettings();
         }
         catch (const std::exception& e) {
-            send(response_maker_.MakeStringResponse(
-                http::status::internal_server_error,
-                req.version(),
-                response_maker_.MakeBadRequest(fields::RequestError::FILE_NOT_FOUND, e.what()),
-                req.keep_alive())
-            );
+            SendServerError(req, send, e.what());
         }
         SendOK(req, send, "Settings loaded");
     }
@@ -182,46 +193,57 @@ namespace gui_http {
             core_.SaveSettings();
         }
         catch (const std::exception& e) {
-            send(response_maker_.MakeStringResponse(
-                http::status::internal_server_error,
-                req.version(),
-                response_maker_.MakeBadRequest(fields::RequestError::FILE_NOT_FOUND, e.what()),
-                req.keep_alive())
-            );
+            SendServerError(req, send, e.what());
         }
         SendOK(req, send, "Settings setted");
     }
 
     template <typename Body, typename Allocator, typename Send>
-    inline void ApiRequestHandler::HandleSetMaxFileSize(http::request<Body, http::basic_fields<Allocator>>&& req, Send&& send) {
-        if (auto new_size = request_validator_.ValidateFileSizeRequest(req, send)) {
+    inline void ApiRequestHandler::HandleMaxFileSize(http::request<Body, http::basic_fields<Allocator>>&& req, Send&& send) {
+        if (req.method() == http::verb::get) {
+            json max;
+            max[Settings::FILE_SIZE] = core_.GetMaxFileSize();
+            SendJSONWithStatus200(req, send, std::move(max));
+        }
+        else if (auto new_size = request_validator_.ValidateFileSizeRequest(req, send)) {
             try {
                 core_.SetMaxFileSize(*new_size);
             }
             catch (const std::exception& e) {
-                send(response_maker_.MakeStringResponse(
-                    http::status::internal_server_error,
-                    req.version(),
-                    response_maker_.MakeBadRequest(fields::RequestError::FILE_NOT_FOUND, e.what()),
-                    req.keep_alive())
-                );
+                SendServerError(req, send, e.what());
             }
             SendOK(req, send, "Max file size updated");
         }
     }
 
     template <typename Body, typename Allocator, typename Send>
-    inline void ApiRequestHandler::HandleSetDownloadsFolder(http::request<Body, http::basic_fields<Allocator>>&& req, Send&& send) {
+    inline void ApiRequestHandler::HandleDownloadsFolder(http::request<Body, http::basic_fields<Allocator>>&& req, Send&& send) {
         if (auto path = request_validator_.ValidateDownloadsFolderRequest(req, send)) {
-            core_.SetDownloadsFolder(*path);
+            core_.SetDownloadsDirectory(*path);
             SendOK(req, send, "Download folder updated");
         }
     }
 
     template <typename Body, typename Allocator, typename Send>
-    inline void ApiRequestHandler::HandleSetDownloadsResourse(http::request<Body, http::basic_fields<Allocator>>&& req, Send&& send) {
-        if (auto resourse = request_validator_.ValidateSetResourseRequest(req, send)) {
-            core_.SetDownloadResourseAndPrefix(resourse->first, resourse->second);
+    inline void ApiRequestHandler::HandleDownloadsResource(http::request<Body, http::basic_fields<Allocator>>&& req, Send&& send) {
+        if (req.method() == http::verb::get) {
+            json data;
+            if (auto resource = core_.GetDownloadResource()) {
+                data[Settings::Resource] = *resource;
+            }
+            if (auto prefix = core_.GetDownloadPrefix()) {
+                data[Settings::PREFIX] = *prefix;
+            }
+            SendJSONWithStatus200(req, send, std::move(data));
+            return;
+        }
+        else if (auto resource = request_validator_.ValidateSetResourceRequest(req, send)) {
+            try {
+                core_.SetDownloadResourceAndPrefix(resource->first, resource->second);
+            }
+            catch (const std::exception& e) {
+                SendServerError(req, send, e.what());
+            }
             SendOK(req, send, "Download resource updated");
         }
     }
@@ -287,8 +309,13 @@ namespace gui_http {
     }
 
     template <typename Body, typename Allocator, typename Send>
-    inline void ApiRequestHandler::HandleSetRoleFilterLevel(http::request<Body, http::basic_fields<Allocator>>&& req, Send&& send) {
-        if (auto level = request_validator_.ValidateSetRoleFilterRequest(req, send)) {
+    inline void ApiRequestHandler::HandleRoleFilterLevel(http::request<Body, http::basic_fields<Allocator>>&& req, Send&& send) {
+        if (req.method() == http::verb::get) {
+            json role_filter;
+            role_filter[Settings::ROLE_FILTER_LEVEL] = core_.GetRoleLevelFilter();
+            SendJSONWithStatus200(req, send, std::move(role_filter));
+        }
+        else if (auto level = request_validator_.ValidateSetRoleFilterRequest(req, send)) {
             core_.SetRoleLevelFilter(*level);
             SendOK(req, send, "Role filter level setted");
         }
@@ -296,8 +323,18 @@ namespace gui_http {
 
     template <typename Body, typename Allocator, typename Send>
     inline void ApiRequestHandler::HandleWhitelistOnly(http::request<Body, http::basic_fields<Allocator>>&& req, Send&& send) {
-        if (auto is_on = request_validator_.ValidateSetWhiteListOnlyRequest(req, send)) {
-            core_.SetWhiteListOnly(*is_on);
+        if (req.method() == http::verb::get) {
+            json wlo;
+            wlo[Settings::ENABLED] = core_.GetWhiteListOnly();
+            SendJSONWithStatus200(req, send, std::move(wlo));
+        }
+        else if (auto is_on = request_validator_.ValidateSetWhiteListOnlyRequest(req, send)) {
+            try {
+                core_.SetWhiteListOnly(*is_on);
+            }
+            catch (const std::exception& e) {
+                SendServerError(req, send, e.what());
+            }
             SendOK(req, send, "Updated white_list_only");
         }
     }
@@ -327,6 +364,14 @@ namespace gui_http {
     }
 
     template<typename Body, typename Allocator, typename Send>
+    inline void ApiRequestHandler::HandleShowChat(http::request<Body, http::basic_fields<Allocator>>&& req, Send&& send) {
+        if (auto toggle = request_validator_.ValidateShowChatRequest(req, send)) {
+            core_.ShowChat(*toggle);
+            SendOK(req, send, "OK");
+        }
+    }
+
+    template<typename Body, typename Allocator, typename Send>
     inline void ApiRequestHandler::SendWarning(http::request<Body, http::basic_fields<Allocator>>& req, Send&& send, std::string_view warning) {
         send(response_maker_.MakeStringResponse(
             http::status::conflict, // 409
@@ -352,12 +397,7 @@ namespace gui_http {
         for (auto it = list->begin(); it != list->end(); ++it) {
             serialized.push_back(*it);
         }
-        send(response_maker_.MakeStringResponse(
-            http::status::ok,
-            req.version(),
-            std::move(serialized),
-            req.keep_alive()
-        ));
+        SendJSONWithStatus200(req, send, std::move(serialized));
     }
 
     template<typename Body, typename Allocator, typename Send>
@@ -366,6 +406,26 @@ namespace gui_http {
             http::status::internal_server_error,
             req.version(),
             response_maker_.MakeBadRequest("Fatal server error", info),
+            req.keep_alive())
+        );
+    }
+
+    template<typename Body, typename Allocator, typename Send>
+    inline void ApiRequestHandler::SendJSONWithStatus200(http::request<Body, http::basic_fields<Allocator>>& req, Send&& send, json&& body) {
+        SendJSONWithStatus(req, send, std::move(body), http::status::ok);
+    }
+
+    template<typename Body, typename Allocator, typename Send>
+    inline void ApiRequestHandler::SendJSONWithStatus500(http::request<Body, http::basic_fields<Allocator>>& req, Send&& send, json&& body) {
+        SendJSONWithStatus(req, send, std::move(body), http::status::internal_server_error);
+    }
+
+    template<typename Body, typename Allocator, typename Send>
+    inline void ApiRequestHandler::SendJSONWithStatus(http::request<Body, http::basic_fields<Allocator>>& req, Send&& send, json&& body, http::status status) {
+        send(response_maker_.MakeStringResponse(
+            status,
+            req.version(),
+            std::move(body),
             req.keep_alive())
         );
     }

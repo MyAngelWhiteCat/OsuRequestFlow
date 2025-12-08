@@ -1,4 +1,5 @@
 #include "message.h"
+#include <memory>
 
 
 namespace irc {
@@ -113,12 +114,7 @@ namespace irc {
                     
                     std::string_view badge(raw_badge.data(), delimer);
                     std::string_view value(raw_badge.data() + delimer + 1, raw_badge.size() - delimer - 1);
-
-                    std::cout << "badge.data(): " << (void*)badge.data() << std::endl;
-                    std::cout << "raw_badge.data(): " << (void*)raw_badge.data() << std::endl;
-
-                    std::cout << "RAW_BADGE: " << raw_badge << std::endl;
-                    std::cout << "Splited badge: " << badge << " value: " << value << "\n";
+                    
                     if (value == "0") {
                         continue;
                     }

@@ -1,16 +1,12 @@
 #pragma once
 
-#include "file_manager.h"
 #include "message.h" // !! Role only required!!!
-#include "logging.h"
 
 #include <string>
 #include <string_view>
-#include <filesystem>
 #include <memory>
 #include <unordered_set>
 #include <vector>
-#include <utility>
 
 
 namespace commands {
@@ -53,58 +49,17 @@ namespace commands {
             {
             }
 
-            bool Verify(const std::string_view user_name, const irc::domain::Role& role) {
-                if (black_list_->count(std::string(user_name))) {
-                    return false;
-                }
-
-                if (whitelist_only_) {
-                    return white_list_->count(std::string(user_name));
-                }
-
-                return role_filter_.CheckRole(role);
-            }
-
-            void SetWhiteListOnly(bool status) {
-                whitelist_only_ = status;
-            }
-
-            void AddUserInWhiteList(std::string_view user_name) {
-                std::cout << "Adding to white list " << user_name << std::endl;
-                white_list_->insert(std::string(user_name));
-            }
-
-            void RemoveUserFromWhiteList(std::string_view user_name) {
-                white_list_->erase(std::string(user_name));
-            }
-
-            void AddUserInBlackList(std::string_view user_name) {
-                black_list_->insert(std::string(user_name));
-            }
-
-            void RemoveUserFromBlackList(std::string_view user_name) {
-                black_list_->erase(std::string(user_name));
-            }
-
-            void SetRoleLevel(int level) {
-                role_filter_.SetLevel(level);
-            }
-
-            int GetRoleLevel() {
-                return role_filter_.GetLevel();
-            }
-
-            bool GetWhiteListOnly() const {
-                return whitelist_only_;
-            }
-
-            std::unordered_set<std::string>* GetWhiteList() {
-                return white_list_.get();
-            }
-
-            std::unordered_set<std::string>* GetBlackList() {
-                return black_list_.get();
-            }
+            bool Verify(const std::string_view user_name, const irc::domain::Role& role);
+            void SetWhiteListOnly(bool status);
+            void AddUserInWhiteList(std::string_view user_name);
+            void RemoveUserFromWhiteList(std::string_view user_name);
+            void AddUserInBlackList(std::string_view user_name);
+            void RemoveUserFromBlackList(std::string_view user_name);
+            void SetRoleLevel(int level);
+            int GetRoleLevel();
+            bool GetWhiteListOnly() const;
+            std::unordered_set<std::string>* GetWhiteList();
+            std::unordered_set<std::string>* GetBlackList();
 
         private:
             RoleFilter role_filter_;

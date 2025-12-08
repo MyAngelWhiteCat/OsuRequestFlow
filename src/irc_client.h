@@ -9,6 +9,7 @@
 #include <optional>
 #include <string>
 #include <string_view>
+#include <unordered_set>
 
 #include "auth_data.h"
 #include "connection.h"
@@ -45,6 +46,8 @@ namespace irc {
         void Read();
         bool CheckConnect();
         void SetReconnectTimeout(int timeout_seconds);
+        int GetReconnectTimeout();
+        const std::unordered_set<std::string>& GetJoinedChannels();
 
     private:
         Strand write_strand_;
@@ -59,7 +62,7 @@ namespace irc {
         std::shared_ptr<handler::MessageHandler<ChatBot>> message_handler_;
 
         bool authorized_ = false;
-        std::unordered_map<std::string, bool> channel_name_to_connect_status_;
+        std::unordered_set<std::string> joined_channels_;
 
         std::optional<std::string> join_command_buffer_;
         std::optional<std::string> auth_data_buffer_;
@@ -67,6 +70,7 @@ namespace irc {
         void OnRead(std::vector<char>&& bytes);
         void Reconnect(bool secured = true);
         std::string GetChannelNamesInStringCommand(std::vector<std::string_view> channels_names);
+        void AddJoinCommandToBuffer(std::string_view join_command);
     };
 
     template <typename ChatBot>
@@ -106,14 +110,19 @@ namespace irc {
 
     template <typename ChatBot>
     void Client<ChatBot>::Join(const std::vector<std::string_view>& channels_names) {
-        join_command_buffer_ = GetChannelNamesInStringCommand(channels_names);
-        connection_->Write(std::string(domain::Command::JOIN_CHANNEL) + *join_command_buffer_ + "\r\n"s);
+        std::string join_command = GetChannelNamesInStringCommand(channels_names);
+        AddJoinCommandToBuffer(join_command);
+        connection_->Write(std::string(domain::Command::JOIN_CHANNEL) + join_command + "\r\n"s);
+        for (const auto channel : channels_names) {
+            joined_channels_.insert(std::string(channel));
+        }
     }
 
     template <typename ChatBot>
     void Client<ChatBot>::Join(const std::string_view channel_name) {
-        join_command_buffer_ = std::string(channel_name);
-        connection_->Write(std::string(domain::Command::JOIN_CHANNEL) + *join_command_buffer_ + "\r\n"s);
+        AddJoinCommandToBuffer(channel_name);
+        connection_->Write(std::string(domain::Command::JOIN_CHANNEL) + std::string(channel_name) + "\r\n"s);
+        joined_channels_.insert(std::string(channel_name));
     }
 
     template <typename ChatBot>
@@ -127,6 +136,7 @@ namespace irc {
     template <typename ChatBot>
     void Client<ChatBot>::Part(const std::string_view channel_name) {
         connection_->Write(std::string(domain::Command::PART_CHANNEL) + std::string(channel_name) + "\r\n"s);
+        joined_channels_.erase(std::string(channel_name));
     }
 
     template <typename ChatBot>
@@ -167,6 +177,16 @@ namespace irc {
     template <typename ChatBot>
     void Client<ChatBot>::SetReconnectTimeout(int timeout) {
         reconnect_timeout_ = timeout;
+    }
+
+    template<typename ChatBot>
+    inline int Client<ChatBot>::GetReconnectTimeout() {
+        return reconnect_timeout_;
+    }
+
+    template<typename ChatBot>
+    inline const std::unordered_set<std::string>& Client<ChatBot>::GetJoinedChannels() {
+        return joined_channels_;
     }
 
     template <typename ChatBot>
@@ -244,6 +264,16 @@ namespace irc {
             is_first = false;
         }
         return command;
+    }
+
+    template<typename ChatBot>
+    inline void Client<ChatBot>::AddJoinCommandToBuffer(std::string_view join_command) {
+        if (join_command_buffer_) {
+            (*join_command_buffer_) += ",#"s.append(std::string(join_command));
+        }
+        else {
+            join_command_buffer_ = std::string(join_command);
+        }
     }
 
 } // namespace irc

@@ -57,30 +57,22 @@ namespace file_manager {
         }
 
         void WriteBinaryInRoot(std::string&& file_name, std::vector<char>&& bytes, bool save_history = true);
-
         void WriteCharsInRoot(std::string&& file_name, std::vector<char>&& bytes, bool save_history = true);
-
         std::optional<std::vector<char>> ReadBinaryFromRoot(std::string_view file_name);
-
         std::optional<std::vector<char>> ReadCharsFromRoot(std::string_view file_name);
-
-
+        fs::path GetRootDirectory() const;
         void RemoveFile(const fs::path& path);
-
         void DeleteAllWritedFilesFromHistory();
+        void AddAction(ActionType type, std::string&& file_name);
 
     private:
         fs::path root_directory_;
         std::list<Action> actions_history_;
 
         std::vector<char> ReadFromRoot(std::ifstream& in, std::string_view file_name);
-
         void WriteInRoot(std::ofstream& out, std::string&& file_name, std::vector<char>&& bytes, bool save_history);
-
         void AddAction(ActionType type, std::string&& file_name, const fs::path& path);
-
         void AddAction(Action&& act);
-
         fs::path GetPathToFileInRoot(std::string_view file_name) const;
     };
 
