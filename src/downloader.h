@@ -21,6 +21,22 @@ namespace downloader {
 
     using Strand = net::strand<net::io_context::executor_type>;
 
+    struct Server {
+        std::string host_;
+        std::string prefix_;
+        double speed_mbs_ = 0;
+
+        bool operator<(const Server& other) {
+            return speed_mbs_ < other.speed_mbs_;
+        }
+
+        bool operator==(const Server& other) {
+            return host_ == other.host_ && prefix_ == other.prefix_;
+        }
+    };
+
+
+
     class Downloader : public std::enable_shared_from_this<Downloader> {
 
     public:
@@ -50,30 +66,15 @@ namespace downloader {
         std::shared_ptr<file_manager::FileManager> file_manager_{ nullptr };
         std::optional<std::string> resource_;
         std::optional<std::string> uri_prefix_;
+
         size_t max_file_size_MiB_ = 100;
+        const int dl_timout_millisec_ = 1000;
+        std::chrono::steady_clock::time_point last_dl_start_;
 
         void OnDownload(std::string&& file_name, size_t bytes_downloaded);
-
         void SaveAction(std::string&& file_name);
-
         std::string GetEndpoint(std::string_view file);
-
-        std::shared_ptr<http_domain::Client> GetReadyClient() {
-            std::shared_ptr<http_domain::Client> client = nullptr;
-            if (secured_) {
-                client = SetupSecuredConnection();
-            }
-            else {
-                client = SetupNonSecuredConnection();
-            }
-            client->SetMaxFileSize(max_file_size_MiB_);
-            if (auto dir = GetDownloadsDirectory()) {
-                client->SetRootDirectory(*dir);
-            }
-            else {
-                throw std::runtime_error("Download directory not setted");
-            }
-        }
+        std::shared_ptr<http_domain::Client> GetReadyClient();
 
     };
 
