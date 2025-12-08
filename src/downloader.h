@@ -3,17 +3,13 @@
 #include <memory>
 #include <string>
 #include <string_view>
-#include <vector>
 
 #include "file_manager.h"
-#include "random_user_agent.h"
 #include "http_client.h"
 
 #include <boost/asio/ip/tcp.hpp>
 #include <boost/asio/io_context.hpp>
 #include <boost/asio/strand.hpp>
-#include <boost/asio/ssl/context.hpp>
-#include "logging.h"
 
 namespace downloader {
 
@@ -61,6 +57,23 @@ namespace downloader {
         void SaveAction(std::string&& file_name);
 
         std::string GetEndpoint(std::string_view file);
+
+        std::shared_ptr<http_domain::Client> GetReadyClient() {
+            std::shared_ptr<http_domain::Client> client = nullptr;
+            if (secured_) {
+                client = SetupSecuredConnection();
+            }
+            else {
+                client = SetupNonSecuredConnection();
+            }
+            client->SetMaxFileSize(max_file_size_MiB_);
+            if (auto dir = GetDownloadsDirectory()) {
+                client->SetRootDirectory(*dir);
+            }
+            else {
+                throw std::runtime_error("Download directory not setted");
+            }
+        }
 
     };
 
