@@ -9,12 +9,8 @@ const client = axios.create({
   },
 })
 
-client.interceptors.response.use(
-  response => response.data,
-  error => {
-    console.error('API Error:', error)
-    throw error
-  }
-)
+// client.interceptors.response.use(
+  
+// )
 
 export default client

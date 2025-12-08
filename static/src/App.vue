@@ -1,6 +1,7 @@
 <script setup>
-import Directory from './components/Directory.vue';
-import JoinChannel from './components/JoinChannel.vue';
+import Directory from './components/StartSettings/Directory.vue';
+import JoinChannel from './components/StartSettings/JoinChannel.vue';
+import AccessLevel from './components/StartSettings/AccessLevel.vue';
 
 
 </script>
@@ -12,9 +13,10 @@ import JoinChannel from './components/JoinChannel.vue';
       <p style="text-align: center;">Начнем с пошаговой настройки программы</p>
     </div>
     
-    <!-- <JoinChannel/>  -->
-     <Directory/>
-  </div>
+    <AccessLevel/>
+    <JoinChannel/> 
+     <!-- <Directory/> -->
+    </div>
 </template>
 
 <style scoped>

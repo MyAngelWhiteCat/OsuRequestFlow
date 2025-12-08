@@ -1,4 +1,4 @@
-export const API_BASE_URL = process.env.VITE_API_URL || 'http://localhost:8181/api'
+export const API_BASE_URL = 'http://localhost:8181/api'
 
 export const ENDPOINTS = {
   SETTINGS: {
@@ -18,5 +18,6 @@ export const ENDPOINTS = {
   IRC: {
     JOIN_CHANNEL: '/irc_client/join',
     PART_CHANNEL: '/irc_client/part',
+    TIMEOUT: '/irc_client/settings/set_reconnect_timeout'
   },
 }
