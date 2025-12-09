@@ -38,18 +38,16 @@ namespace downloader {
     }
 
     void Downloader::Download(std::string_view file) {
+        auto now = std::chrono::steady_clock::now();
+        auto dur = std::chrono::duration_cast<std::chrono::milliseconds>(now - last_dl_start_).count();
+        if (dur < dl_timout_millisec_) {
+            std::this_thread::sleep_for(std::chrono::milliseconds(dur));
+        }
+
         LOG_INFO("Downdload "s.append(file));
         net::dispatch(dl_strand, [self = this->shared_from_this(), file = std::string(file)]() {
-            std::shared_ptr<http_domain::Client> client = nullptr;
-            if (self->secured_) {
-                client = self->SetupSecuredConnection();
-            }
-            else {
-                client = self->SetupNonSecuredConnection();
-            }
-            client->SetMaxFileSize(self->max_file_size_MiB_);
             try {
-                client->SetRootDirectory(self->file_manager_->GetRootDirectory());
+                auto client = self->GetReadyClient();
                 client->Get(self->GetEndpoint(file), self->user_agent_, [self, client]
                 (std::string&& file_name, size_t bytes_downloaded) {
                         self->OnDownload(std::move(file_name), bytes_downloaded);
@@ -59,7 +57,8 @@ namespace downloader {
                 LOG_CRITICAL(e.what());
             }
             });
-            
+        last_dl_start_ = std::chrono::steady_clock::now();
+
     }
 
     void Downloader::SetUserAgent(std::string_view user_agent) {
@@ -79,7 +78,7 @@ namespace downloader {
     }
 
     void Downloader::OnDownload(std::string&& file_name, size_t bytes_downloaded) {
-        LOG_INFO("Successfuly download "s.append(std::to_string(bytes_downloaded)).append(" bytes"));
+        LOG_INFO("Successfuly download "s.append(std::to_string(static_cast<double>(bytes_downloaded) * http_domain::MiB)).append(" MB"));
         SaveAction(std::move(file_name));
     }
 
@@ -100,7 +99,7 @@ namespace downloader {
 
     std::shared_ptr<http_domain::Client> Downloader::SetupSecuredConnection() {
         if (!resource_) {
-            throw std::runtime_error("Resource doesnt setted");
+            throw std::runtime_error("Resource doesn't setted");
         }
         auto client = std::make_shared<http_domain::Client>(ioc_, connection::GetSSLContext());
         client->SetMaxFileSize(max_file_size_MiB_);
@@ -137,9 +136,26 @@ namespace downloader {
 
     std::string Downloader::GetEndpoint(std::string_view file) {
         if (!uri_prefix_) {
-            throw std::runtime_error("prefix doesnt setted");
+            throw std::runtime_error("prefix doesn't setted");
         }
         return *uri_prefix_ + std::string(file);
+    }
+
+    std::shared_ptr<http_domain::Client> Downloader::GetReadyClient() {
+        std::shared_ptr<http_domain::Client> client = nullptr;
+        if (secured_) {
+            client = SetupSecuredConnection();
+        }
+        else {
+            client = SetupNonSecuredConnection();
+        }
+        client->SetMaxFileSize(max_file_size_MiB_);
+        if (auto dir = GetDownloadsDirectory()) {
+            client->SetRootDirectory(*dir);
+        }
+        else {
+            throw std::runtime_error("Download directory not setted");
+        }
     }
 
 } // namespace downloader

@@ -62,6 +62,7 @@ namespace file_manager {
         std::optional<std::vector<char>> ReadCharsFromRoot(std::string_view file_name);
         fs::path GetRootDirectory() const;
         void RemoveFile(const fs::path& path);
+        // TODO: DeleteFolder
         void DeleteAllWritedFilesFromHistory();
         void AddAction(ActionType type, std::string&& file_name);
 
