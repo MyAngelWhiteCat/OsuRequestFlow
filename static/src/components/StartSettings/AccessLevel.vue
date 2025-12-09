@@ -28,45 +28,66 @@
             <div class="access-level__menu-subtitle">Выберите минимальную роль для доступа к командам</div>
             <div class="access-level__choose">Выберите уровень:</div>
             <div class="access-level__items">
-                <div class="access-level__item" v-for="lvl in levels.cards" :key="lvl.id">
+                <div class="access-level__item" :class="{'active': currentLvlId == index}" v-for="(lvl, index) in levels.cards" :key="index" @click="selectLvlId(index)">
                     <div class="access-level__item-title">{{ lvl.name }}</div>
+                    <div class="access-level__item-list">Кто имеет доступ: {{ lvl.text }}</div>
+                    <div class="access-level__item-lvl" :style="selectColor(lvl.color).borderColor"><span :style="selectColor(lvl.color).fontColor">{{ index }}</span></div>
                 </div>
+            </div>
+            <div class="access-level__trust">
+                <div class="access-level__trust-title">
+                    Только доверенные пользователи
+                </div>
+                <div class="access-level__trust-selected" @click="toggleDropdown">
+                    <div class="access-level__trust-text">{{ currentTrustId }}</div>
+                    <svg :class="{'rotated': isDropdownOpen}" xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                        <polyline points="6 9 12 15 18 9"></polyline>
+                    </svg>
+                </div>
+                <transition name="dropdown">
+                    <div class="access-level__trust-dropdown" v-if="isDropdownOpen">
+                        <div class="dropdown-item" v-for="(item, index) in dropdownItems" :key="index" @click="selectTrustId(index)">
+                            {{ item }}
+                        </div>
+                    </div>
+                </transition>
             </div>
         </div>
     </div>
 </template>
 
 <script setup>
+import { computed, ref, watch } from 'vue';
+import {levels, dropdownItems} from '../../context/data';
 
-const levels = {
-    cards: {
-        '0': {
-            name: 'Все пользователи',
-            text: 'Любой пользователь чата',
-            color: '#ffffff'
-        },
-        '1': {
-            name: 'Подписчики и выше',
-            text: 'Подписчики, VIP, модераторы, стример',
-            color: '#F4F4F4'
-        },
-        '2': {
-            name: 'VIP и выше',
-            text: 'VIP, модераторы, стример',
-            color: '#F4F4F4'
-        },
-        '3': {
-            name: 'Модераторы и стример',
-            text: 'Только модераторы и стримеры',
-            color: '#F4F4F4'
-        },
-        '4': {
-            name: 'Только стример',
-            text: 'Только стример',
-            color: '#F4F4F4'
-        }
-    }
+const currentLvlId = ref('0')
+const currentTrustId = ref(dropdownItems[0])
+const isDropdownOpen = ref(false)
+
+const selectLvlId = (index) => {
+    currentLvlId.value = index
 }
+
+const selectTrustId = (index) => {
+    currentTrustId.value = dropdownItems[index]
+    isDropdownOpen.value = !isDropdownOpen.value
+}
+
+const toggleDropdown = () => {
+    isDropdownOpen.value = !isDropdownOpen.value
+}
+
+const selectColor = (color) => {
+    return {
+        borderColor: `border-color: ${color};`,
+        fontColor: `color: ${color};`
+    }
+};
+
+watch(isDropdownOpen, () => {
+    console.log(isDropdownOpen.value);
+})
+
 
 </script>
 
@@ -102,21 +123,145 @@ const levels = {
 
 .access-level__items {
     display: grid;
-    grid-template-columns: repeat(5, 1fr);
+    grid-template-columns: repeat(2, 1fr);
     gap: 8px;
     margin-top: 12px;
 }
 
 .access-level__item {
-    padding: 10px;
+    padding: 20px;
     background-color: #233d66;
+    border: 1px solid transparent;
     border-radius: 15px;
+    position: relative;
+    transition: 0.3s;
+
+    &:hover {
+        background-color: #152947;
+        border-color: #3862a5;
+        cursor: pointer;
+    }
+
+    &.active {
+        background-color: #0c3369;
+        border-color: #3862a5;
+    }
+ 
 }
 
 .access-level__item-title {
-    font-size: 14px;
+    font-size: 15px;
     font-weight: 600;
     color: #ffffff;
     margin-bottom: 8px;
+}
+
+.access-level__item-list {
+    color: #3fb972;
+    font-size: 14px;
+
+    ul {
+        margin: 10px 0;
+        padding-left:17px;
+    }
+}
+
+.access-level__item-lvl {
+    position: absolute;
+    top: 50%;
+    transform: translateY(-50%);
+    right: 25px;
+    width: 33px;
+    height: 33px;
+    border: 4px solid transparent;
+    border-radius: 50%;
+
+    span {
+        position: absolute;
+        top: 3px;
+        left: 12px;
+        font-size: 18px;
+        font-weight: 600;
+    }
+}
+
+.access-level__trust {
+    position: relative;
+    margin-top: 20px;
+}
+
+.access-level__trust-title {
+    font-size: 14px;
+    font-weight: 600;
+    color: #ffffff;
+    margin-bottom: 12px;
+}
+
+.access-level__trust-selected {
+    border: 1px solid #214981;
+    background-color: #162d5c;
+    border-radius: 15px;
+    position: relative;
+    z-index: 1;
+    width: 525px;
+    cursor: pointer;
+
+    svg {
+        position: absolute;
+        top: 14px;
+        right: 15px;
+        transition: 0.3s;
+
+        &.rotated {
+            transform: rotate(180deg);
+        }
+    }
+}
+
+.access-level__trust-text {
+    padding: 12px;
+    color: #fff
+}
+
+.access-level__trust-dropdown {
+    position: absolute;
+    width: 525px;
+    top: 62px;
+    left: 0;
+    background-color: #162d5c;
+    padding-top: 20px;
+    border-bottom-left-radius: 15px;
+    border-bottom-right-radius: 15px;
+    border: 1px solid #214981;
+    z-index: 0; 
+}
+
+.dropdown-item {
+    padding: 6px 12px;
+
+    &:last-child {
+        border-bottom-left-radius: 15px;
+        border-bottom-right-radius: 15px;
+    }
+
+    &:hover {
+        background-color: #152947;
+        cursor: pointer;
+    }
+}
+
+.dropdown-enter-active,
+.dropdown-leave-active {
+    transition: opacity 0.2s ease, transform 0.3s ease;
+}
+
+.dropdown-enter-from {
+    opacity: 0;
+    transform: translateY(-10px); 
+}
+
+.dropdown-leave-to {
+    opacity: 0;
+    transform: translateY(-10px); 
 }
 </style>

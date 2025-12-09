@@ -48,6 +48,8 @@
 <script setup>
 import { ref, watch } from 'vue';
 import axios from 'axios';
+import client from '../../api/client';
+import { ENDPOINTS } from '../../api/endpoints';
 
 const selectedPath = ref('')
 const statusMessage = ref(null)
@@ -62,7 +64,7 @@ const handleClickSave = () => {
 
 const fetchSelectFolder = async () => {
     try {
-        const res = await axios.put('http://localhost:8181/api/downloader/settings/folder', 
+        const res = await client.put(ENDPOINTS.DOWNLOADER.DOWNLOADS_FOLDER, 
         { 
             Path: selectedPath.value
         });

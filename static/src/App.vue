@@ -15,7 +15,7 @@ import AccessLevel from './components/StartSettings/AccessLevel.vue';
     
     <AccessLevel/>
     <JoinChannel/> 
-     <!-- <Directory/> -->
+    <Directory/>
     </div>
 </template>
 
