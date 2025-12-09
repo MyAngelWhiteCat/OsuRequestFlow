@@ -1,7 +1,7 @@
 <template>
     <div class="directory">
-        <div class="directory__notice">
-            <div class="directory__notice-title">
+        <div class="notice">
+            <div class="notice-title">
                 <svg xmlns="http://www.w3.org/2000/svg" version="1.1" width="18" height="18" viewBox="0 0 512 512">
                     <path d="M272 0l-48 48 48 48-112 128h-112l88 88-136 180.308v19.692h19.692l180.308-136 88 88v-112l128-112 48 48 48-48-240-240zM224 272l-32-32 112-112 32 32-112 112z"/>
                 </svg>
@@ -26,21 +26,19 @@
             <p>Укажите путь для сохранения загруженных карт</p>
             <!-- <form method="post">
                 <label class="input-file">
-                    <span class="input-file-btn" @click="selectFolder">Выберите файл</span>
-                    <span class="input-file-text" type="text">{{ selectedPath }}</span>
+                    <span class="input-file-btn" @click="selectFolder">Выберите папку</span>
+                    <span class="input-file-text" type="text">Или введите вручную</span>
                     <input type="file">        
                 </label>
             </form> -->
             <div class="directory__path">
-                <input id type="text" placeholder="Укажите путь к папке" class="directory__input-path" @input="onTypePath">
+                <input id type="text" value="C:/" placeholder="Укажите путь к папке" class="directory__input-path" @input="onTypePath">
                 <div class="directory__path-bottom">
                     <button class="directory__save-btn" @click="handleClickSave">Сохранить и продолжить</button>
                     <span v-if="statusMessage" class="directory__status-message">{{ statusMessage }}</span>
                 </div>
             </div>
-            <!-- <div style="height: 45px; margin-top: 20px;">
-                <div v-if="statusMessage" class="directory__status-message">{{ statusMessage }}</div>
-            </div> -->
+            <!-- <button class="directory__save-btn" @click="handleClickSave">Сохранить и продолжить</button>  -->
         </div>
     </div>
 </template>
@@ -51,15 +49,19 @@ import axios from 'axios';
 import client from '../../api/client';
 import { ENDPOINTS } from '../../api/endpoints';
 
-const selectedPath = ref('')
+const emit = defineEmits(['next-step']);
+
+const selectedPath = ref('C:/')
 const statusMessage = ref(null)
 
 const onTypePath = (e) => {
     selectedPath.value = e.target.value
 }
 
-const handleClickSave = () => {
-    fetchSelectFolder()
+const handleClickSave = async () => {
+    const success = await fetchSelectFolder()
+
+    if (success) emit('next-step');
 }
 
 const fetchSelectFolder = async () => {
@@ -70,11 +72,14 @@ const fetchSelectFolder = async () => {
         });
         statusMessage.value = null
         console.log(res);
-        
 
+        return true
+        
     } catch (error) {
         statusMessage.value = "Неверно указан путь к папке";
-        console.log('Ошибка при выборе папки:', error)     
+        console.log('Ошибка при выборе папки:', error)  
+
+        return false   
     }
 }
 
@@ -90,7 +95,7 @@ watch(statusMessage, () => {
     padding-top: 50px;
 }
 
-.directory__notice {
+.notice {
     padding: 25px;
     background: radial-gradient(circle at center, #1f305a 0%, #16274e 100%);
     border: 2px solid #16274e;
@@ -98,7 +103,7 @@ watch(statusMessage, () => {
     color: rgb(189, 189, 189);
 }
 
-.directory__notice-title {
+.notice-title {
     font-size: 18px;
     color: #93a7ff;
     font-weight: 600;
@@ -192,7 +197,6 @@ watch(statusMessage, () => {
     padding: 10px;
     border: 1px solid #ddd;
     border-radius: 6px;
-
     font-size: 14px;
     color: rgb(255, 255, 255);
     background-color: transparent;
@@ -217,9 +221,9 @@ watch(statusMessage, () => {
     border: none;
     box-shadow: 0 4px 15px rgba(0, 0, 0, 0.2);
     transition: all 0.3s ease;
+    height: 42px;
 
     &:hover {
-        transform: translateY(-2px);
         box-shadow: 0 6px 20px rgba(45, 91, 255, 0.4);
     }
 }

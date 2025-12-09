@@ -2,6 +2,7 @@
 import Directory from './components/StartSettings/Directory.vue';
 import JoinChannel from './components/StartSettings/JoinChannel.vue';
 import AccessLevel from './components/StartSettings/AccessLevel.vue';
+import SetupWizard from './components/SetupWizard.vue';
 
 
 </script>

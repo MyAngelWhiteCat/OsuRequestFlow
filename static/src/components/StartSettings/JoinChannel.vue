@@ -1,7 +1,7 @@
 <template>
     <div class="join-channel">
-        <div class="directory__notice">
-            <div class="directory__notice-title">
+        <div class="notice">
+            <div class="notice-title">
                 <svg xmlns="http://www.w3.org/2000/svg" version="1.1" width="18" height="18" viewBox="0 0 512 512">
                     <path d="M272 0l-48 48 48 48-112 128h-112l88 88-136 180.308v19.692h19.692l180.308-136 88 88v-112l128-112 48 48 48-48-240-240zM224 272l-32-32 112-112 32 32-112 112z"/>
                 </svg>
@@ -198,13 +198,11 @@ watch(currentConnetions, () => {
     background-color: transparent;
     color: #f5f5f5;
     font-size: 15px;
+    transition: .4s;
 
-    &--error {
-        border-color: #ff0000;
-
-        &::placeholder {
-            color: #ff0000; 
-        }
+    &:focus {
+        box-shadow: 0 1px 10px 4px rgba(45, 91, 255, 0.4);
+        outline: none;
     }
 }
 
@@ -215,23 +213,18 @@ watch(currentConnetions, () => {
 }
 
 .join-channel__button {
-    background-color: #1863d4;
-    color: #fff;
     transition: .3s;
     height: 42px;
     width: 100%;
     margin-top: 20px;
+    background: linear-gradient(45deg, #202abe 0%, #0960d1 100%);
+    color: #ffffff;
+    font-weight: 600;
+    border: none;
+    box-shadow: 0 4px 15px rgba(0, 0, 0, 0.2);
 
-    &:hover {
-        background-color: #0349b1;
-    }
-
-    &--disconnect {
-        background-color: #ff0000;
-
-        &:hover {
-            background-color: #c30000;
-        }
+    &:hover { 
+        box-shadow: 0 6px 20px rgba(45, 91, 255, 0.4);
     }
 }
 
