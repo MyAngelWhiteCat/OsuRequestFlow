@@ -3,6 +3,7 @@
 #include <memory>
 #include <string>
 #include <string_view>
+#include <unordered_set>
 
 #include "file_manager.h"
 #include "http_client.h"
@@ -21,6 +22,12 @@ namespace downloader {
 
     using Strand = net::strand<net::io_context::executor_type>;
 
+    enum class ServerStatus {
+        AVAILABLE,
+        UNAVAILABLE,
+        UNKNOWN
+    };
+
     struct Server {
         Server(std::string_view host, std::string_view prefix)
             : host_(std::string(host))
@@ -31,6 +38,7 @@ namespace downloader {
         std::string host_;
         std::string prefix_;
         std::optional<double> speed_mbs_;
+        ServerStatus status;
 
         bool operator<(const Server& other) {
             if (speed_mbs_) {
@@ -66,12 +74,14 @@ namespace downloader {
         void SetUserAgent(std::string_view user_agent);
         void SetUriPrefix(std::string_view uri_prefix);
         void SetResource(std::string_view resource);
+        void AddBaseServer(std::string_view host, std::string_view port);
         void SetDownloadsDirectory(std::string_view path);
         std::shared_ptr<http_domain::Client> SetupNonSecuredConnection();
         std::shared_ptr<http_domain::Client> SetupSecuredConnection();
         void SetMaxFileSize(size_t MiB);
 
         void MesureServersDownloadSpeed(std::string_view file);
+        void MesureSpeed(Server& server, std::string_view to_file);
         void Download(std::string_view file);
 
         std::optional<std::string> GetResource() const;
@@ -88,19 +98,22 @@ namespace downloader {
 
         std::shared_ptr<file_manager::FileManager> file_manager_{ nullptr };
         std::optional<std::string> resource_;
-        std::optional<std::string> uri_prefix_;
+        std::optional<std::string> prefix_;
+
         std::vector<Server> base_servers_;
+        std::unordered_map<size_t, std::optional<http_domain::Client>> server_to_client_;
+        std::unordered_set<std::string> download_queue_;
 
         size_t max_file_size_MiB_ = 100;
         const int dl_timout_millisec_ = 1000;
         std::chrono::steady_clock::time_point last_dl_start_;
 
-        void OnDownload(http_domain::DLMetaData&& metadata);
+        void OnDownload(std::string_view file, http_domain::DLMetaData&& metadata);
+        void OnMesureSpeed(Server& server, http_domain::DLMetaData&& metadata);
         void SaveAction(std::string&& file_name);
         std::string GetEndpoint(std::string_view file);
         std::shared_ptr<http_domain::Client> GetReadyClient();
-        void MesureDownloadSpeed(Server& server, std::string_view file);
-        void OnMesureDownloadSpeed(Server& server, http_domain::DLMetaData&& metadata);
+
     };
 
 }
