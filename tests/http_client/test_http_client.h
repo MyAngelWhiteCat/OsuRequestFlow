@@ -23,9 +23,9 @@ namespace test_http_client {
     using DynamicResponse = http::response<http::dynamic_body>;
 
 
-    auto handler = [](std::string&& file_name, size_t body_size) {
+    auto handler = [](http_domain::DLMetaData&& metadata) {
         LOG_INFO("Get response");
-        std::ofstream out("downloads/" + file_name);
+        std::ofstream out("downloads/" + metadata.file_name_);
         LOG_INFO("File writen");
         };
 
