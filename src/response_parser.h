@@ -5,18 +5,14 @@
 #include <iostream>
 #include <filesystem>
 
-#include <boost/asio/io_context.hpp>
-#include <boost/asio/ip/tcp.hpp>
-
 #include <boost/beast.hpp>
 
 #include <string_view>
 #include <string>
-#include <utility>
-#include <fstream>
 #include "logging.h"
 
 #include "decode_url.h"
+#include <optional>
 
 
 namespace http_domain {
@@ -35,14 +31,14 @@ namespace http_domain {
         static constexpr std::string_view OK = "OK"sv;
     };
 
+    using FileResponse = http::response<http::file_body>;
+
+    template <typename Parser>
     class FileResponseParser {
     public:
 
-        using FileResponse = http::response<http::file_body>;
-
-        FileResponseParser(const std::filesystem::path& root_dir, int max_file_size_MiB)
-            : root_directory_(root_dir)
-            , max_file_size_(MiB* max_file_size_MiB)
+        FileResponseParser(int max_file_size_MiB)
+            : max_file_size_(MiB* max_file_size_MiB)
         {
             response_parser_.body_limit(max_file_size_);
         }
@@ -52,8 +48,13 @@ namespace http_domain {
             return response.reason() == Status::OK;
         }
 
+        void SetRootDirectory(const std::filesystem::path& root_dir) {
+            root_directory_ = root_dir;
+        }
+
         void PrintResponseHeaders() {
             auto& response = response_parser_.get();
+
             LOG_INFO(response.reason());
             std::ofstream log_request("LogRequest.txt", std::ios::app);
             log_request << "RESPONSE" << "\n";
@@ -98,7 +99,7 @@ namespace http_domain {
             return false;
         }
 
-        http::response_parser<http::file_body>& GetParser() {
+        Parser& GetParser() {
             return response_parser_;
         }
 
@@ -112,20 +113,35 @@ namespace http_domain {
         }
 
         double GetProgress() {
-            return static_cast<double>(std::filesystem::file_size(GetFilePath())) / static_cast<double>(file_size_) * 100;
+            if (speed_mesure_mode_) {
+                return static_cast<double>(response_parser_.get().body().size())
+                    / static_cast<double>(file_size_) * 100;
+            }
+            return static_cast<double>(std::filesystem::file_size(GetFilePath()))
+                / static_cast<double>(file_size_) * 100;
         }
 
         bool OpenFile() {
-            beast::error_code ec;
-            GetFileName();
-            response_parser_.get().body().open(GetFilePath().string().c_str(), beast::file_mode::write, ec);
-            return !ec;
+            if constexpr (std::is_same_v<Parser, http::response_parser<http::file_body>>) {
+                beast::error_code ec;
+                GetFileName();
+                response_parser_.get().body().open(GetFilePath().string().c_str(),
+                    beast::file_mode::write, ec);
+                return !ec;
+            }
+            else {
+                return true;
+            }
+        }
+
+        void SetSpeedMesureMode(bool is_speed_mesuring) {
+            speed_mesure_mode_ = is_speed_mesuring;
         }
 
     private:
-        std::filesystem::path root_directory_;
-        http::response_parser<http::file_body> response_parser_;
-        FileResponse file_response_;
+        std::optional<std::filesystem::path> root_directory_;
+        Parser response_parser_;
+        bool speed_mesure_mode_ = false;
         size_t file_size_ = 0;
         size_t max_file_size_ = 200 * MiB;
         std::string file_name_ = "JohnDoe";
@@ -141,9 +157,13 @@ namespace http_domain {
         }
 
         std::filesystem::path GetFilePath() const {
-            return std::filesystem::path(root_directory_ / file_name_);
+            if (!root_directory_) {
+                throw std::runtime_error("Root directory not seted");
+            }
+            return std::filesystem::path(*root_directory_ / file_name_);
         }
 
     };
+
 
 }
