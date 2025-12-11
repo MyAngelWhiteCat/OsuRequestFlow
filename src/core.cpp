@@ -31,11 +31,13 @@ namespace core {
         downloader_->SetResource(resource);
         downloader_->SetUriPrefix(uri_prefix);
         downloader_->SetDownloadsDirectory(downloads_directory);
+        SetBaseDownloaderResources();
         SetupChatBot();
     }
 
     void Core::SetupDownloader(bool secured) {
         downloader_ = std::make_shared<downloader::Downloader>(ioc_, secured);
+        SetBaseDownloaderResources();
         SetupChatBot();
     }
 
@@ -158,6 +160,10 @@ namespace core {
 
     void Core::SetMaxFileSize(size_t MiB) {
         downloader_->SetMaxFileSize(MiB);
+    }
+
+    void Core::MesureDownloadSpeed(std::string_view to_resourse) {
+        downloader_->MesureServersDownloadSpeed(to_resourse);
     }
 
     std::optional<std::string_view> Core::GetDownloadResource() {
@@ -339,6 +345,15 @@ namespace core {
         if (auto it = settings.find(SettingsKeys::PREFIX); it != settings.end()) {
             downloader_->SetUriPrefix(it->get<std::string>());
         }
+    }
+
+    void Core::SetBaseDownloaderResources() {
+        std::vector<std::pair<std::string, std::string>> base_resources{
+            {"osu.direct", "/api/d/"},
+            {"catboy.best", "/d/"},
+            {"api.nerinyan.moe", "/d/"}
+        };
+        downloader_->SetupBaseServers(base_resources);
     }
 
 
