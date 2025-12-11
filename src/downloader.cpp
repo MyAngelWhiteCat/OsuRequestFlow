@@ -13,7 +13,6 @@
 #include <boost/asio/ip/tcp.hpp>
 #include <boost/asio/io_context.hpp>
 #include <boost/asio/strand.hpp>
-#include <boost/asio/ssl/context.hpp>
 #include <stdexcept>
 #include "logging.h"
 
@@ -37,6 +36,22 @@ namespace downloader {
     {
     }
 
+    void Downloader::SetupBaseServers(const std::vector<std::pair<std::string, std::string>>& servers) {
+        for (const auto& server : servers) {
+            base_servers_.emplace_back(server.first, server.second);
+        }
+    }
+
+    void Downloader::MesureServersDownloadSpeed(std::string_view file) {
+        for (auto& server : base_servers_) {
+            net::post(ioc_, [self = shared_from_this(), &server, file]() {
+                self->SetResource(server.host_);
+                self->SetUriPrefix(server.prefix_);
+                self->MesureDownloadSpeed(server, file);
+                });
+        }
+    }
+
     void Downloader::Download(std::string_view file) {
         auto now = std::chrono::steady_clock::now();
         auto dur = std::chrono::duration_cast<std::chrono::milliseconds>(now - last_dl_start_).count();
@@ -49,8 +64,8 @@ namespace downloader {
             try {
                 auto client = self->GetReadyClient();
                 client->Get(self->GetEndpoint(file), self->user_agent_, [self, client]
-                (std::string&& file_name, size_t bytes_downloaded) {
-                        self->OnDownload(std::move(file_name), bytes_downloaded);
+                (http_domain::DLMetaData&& metadata) {
+                        self->OnDownload(std::move(metadata));
                     });
             }
             catch (const std::exception& e) {
@@ -77,9 +92,9 @@ namespace downloader {
         file_manager_ = std::make_shared<file_manager::FileManager>(std::filesystem::path(path));
     }
 
-    void Downloader::OnDownload(std::string&& file_name, size_t bytes_downloaded) {
-        LOG_INFO("Successfuly download "s.append(std::to_string(static_cast<double>(bytes_downloaded) * http_domain::MiB)).append(" MB"));
-        SaveAction(std::move(file_name));
+    void Downloader::OnDownload(http_domain::DLMetaData&& metadata) {
+        LOG_INFO("Successfuly download "s.append(std::to_string(static_cast<double>(metadata.file_size_) * http_domain::MiB)).append(" MB"));
+        SaveAction(std::move(metadata.file_name_));
     }
 
     void Downloader::SaveAction(std::string&& file_name) {
@@ -156,6 +171,26 @@ namespace downloader {
         else {
             throw std::runtime_error("Download directory not setted");
         }
+    }
+
+    void Downloader::MesureDownloadSpeed(Server& server, std::string_view file) {
+        net::dispatch(dl_strand, [self = this->shared_from_this(), file = std::string(file)]() {
+            try {
+                auto client = self->GetReadyClient();
+                client->SetSpeedMesureMode(true);
+                client->Get(self->GetEndpoint(file), self->user_agent_, [self, client]
+                (http_domain::DLMetaData&& metadata) {
+                        self->OnDownload(std::move(metadata));
+                    });
+            }
+            catch (const std::exception& e) {
+                LOG_CRITICAL(e.what());
+            }
+            });
+    }
+
+    void Downloader::OnMesureDownloadSpeed(Server& server, http_domain::DLMetaData&& metadata) {
+
     }
 
 } // namespace downloader

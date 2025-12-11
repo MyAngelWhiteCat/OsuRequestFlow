@@ -22,12 +22,33 @@ namespace downloader {
     using Strand = net::strand<net::io_context::executor_type>;
 
     struct Server {
+        Server(std::string_view host, std::string_view prefix)
+            : host_(std::string(host))
+            , prefix_(std::string(prefix))
+        {
+        }
+
         std::string host_;
         std::string prefix_;
-        double speed_mbs_ = 0;
+        std::optional<double> speed_mbs_;
 
         bool operator<(const Server& other) {
-            return speed_mbs_ < other.speed_mbs_;
+            if (speed_mbs_) {
+                if (other.speed_mbs_) {
+                    return *speed_mbs_ < *other.speed_mbs_;
+                }
+                else {
+                    return true;
+                }
+            }
+            else {
+                if (other.speed_mbs_) {
+                    return true;
+                }
+                else {
+                    return false;
+                }
+            }
         }
 
         bool operator==(const Server& other) {
@@ -36,13 +57,12 @@ namespace downloader {
     };
 
 
-
     class Downloader : public std::enable_shared_from_this<Downloader> {
 
     public:
         Downloader(net::io_context& ioc, bool secured = true);
 
-        void Download(std::string_view file);
+        void SetupBaseServers(const std::vector<std::pair<std::string, std::string>>& servers);
         void SetUserAgent(std::string_view user_agent);
         void SetUriPrefix(std::string_view uri_prefix);
         void SetResource(std::string_view resource);
@@ -50,6 +70,9 @@ namespace downloader {
         std::shared_ptr<http_domain::Client> SetupNonSecuredConnection();
         std::shared_ptr<http_domain::Client> SetupSecuredConnection();
         void SetMaxFileSize(size_t MiB);
+
+        void MesureServersDownloadSpeed(std::string_view file);
+        void Download(std::string_view file);
 
         std::optional<std::string> GetResource() const;
         std::optional<std::string> GetPrefix() const;
@@ -66,16 +89,18 @@ namespace downloader {
         std::shared_ptr<file_manager::FileManager> file_manager_{ nullptr };
         std::optional<std::string> resource_;
         std::optional<std::string> uri_prefix_;
+        std::vector<Server> base_servers_;
 
         size_t max_file_size_MiB_ = 100;
         const int dl_timout_millisec_ = 1000;
         std::chrono::steady_clock::time_point last_dl_start_;
 
-        void OnDownload(std::string&& file_name, size_t bytes_downloaded);
+        void OnDownload(http_domain::DLMetaData&& metadata);
         void SaveAction(std::string&& file_name);
         std::string GetEndpoint(std::string_view file);
         std::shared_ptr<http_domain::Client> GetReadyClient();
-
+        void MesureDownloadSpeed(Server& server, std::string_view file);
+        void OnMesureDownloadSpeed(Server& server, http_domain::DLMetaData&& metadata);
     };
 
 }
