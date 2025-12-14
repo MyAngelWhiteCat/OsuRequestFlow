@@ -28,8 +28,7 @@ namespace core {
     void Core::SetupDownloader(bool secured, std::string_view resource
         , std::string_view uri_prefix, std::string_view downloads_directory) {
         downloader_ = std::make_shared<downloader::Downloader>(ioc_, secured);
-        downloader_->SetResource(resource);
-        downloader_->SetUriPrefix(uri_prefix);
+        downloader_->SetResourceAndPrefix(resource, uri_prefix);
         downloader_->SetDownloadsDirectory(downloads_directory);
         SetBaseDownloaderResources();
         SetupChatBot();
@@ -150,8 +149,7 @@ namespace core {
     // downloader
 
     void Core::SetDownloadResourceAndPrefix(std::string_view resource, std::string_view prefix) {
-        downloader_->SetResource(resource);
-        downloader_->SetUriPrefix(prefix);
+        downloader_->SetResourceAndPrefix(resource, prefix);
     }
 
     void Core::SetDownloadsDirectory(std::string_view path) {
