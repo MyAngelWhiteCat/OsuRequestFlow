@@ -218,6 +218,28 @@ namespace gui_http {
 
     template <typename Body, typename Allocator, typename Send>
     inline void ApiRequestHandler::HandleDownloadsFolder(http::request<Body, http::basic_fields<Allocator>>&& req, Send&& send) {
+        if (req.method() == http::verb::post) {
+            try {
+                core_.PickDownloadsDirectory();
+                SendOK(req, send, "Directory picked");
+                return;
+            }
+            catch (const std::exception& e) {
+                SendServerError(req, send, e.what());
+            }
+        }
+        if (req.method() == http::verb::get) {
+            json resp;
+            if (auto dir = core_.GetDownloadsDirectory()) {
+                resp[Settings::PATH] = dir->string();
+                SendJSONWithStatus200(req, send, std::move(resp));
+            }
+            else {
+                resp[Settings::PATH] = "not setted";
+                SendJSONWithStatus200(req, send, std::move(resp));
+            }
+            return;
+        }
         if (auto path = request_validator_.ValidateDownloadsFolderRequest(req, send)) {
             core_.SetDownloadsDirectory(*path);
             SendOK(req, send, "Download folder updated");
