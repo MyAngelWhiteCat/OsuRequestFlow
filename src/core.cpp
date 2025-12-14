@@ -156,6 +156,12 @@ namespace core {
         downloader_->SetDownloadsDirectory(path);
     }
 
+    void Core::PickDownloadsDirectory() {
+        std::string path = SelectFolderDialog();
+        if (!path.empty()) {
+            downloader_->SetDownloadsDirectory(path);
+    }
+
     void Core::SetMaxFileSize(size_t MiB) {
         downloader_->SetMaxFileSize(MiB);
     }
@@ -352,6 +358,41 @@ namespace core {
             {"api.nerinyan.moe", "/d/"}
         };
         downloader_->SetupBaseServers(base_resources);
+    }
+
+    std::string Core::SelectFolderDialog() {
+        // AI on
+        std::string result;
+
+        CoInitialize(NULL);
+
+        IFileDialog* pfd;
+        if (SUCCEEDED(CoCreateInstance(CLSID_FileOpenDialog, NULL,
+            CLSCTX_INPROC_SERVER,
+            IID_PPV_ARGS(&pfd)))) {
+            DWORD dwOptions;
+            pfd->GetOptions(&dwOptions);
+            pfd->SetOptions(dwOptions | FOS_PICKFOLDERS);
+
+            if (SUCCEEDED(pfd->Show(NULL))) {
+                IShellItem* psi;
+                if (SUCCEEDED(pfd->GetResult(&psi))) {
+                    PWSTR pszPath;
+                    if (SUCCEEDED(psi->GetDisplayName(SIGDN_FILESYSPATH, &pszPath))) {
+                        char buffer[MAX_PATH];
+                        wcstombs(buffer, pszPath, MAX_PATH);
+                        result = buffer;
+                        CoTaskMemFree(pszPath);
+                    }
+                    psi->Release();
+                }
+            }
+            pfd->Release();
+        }
+
+        CoUninitialize();
+        return result;
+        // AI off
     }
 
 

@@ -85,6 +85,7 @@ namespace core {
 
         void SetDownloadResourceAndPrefix(std::string_view resource, std::string_view prefix);
         void SetDownloadsDirectory(std::string_view path);
+        void PickDownloadsDirectory();
         void SetMaxFileSize(size_t MiB);
 
         void MesureDownloadSpeed(std::string_view to_resourse = "1886002");
@@ -133,6 +134,7 @@ namespace core {
         void LoadDownloaderSettings(json& settings);
 
         void SetBaseDownloaderResources();
+        std::string SelectFolderDialog();
 
     };
 
