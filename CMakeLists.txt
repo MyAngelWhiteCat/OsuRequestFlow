@@ -360,3 +360,7 @@ target_link_libraries(GUI PUBLIC
     Core 
     HTTPServer 
 )
+
+add_executable(OpenGUI
+    helpers/main.cpp
+)
