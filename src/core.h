@@ -9,6 +9,7 @@
 #include <memory>
 #include <string_view>
 
+#include <windows.h>
 
 namespace core {
 
