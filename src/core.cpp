@@ -80,8 +80,22 @@ namespace core {
 
     void Core::LoadSettings() {
         json settings;
+        if (!std::filesystem::exists(std::filesystem::current_path() / std::string(SettingsKeys::FILENAME.data(), SettingsKeys::FILENAME.size()))) {
+            LOG_ERROR("Settings file not exist");
+            return;
+        }
         std::ifstream in(std::string(SettingsKeys::FILENAME.data(), SettingsKeys::FILENAME.size()));
+        try {
         in >> settings;
+        }
+        catch (const std::exception& e) {
+            LOG_CRITICAL(e.what());
+            return;
+        }
+        if (settings.empty()) {
+            LOG_ERROR("Empty settings");
+            return;
+        }
         std::cout << settings << std::endl;
         if (auto it = settings.find(SettingsKeys::USER_VERIFICATOR); it != settings.end()) {
             LoadUserVerificatorSettings(*it);
