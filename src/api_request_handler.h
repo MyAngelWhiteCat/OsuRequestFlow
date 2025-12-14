@@ -270,6 +270,40 @@ namespace gui_http {
         }
     }
 
+    template<typename Body, typename Allocator, typename Send>
+    inline void ApiRequestHandler::HandleMesureSpeed(http::request<Body, http::basic_fields<Allocator>>&& req, Send&& send) {
+        if (!core_.IsNeedToMesureSpeed()) { 
+            return;
+        }
+
+        if (req.method() != http::verb::post) {
+            request_validator_.SendMethodNotAllowed(req, send, "POST");
+        }
+        try {
+            core_.MesureDownloadSpeed();
+        }
+        catch (const std::exception& e) {
+            SendServerError(req, send, e.what());
+            return;
+        }
+        SendOK(req, send, "Start mesuring speed");
+    }
+
+    template<typename Body, typename Allocator, typename Send>
+    inline void ApiRequestHandler::HandleDLServerStatus(http::request<Body, http::basic_fields<Allocator>>&& req, Send&& send) {
+        if (req.method() != http::verb::get) {
+            request_validator_.SendMethodNotAllowed(req, send, "GET");
+            return;
+        }
+        try {
+            json result;
+            result[Settings::STATUS] = core_.GetAccessTestResult();
+            SendJSONWithStatus200(req, send, std::move(result));
+        } catch (const std::exception& e) {
+            SendJSONWithStatus500(req, send, e.what());
+        }
+    }
+
     template <typename Body, typename Allocator, typename Send>
     inline void ApiRequestHandler::HandleWhiteList(http::request<Body, http::basic_fields<Allocator>>&& req, Send&& send) {
         if (req.method() == http::verb::get) {
