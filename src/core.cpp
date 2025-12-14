@@ -366,8 +366,10 @@ namespace core {
         if (auto it = settings.find(SettingsKeys::DOWNLOADS_DIR); it != settings.end()) {
             downloader_->SetDownloadsDirectory(it->get<std::string_view>());
         }
-        if (auto it = settings.find(SettingsKeys::RESOURCE); it != settings.end()) {
-            downloader_->SetResource(it->get<std::string>());
+        if (auto res_it = settings.find(SettingsKeys::RESOURCE); res_it != settings.end()) {
+            if (auto pref_it = settings.find(SettingsKeys::PREFIX); pref_it != settings.end()) {
+                downloader_->SetResourceAndPrefix(res_it->get<std::string>()
+                    , pref_it->get<std::string>());
         }
         if (auto it = settings.find(SettingsKeys::PREFIX); it != settings.end()) {
             downloader_->SetUriPrefix(it->get<std::string>());
