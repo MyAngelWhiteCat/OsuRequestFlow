@@ -88,6 +88,8 @@ namespace core {
         void PickDownloadsDirectory();
         void SetMaxFileSize(size_t MiB);
 
+        bool IsNeedToMesureSpeed();
+        std::string GetAccessTestResult();
         void MesureDownloadSpeed(std::string_view to_resourse = "1886002");
 
         std::optional<std::string_view> GetDownloadResource();

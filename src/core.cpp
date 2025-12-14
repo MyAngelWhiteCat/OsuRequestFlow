@@ -161,9 +161,18 @@ namespace core {
         if (!path.empty()) {
             downloader_->SetDownloadsDirectory(path);
     }
+    }
 
     void Core::SetMaxFileSize(size_t MiB) {
         downloader_->SetMaxFileSize(MiB);
+    }
+
+    bool Core::IsNeedToMesureSpeed() {
+        return downloader_->IsNeedToMesureSpeed();
+    }
+
+    std::string Core::GetAccessTestResult() {
+        return downloader_->GetAccessTestResult();
     }
 
     void Core::MesureDownloadSpeed(std::string_view to_resourse) {
