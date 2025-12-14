@@ -49,6 +49,14 @@ namespace gui_http {
             else if (target == APITarget::DL_RESOURCE) {
                 HandleDownloadsResource(std::move(req), std::move(send));
             }
+            else if (target == APITarget::MESURE_SPEED) {
+                LOG_DEBUG("Processed as MESURE_SPEED");
+                HandleMesureSpeed(std::move(req), std::move(send));
+            }
+            else if (target == APITarget::DL_SERVER_STATUS) {
+                LOG_DEBUG("Processed as DL_SERVER_STATUS");
+                HandleDLServerStatus(std::move(req), std::move(send));
+            }
             else if (target == APITarget::WHITELIST) {
                 HandleWhiteList(std::move(req), std::move(send));
             }
@@ -118,6 +126,12 @@ namespace gui_http {
 
         template <typename Body, typename Allocator, typename Send>
         void HandleDownloadsResource(http::request<Body, http::basic_fields<Allocator>>&& req, Send&& send);
+
+        template <typename Body, typename Allocator, typename Send>
+        void HandleMesureSpeed(http::request<Body, http::basic_fields<Allocator>>&& req, Send&& send);
+
+        template <typename Body, typename Allocator, typename Send>
+        void HandleDLServerStatus(http::request<Body, http::basic_fields<Allocator>>&& req, Send&& send);
 
         // IRC Client
 
