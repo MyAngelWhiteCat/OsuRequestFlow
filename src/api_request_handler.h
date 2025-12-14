@@ -419,6 +419,18 @@ namespace gui_http {
 
     template <typename Body, typename Allocator, typename Send>
     inline void ApiRequestHandler::HandleJoinChannel(http::request<Body, http::basic_fields<Allocator>>&& req, Send&& send) {
+        if (req.method() == http::verb::get) {
+            auto joined = core_.GetJoinedChannels();
+            json arr = json::array();
+            for (auto& channel : joined) {
+                json data;
+                data[Settings::CHANNEL] = std::string(channel);
+                arr.push_back(data);
+            }
+            SendJSONWithStatus200(req, send, std::move(arr));
+
+            return;
+        }
         if (auto channel = request_validator_.ValidateJoinRequest(req, send)) {
             core_.Join(*channel);
             SendOK(req, send, "Join " + std::string(*channel));
