@@ -209,6 +209,7 @@ namespace core {
         return downloader_->GetMaxFileSize();
     }
 
+
     // irc client
 
     void Core::Join(std::string_view channel) {
@@ -224,7 +225,7 @@ namespace core {
     }
 
     std::vector<std::string_view> Core::GetJoinedChannels() {
-        auto jc = client_->GetJoinedChannels();
+        auto& jc = client_->GetJoinedChannels();
         std::vector<std::string_view> joined_channels;
         joined_channels.reserve(jc.size());
 
@@ -374,6 +375,7 @@ namespace core {
         if (auto it = settings.find(SettingsKeys::PREFIX); it != settings.end()) {
             downloader_->SetUriPrefix(it->get<std::string>());
         }
+
     }
 
     void Core::SetBaseDownloaderResources() {
