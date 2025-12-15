@@ -135,6 +135,12 @@
   - Description: Сохранить текущие настройки
 
 ### Downloader Settings
+
+- **POST** `/api/downloader/remove_dublicates`
+  - Body: `empty` 
+  - Response: `ok` / `error`
+  - Description: Удалить дубликаты из корневой папки
+  
 - **PUT** `/api/downloader/settings/max_file_size`
   - Body: `{"FileSize": number}` (unsigned int)
   - Response: `ok` / `error`
