@@ -1,0 +1,79 @@
+#include <optional>
+#include <string>
+#include <utility>
+#include <string_view>
+
+#include "message.h"
+#include "command.h"
+#include "logging.h"
+#include "command_executor.h"
+#include "command_parser.h"
+
+namespace commands {
+
+
+
+    std::optional<Command> commands::CommandParser::Parse(irc::domain::Message&& message) {
+        auto line = message.GetContent();
+        if (line.empty()) {
+            return std::nullopt;
+        }
+
+        if (line[0] == command_start_) {
+            // TODO:
+        }
+        if (auto id = CheckForOsuMapURLAndGetID(line)) {
+            std::ofstream log_request("LogRequest.txt", std::ios::app);
+            log_request << message.GetNick() << message.GetContent() << "\n";
+            Command osu_request(CommandType::OsuRequest
+                , std::string(message.GetNick()), std::move(*id), std::move(message.GetRole()));
+            LOG_INFO("Osu map find");
+            return osu_request;
+        }
+        return std::nullopt;
+
+    }
+
+    void CommandParser::SetCommandStart(char ch) {
+        command_start_ = ch;
+    }
+
+    void CommandParser::SetGameMode(std::string_view mode) {
+        OSU_GAME_MODE = std::string(mode);
+    }
+
+    std::optional<std::string> CommandParser::CheckForOsuMapURLAndGetID(std::string_view url) {
+        size_t url_start = url.find(OSU_BEATMAPS_URL);
+        if (url_start == std::string::npos) {
+            return std::nullopt;
+        }
+        if (!CheckGameMode(url.substr(url_start))) {
+            return std::nullopt;
+        }
+        return GetBeatmapSetId(url.substr(url_start));
+    }
+
+    bool CommandParser::CheckGameMode(std::string_view url) {
+        std::string_view cut = url.substr(OSU_BEATMAPS_URL.size());
+        size_t start = cut.find_first_of("#") + 1;
+        size_t end = cut.find_first_of("/");
+        return cut.substr(start, end - start) == OSU_GAME_MODE;
+    }
+
+    std::string CommandParser::GetOsuMapID(std::string_view message) {
+        size_t map_id_pos = message.find_last_of('/');
+        if (map_id_pos == std::string::npos) {
+            return  "";
+        }
+        return std::string(message.substr(map_id_pos + 1, message.size()));
+    }
+
+    std::string CommandParser::GetBeatmapSetId(std::string_view url) {
+        std::string_view cut = url.substr(OSU_BEATMAPS_URL.size());
+        size_t end = cut.find_first_of("#");
+        std::ofstream log_request("LogRequest.txt", std::ios::app);
+        log_request << "Parsed as: " << url << " " << cut << " " << cut.substr(0, end) << '\n';
+        return std::string(cut.substr(0, end));
+    }
+
+}

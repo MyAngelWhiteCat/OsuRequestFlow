@@ -27,7 +27,7 @@ namespace osu_file_manager {
         }
     }
 
-    void OsuFileManager::RemoveDirectory(const fs::path& path) {
+    void OsuFileManager::RemoveDirectory_(const fs::path& path) {
         if (fs::remove_all(path)) {
             LOG_INFO("Deleted " + path.string());
         }
@@ -55,7 +55,7 @@ namespace osu_file_manager {
             if (auto it = id_to_path.find(map_id); it != id_to_path.end()) {
                 if (dir_entry.path().string().size() > it->second.string().size()) {
                     if (dir_entry.is_directory()) {
-                        RemoveDirectory(dir_entry.path());
+                        RemoveDirectory_(dir_entry.path());
                     }
                     else {
                         RemoveFile(dir_entry.path());
