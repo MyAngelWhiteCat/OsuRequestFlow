@@ -1,4 +1,105 @@
-[Общая архитектура модулей системы (Не актуально )](Design.drawio.png)
+# OsuRequestFlow
+
+Альфа-версия уже доступна: https://github.com/MyAngelWhiteCat/OsuRequestFlow/releases/tag/RequestFlowAlpha
+
+## Что это такое?
+
+Представь: ты стримишь Osu!, зрители кидают реквесты и карты начинают устанавливаться сами собой. Именно для этого я и делаю OsuRequestFlow. Пока что название временное, но суть уже понятна.
+
+Чат-бот запускается прямо на твоём компьютере, так что зрители могут влиять на происходящее в реальном времени. Основные команды и механики для подписок, донатов и канальных баллов уже в работе. Но главное, что уже работает — это мгновенная установка карт по запросам.
+
+## Как это работает?
+
+**Основная фишка** — зритель кидает ссылку, и карта начинает качаться. Не бойся, это безопастно, все предусмотренно. Без лишних кликов, без танцев с бубном. Особенно круто для тех, у кого нет Osu!Supporter — система ставит карты сама, пока ты играешь.
+
+**Настроек минимум:**
+- Укажи папку с картами Osu! (При выборе через проводник учти, что при нажатии кнопки он откроется, но может не развернуться, не нужно кликать много раз, а то устанешь потом закрывать)
+- Выбери, чьи реквесты принимать: всех, подписчиков, VIP, модераторов или только свои. А так же есть белый и черный список :)
+
+Перед установкой система проверяет — если карта уже есть, она не будет качаться заново. Потом можно будет это отключить, если захочется.
+
+## Самая сложная часть — серверы
+
+Программа использует публичные бесплатные серверы (огромное спасибо ребятам из [catboy.best](https://catboy.best/)!), но некоторые провайдеры этот трафик не очень любят.
+
+Чтобы не гадать, будет работать или нет, на главном экране есть специальный индикатор:
+
+![Индикатор статуса серверов](look_here.png)
+
+**Три возможных состояния:**
+1. ✅ **Всё отлично** — все сервера доступны, система выбрала самый быстрый
+2. ⚠️ **Работает, но неидеально** — хотя бы один сервер отвечает, можно пользоваться
+3. ❌ **Недоступно** — ни один сервер не отвечает, загрузка карт не сработает
+
+Если ты из России — будь готов к последнему варианту. Многие сервера у нас не очень доступны. Система пока проверяет osu.direct, европейский сервер catboy.best и пару зеркал.
+
+## Про производительность
+
+Я старался сделать так, чтобы бот не мешал играть. В среднем он занимает:
+- **Память:** ~15 МБ (попозже оптимизирую)
+- **Процессор:** 1-5% в моменты активности
+
+## Нужна твоя помощь!
+
+Если что-то не работает, странно себя ведёт или просто есть идеи — пиши! Прикрепляй логи, всего их 3 вида LogRequest (Записи запросов к серверам и их ответы). GeneralLogs (Все мелочи что происходят внутри) и (Показывает немного больше информации о серверах) — так я смогу быстрее разобраться и починить.
+Не переживай. Логи не содержат НИКАКОЙ информации о тебе и твоем ПК.
+
+---
+
+## For English speakers. 
+
+# OsuRequestFlow
+
+Alpha version is available: https://github.com/MyAngelWhiteCat/OsuRequestFlow/releases/tag/RequestFlowAlpha
+
+## What is this?
+
+Imagine this: you're streaming Osu!, viewers send requests, and maps start installing automatically. That's exactly what I'm building with OsuRequestFlow. The name is temporary for now, but the concept is clear.
+
+The chat bot runs directly on your computer, allowing viewers to influence what happens in real time. Core commands and mechanics for subscriptions, donations, and channel points are in development. But the main feature that's already working is instant map installation from requests.
+
+## How does it work?
+
+**The main feature** — a viewer sends a link, and the map starts downloading. Don't worry, it's safe, everything is accounted for. No extra clicks, no complicated steps. Especially great for those without Osu!Supporter — the system installs maps automatically while you play.
+
+**Minimal setup:**
+- Specify your Osu! songs folder (When selecting through the explorer, keep in mind that when you click the button, it will open, but it may not expand, you do not need to click many times, otherwise you will get tired of closing it later.)
+- Choose whose requests to accept: everyone, subscribers, VIPs, moderators, or only yourself. Plus, there are whitelist and blacklist options :)
+
+Before installing, the system checks if the map already exists — it won't re-download duplicates. You'll be able to disable this check later if you want.
+
+## The tricky part — servers
+
+The program uses public free servers (huge thanks to the folks at [catboy.best](https://catboy.best/)!), but some internet providers aren't too fond of this traffic.
+
+To avoid guessing whether it'll work or not, there's a special indicator on the main screen:
+
+![Server status indicator](look_here.png)
+
+**Three possible states:**
+1. ✅ **Everything's great** — all servers available, system picked the fastest one
+2. ⚠️ **Works, but not ideal** — at least one server responds, you can use it
+3. ❌ **Unavailable** — no servers respond, map downloads won't work
+
+If you're from Russia — be prepared for the third option. Many servers aren't very accessible here. The system currently checks osu.direct, the European catboy.best server, and a couple of mirrors.
+
+## About performance
+
+I tried to make sure the bot doesn't interfere with gameplay. On average, it uses:
+- **Memory:** ~15 MB (I'll optimize it later)
+- **CPU:** 1-5% during active periods
+
+## I need your help!
+
+If something isn't working, behaving strangely, or if you just have ideas — write! Attach logs — there are 3 types: LogRequest (server requests and responses), GeneralLogs (all internal events), and additional server info logs — this helps me figure things out and fix them faster.
+Don't worry. Logs contain NO information about you or your PC.
+
+---
+
+## For Developers
+
+
+[Общая архитектура модулей системы (В какой то момент потеряла актуальность, но для понимания еще пойдет)](Design.drawio.png)
 
 # TODO
 
@@ -272,7 +373,7 @@
 ---
 
 ## Тестирование
-- Наверное Макс разберется
+- лепим наугад
 
 ---
 
@@ -292,10 +393,10 @@ conan profile detect --force
 
 ```
 mkdir build && cd build
-conan install .. --build=missing --output-folder=. -s build_type=Debug -s compiler.runtime=static
+conan install .. --build=missing --output-folder=. -s build_type=Release -s compiler.runtime=static
 (при первом запуске может занять больше часа. Сборка библиотек Boost)
 cmake .. --preset conan-default
-cmake --build .
+cmake --build . --config Release
 (Может быть очень много ворнингов. Это ок)
 ```
   
