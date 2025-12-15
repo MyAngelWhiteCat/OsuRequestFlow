@@ -37,6 +37,17 @@ void RunWorkers(unsigned num_workers, const Fn& fn) {
     fn();
 }
 
+void RemoveOldLogs() {
+    fs::path log_access = fs::current_path() / "LogAccessTestResult.txt";
+    if (fs::exists(log_access)) {
+        fs::remove(log_access);
+    }
+    fs::path log_request = fs::current_path() / "LogRequest.txt";
+    if (fs::exists(log_request)) {
+        fs::remove(log_request);
+    }
+}
+
 bool OpenBrowserAtPort23140() {
     std::string url = "http://127.0.0.1:23140";
     HINSTANCE result = ShellExecuteA(
@@ -51,6 +62,8 @@ bool OpenBrowserAtPort23140() {
 }
 
 int main() {
+    RemoveOldLogs();
+
     SetConsoleOutputCP(1251);
     SetConsoleCP(1251);
     setlocale(LC_ALL, "Russian_Russia.1251");
@@ -84,6 +97,7 @@ int main() {
     LOG_INFO("if path is OK Press ENTER.");
 
     std::cin.get();
+
 
     core::Core core(ioc);
     core.SetupConnection(true);
