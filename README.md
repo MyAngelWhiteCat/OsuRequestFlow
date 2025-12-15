@@ -32,7 +32,7 @@
 3. ❌ **Недоступно** — ни один сервер не отвечает, загрузка карт не сработает
 
 Если ты из России — будь готов к последнему варианту. Многие сервера у нас не очень доступны. Система пока проверяет osu.direct, европейский сервер catboy.best и пару зеркал.
-
+Буквально у меня всё работало только при подключении к вайфаю пивнухи на первом этаже. Интересно, зачем им гигабитный канал с полным набором прокси.
 ## Про производительность
 
 Я старался сделать так, чтобы бот не мешал играть. В среднем он занимает:
@@ -81,7 +81,7 @@ To avoid guessing whether it'll work or not, there's a special indicator on the 
 2. ⚠️ **Works, but not ideal** — at least one server responds, you can use it
 3. ❌ **Unavailable** — no servers respond, map downloads won't work
 
-If you're from Russia — be prepared for the third option. Many servers aren't very accessible here. The system currently checks osu.direct, the European catboy.best server, and a couple of mirrors.
+Literally, everything worked for me only when connected to the Wi-Fi of the pub on the ground floor. I wonder why they need a gigabit channel with a full set of proxies.
 
 ## About performance
 
@@ -101,6 +101,8 @@ Don't worry. Logs contain NO information about you or your PC.
 
 [Общая архитектура модулей системы (В какой то момент потеряла актуальность, но для понимания еще пойдет)](Design.drawio.png)
 
+В коде применяется большое количество не очень хороших практик, присутсвуют довольно жесткие архитектурные ошибки и моменты, когда швабры держат полок, так что разобраться в нем будет тяжеловато.
+The code uses a large number of not very good practices, there are quite severe architectural errors and moments when mops hold shelves, so it will be difficult to figure it out.
 # TODO
 
 
