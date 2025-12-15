@@ -52,7 +52,7 @@ namespace http_domain {
         std::string file_name_;
         size_t file_size_;
         double speed_mbs_;
-        bool success = true;
+        bool success = false;
     };
 
     class Client : public std::enable_shared_from_this<Client> {
@@ -63,7 +63,7 @@ namespace http_domain {
             , write_strand_(net::make_strand(ioc))
             , read_strand_(net::make_strand(ioc))
         {
-
+            LOG_INFO("non secured DL_CLIENT constructed");
         }
 
         Client(net::io_context& ioc, std::shared_ptr<ssl::context> ctx)
@@ -71,7 +71,7 @@ namespace http_domain {
             , write_strand_(net::make_strand(ioc))
             , read_strand_(net::make_strand(ioc))
         {
-
+            LOG_INFO("secured DL_CLIENT constructed");
         }
 
         void Connect(std::string_view host, std::string_view port, int attempt = 1) {
@@ -110,14 +110,13 @@ namespace http_domain {
             if (speed_mesure_mode_) {
                 auto visitor = std::make_shared<ReadVisitor<ResponseHandler
                     , http::response_parser<http::dynamic_body>>>
-                    (this->shared_from_this(), std::forward<ResponseHandler>(response_handler));
-                visitor->SetSpeedMesureMode(speed_mesure_mode_);
+                    (this->shared_from_this(), speed_mesure_mode_, std::forward<ResponseHandler>(response_handler));
                 std::visit((*visitor), connection_.GetStream());
                 return;
             }
             auto visitor = std::make_shared<ReadVisitor<ResponseHandler
                 , http::response_parser<http::file_body>>>
-                (this->shared_from_this(), std::forward<ResponseHandler>(response_handler));
+                (this->shared_from_this(), speed_mesure_mode_, std::forward<ResponseHandler>(response_handler));
             std::visit((*visitor), connection_.GetStream());
         }
 
@@ -128,6 +127,9 @@ namespace http_domain {
         template <typename ResponseHandler>
         void Get(std::string_view target, std::string_view user_agent, ResponseHandler&& handler) {
             if (!IsConnected() || !host_) {
+                DLMetaData metadata;
+                metadata.success = false;
+                handler(std::move(metadata));
                 throw std::logic_error("Trying send request without connection");
             }
             auto req = request_builder_.Get(target, user_agent, *host_);
@@ -158,16 +160,19 @@ namespace http_domain {
         template <typename Handler, typename Parser>
         class ReadVisitor : public std::enable_shared_from_this<ReadVisitor<Handler, Parser>> {
         public:
-            ReadVisitor(std::shared_ptr<Client> client, Handler&& handler)
+            ReadVisitor(std::shared_ptr<Client> client, bool speed_mesure_mode, Handler&& handler)
                 : client_(client)
                 , handler_(std::forward<Handler>(handler))
                 , response_parser_(client->max_file_size_MiB_)
+                , speed_mesure_mode_(speed_mesure_mode)
             {
                 if (client->root_directory_) {
                     response_parser_.SetRootDirectory(*client->root_directory_);
                 }
                 else {
-                    throw std::runtime_error("Need to set dowloader folder");
+                    if (!speed_mesure_mode_) {
+                        throw std::runtime_error("Need to set dowloader folder");
+                    }
                 }
             }
 
@@ -207,7 +212,7 @@ namespace http_domain {
             template <typename Stream>
             void ReadHeaders(Stream& stream) {
                 http::async_read_header(stream, buffer_
-                    ,  response_parser_.GetParser()
+                    , response_parser_.GetParser()
                     , net::bind_executor(client_->read_strand_
                         , [self = this->shared_from_this(), &stream]
                         (const beast::error_code& ec, size_t bytes_readed) mutable
@@ -226,6 +231,7 @@ namespace http_domain {
                 response_parser_.PrintResponseHeaders();
                 if (!response_parser_.IsOK()) {
                     LOG_ERROR("Response status is not OK");
+                    handler_(DLMetaData{});
                     return;
                 }
 
@@ -261,9 +267,7 @@ namespace http_domain {
                 if (ec) {
                     if (ec == net::error::operation_aborted) {
                         LOG_ERROR("Download cancelled.");
-                        DLMetaData metadata;
-                        metadata.success = false;
-                        handler_(std::move(metadata));
+                        handler_(DLMetaData{});
                         return;
                     }
                     CheckConnectionError(ec);
@@ -278,8 +282,9 @@ namespace http_domain {
                 DLMetaData metadata;
                 metadata.file_name_ = std::string(response_parser_.GetFileName());
                 metadata.file_size_ = bytes_readed;
-                metadata.speed_mbs_ = static_cast<double>(bytes_readed * MiB) 
-                    / (time_spend * MILLISECONDS_IN_SECOND);
+                metadata.speed_mbs_ = static_cast<double>(bytes_readed / MiB)
+                    / (time_spend / MILLISECONDS_IN_SECOND);
+                metadata.success = true;
                 handler_(std::move(metadata));
             }
 
@@ -293,12 +298,12 @@ namespace http_domain {
 
             template <typename Stream>
             void MonitorDownloading(Stream& stream) {
-                downloading_monitoring_timer_.expires_after(std::chrono::milliseconds(50));
+                downloading_monitoring_timer_.expires_after(std::chrono::milliseconds(100));
                 downloading_monitoring_timer_.async_wait([self = this->weak_from_this(), &stream](auto ec) {
                     if (auto cli = self.lock(); !ec && cli->in_downloading_) {
                         double progress = cli->response_parser_.GetProgress();
                         if (progress != cli->last_knowed_progress_) {
-                            std::cout << std::setprecision(2) << progress << "%\n";
+                            LOG_INFO("Download "s + std::to_string(progress).substr(0, 4).append("% ").append(cli->response_parser_.GetFileName()).append(" from ").append(cli->client_->host_.value()));
                         }
 
                         if (progress == cli->last_knowed_progress_) {
@@ -310,9 +315,8 @@ namespace http_domain {
                             }
                         }
                         else {
-                            if (cli->no_progress_streak_ > 0) { 
-                                --cli->no_progress_streak_; 
-                            }
+                            --cli->no_progress_streak_ = 0;
+
                         }
                         cli->last_knowed_progress_ = progress;
                         cli->MonitorDownloading(stream);
