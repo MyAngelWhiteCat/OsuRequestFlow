@@ -99,10 +99,13 @@ namespace downloader {
         std::optional<std::filesystem::path> GetDownloadsDirectory() const;
         std::string GetUserAgent() const;
 
+        void RemoveDublicatesInRootDirectory();
+
     private:
         net::io_context& ioc_;
         Strand dl_strand_;
         Strand dl_status_strand_;
+        Strand write_dl_status_strand_;
         bool secured_ = true;
         bool is_speed_mesured_ = false;
         bool is_any_available_ = false;
@@ -124,7 +127,6 @@ namespace downloader {
 
         void OnDownload(std::string_view file, http_domain::DLMetaData&& metadata);
         void OnMesureSpeed(Server& server, http_domain::DLMetaData&& metadata);
-        void SaveAction(std::string&& file_name);
         std::string GetEndpoint(std::string_view file);
         std::shared_ptr<http_domain::Client> GetReadyClient();
 

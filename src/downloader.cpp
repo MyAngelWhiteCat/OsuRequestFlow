@@ -34,6 +34,7 @@ namespace downloader {
         , secured_(secured)
         , dl_strand_(net::make_strand(ioc))
         , dl_status_strand_(net::make_strand(ioc))
+        , write_dl_status_strand_(net::make_strand(ioc))
     {
         LOG_DEBUG("Downloader constructed");
     }
@@ -178,10 +179,15 @@ namespace downloader {
         }
         download_queue_.erase(std::string(file));
         LOG_INFO("Successfuly download "s.append(std::to_string(static_cast<double>(metadata.file_size_) / http_domain::MiB)).append(" MB"));
-        SaveAction(std::move(metadata.file_name_));
     }
 
-    void Downloader::OnMesureSpeed(Server& server, http_domain::DLMetaData&& metadata) {
+    void Downloader::OnMesureSpeed(Server& server, http_domain::DLMetaData&& metadata_) {
+        http_domain::DLMetaData metadata(std::move(metadata_));
+        net::post(write_dl_status_strand_, [metadata] {
+            std::ofstream log("LogAccessTestResult.txt", std::ios::app);
+            metadata.Print(log);
+            });
+
         need_to_mesure_speed_ = !metadata.success;
         if (!metadata.success) {
             server.status = ServerStatus::UNAVAILABLE;
@@ -207,6 +213,7 @@ namespace downloader {
                 }
             }
         }
+
         LOG_INFO("Servers after speed based sort: "s.append(servers));
         resource_ = base_servers_.back().host_;
         prefix_ = base_servers_.back().prefix_;
@@ -220,13 +227,8 @@ namespace downloader {
             download_queue_.erase(elem);
             Download(elem);
         }
-    }
 
-    void Downloader::SaveAction(std::string&& file_name) {
-        LOG_INFO("IN ON DOWNLOAD FUNC after downloading"s.append(file_name));
-        /*net::post([self = this->shared_from_this(), file_name = std::move(file_name)]() mutable {
-            self->file_manager_->AddAction(file_manager::ActionType::Write, std::move(file_name));
-            });*/
+
     }
 
     std::shared_ptr<http_domain::Client> Downloader::SetupNonSecuredConnection() {
@@ -273,6 +275,13 @@ namespace downloader {
 
     std::string Downloader::GetUserAgent() const {
         return user_agent_;
+    }
+
+    void Downloader::RemoveDublicatesInRootDirectory() {
+        if (!osu_file_manager_) {
+            throw std::logic_error("need to setup file manager");
+        }
+        osu_file_manager_->RemoveDuplicates();
     }
 
     std::string Downloader::GetEndpoint(std::string_view file) {

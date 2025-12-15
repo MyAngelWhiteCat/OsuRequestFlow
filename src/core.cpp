@@ -181,6 +181,10 @@ namespace core {
         downloader_->SetMaxFileSize(MiB);
     }
 
+    void Core::RemoveDublicates() {
+        downloader_->RemoveDublicatesInRootDirectory();
+    }
+
     bool Core::IsNeedToMesureSpeed() {
         return downloader_->IsNeedToMesureSpeed();
     }

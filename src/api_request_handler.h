@@ -53,6 +53,10 @@ namespace gui_http {
                 LOG_DEBUG("Processed as DOWNLOADS_FOLDER");
                 HandleDownloadsFolder(std::move(req), std::move(send));
             }
+            else if (target == APITarget::REMOVE_DUBLICATES) {
+                LOG_DEBUG("Processed as REMOVE_DUBLICATES");
+                HandleRemoveDublicates(std::move(req), std::move(send));
+            }
             else if (target == APITarget::DL_RESOURCE) {
                 LOG_DEBUG("Processed as DL_RESOURCE");
                 HandleDownloadsResource(std::move(req), std::move(send));
@@ -140,6 +144,9 @@ namespace gui_http {
 
         template <typename Body, typename Allocator, typename Send>
         void HandleDownloadsFolder(http::request<Body, http::basic_fields<Allocator>>&& req, Send&& send);
+
+        template <typename Body, typename Allocator, typename Send>
+        void HandleRemoveDublicates(http::request<Body, http::basic_fields<Allocator>>&& req, Send&& send);
 
         template <typename Body, typename Allocator, typename Send>
         void HandleDownloadsResource(http::request<Body, http::basic_fields<Allocator>>&& req, Send&& send);
@@ -274,6 +281,21 @@ namespace gui_http {
         if (auto path = request_validator_.ValidateDownloadsFolderRequest(req, send)) {
             core_.SetDownloadsDirectory(*path);
             SendOK(req, send, "Download folder updated");
+        }
+    }
+
+    template<typename Body, typename Allocator, typename Send>
+    inline void ApiRequestHandler::HandleRemoveDublicates(http::request<Body, http::basic_fields<Allocator>>&& req, Send&& send) {
+        if (req.method() != http::verb::post) {
+            request_validator_.SendMethodNotAllowed(req, send, "POST");
+            return;
+        }
+        try {
+            core_.RemoveDublicates();
+            SendOK(req, send, "Start removing duplicates...");
+        } 
+        catch (const std::exception& e) {
+            SendServerError(req, send, e.what());
         }
     }
 

@@ -90,6 +90,7 @@ namespace core {
         void SetDownloadsDirectory(std::string_view path);
         void PickDownloadsDirectory();
         void SetMaxFileSize(size_t MiB);
+        void RemoveDublicates();
 
         bool IsNeedToMesureSpeed();
         std::string GetAccessTestResult();
