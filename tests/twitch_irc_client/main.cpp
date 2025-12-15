@@ -47,11 +47,9 @@ int main() {
     auto work = net::make_work_guard(ioc);
     auto irc_strand = net::make_strand(ioc);
 
-    auto ctx_dl = connection::GetSSLContext();
     std::string resource = "osu.direct";
-    auto downloader = std::make_shared<downloader::Downloader>(ioc, ctx_dl);
-    downloader->SetResource(resource);
-    downloader->SetUriPrefix("/api/d/");
+    auto downloader = std::make_shared<downloader::Downloader>(ioc, true);
+    downloader->SetResourceAndPrefix(resource, "/api/d/");
     downloader->SetDownloadsDirectory(std::filesystem::current_path().string() + "/downloads");
     auto executor = std::make_shared<commands::CommandExecutor>(downloader);
     auto parser = std::make_shared<commands::CommandParser>(*executor);

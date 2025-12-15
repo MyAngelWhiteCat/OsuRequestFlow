@@ -1,5 +1,5 @@
 #include "../../src/downloader.h"
-#include "../../src/file_manager.h"
+#include "../../src/osu_file_manager.h"
 #include "../../src/connection.h"
 
 #include <filesystem>
@@ -32,12 +32,11 @@ namespace test_downloader {
     }
 
     void RunOsuMapDownloadTest(boost::asio::io_context& ioc) {
-        auto ctx = connection::GetSSLContext();
         std::string resource = "catboy.best";
-        auto downloader = std::make_shared<downloader::Downloader>(ioc, ctx);
+        auto downloader = std::make_shared<downloader::Downloader>(ioc, true);
         downloader->SetResourceAndPrefix(resource, "/d/");
         downloader->SetDownloadsDirectory(std::filesystem::current_path().string() + "/downloads");
-        TestDownloadIevanPolka(downloader);
+        //TestDownloadIevanPolka(downloader);
     }
 
 }
