@@ -52,14 +52,17 @@ namespace irc {
         template <typename ChatBot>
         void MessageHandler<ChatBot>::operator()(std::vector<domain::Message>&& messages) {
             try {
+                std::stringstream ss{};
                 for (auto& message : messages) {
                     switch (message.GetMessageType()) {
                     case MessageType::PING:
                         SendPong(message.GetContent());
                         break;
                     case MessageType::PRIVMSG:
-                        std::cout << '[' << static_cast<int>(message.GetRole()) << ']' << message.GetNick() << ' ' << message.GetContent() << "\n";
+                        ss << '[' << static_cast<int>(message.GetRole()) << ']' << message.GetNick() << ' ' << message.GetContent() << "\n";
+                        LOG_INFO(ss.str());
                         if (!chat_bot_) {
+                            LOG_INFO("Chat bot not setted");
                             return;
                         }
                         net::post([self = this->shared_from_this(), message = std::move(message)]() mutable
