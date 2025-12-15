@@ -1,5 +1,5 @@
 #include "downloader.h"
-#include "file_manager.h"
+#include "osu_file_manager.h"
 #include "http_client.h"
 #include "connection.h"
 
@@ -32,12 +32,15 @@ namespace downloader {
     Downloader::Downloader(net::io_context& ioc, bool secured)
         : ioc_(ioc)
         , secured_(secured)
-        , dl_strand(net::make_strand(ioc))
+        , dl_strand_(net::make_strand(ioc))
+        , dl_status_strand_(net::make_strand(ioc))
     {
+        LOG_DEBUG("Downloader constructed");
     }
 
     void Downloader::SetupBaseServers(const std::vector<std::pair<std::string, std::string>>& servers) {
         for (const auto& server : servers) {
+            LOG_DEBUG("Set up base server: "s.append(server.first).append(server.second));
             base_servers_.emplace_back(server.first, server.second);
         }
     }
@@ -46,11 +49,20 @@ namespace downloader {
         for (auto& server : base_servers_) {
             MesureSpeed(server, file);
         }
+        need_to_mesure_speed_ = false;
     }
 
     void Downloader::MesureSpeed(Server& server, std::string_view to_file) {
-        resource_ = server.host_;
-        prefix_ = server.prefix_;
+        net::dispatch(dl_strand_, [self = shared_from_this(), &server, to_file = std::string(to_file)]() {
+            if (!self->need_to_mesure_speed_) { return; }
+            self->resource_ = server.host_;
+            self->prefix_ = server.prefix_;
+            for (auto& server : self->base_servers_) {
+                server.status = ServerStatus::UNKNOWN;
+            }
+            });
+
+        LOG_INFO("Mesuring dl speed to "s.append(server.host_).append(server.prefix_));
         try {
             auto client = GetReadyClient();
             client->SetSpeedMesureMode(true);
@@ -60,22 +72,30 @@ namespace downloader {
                 });
         }
         catch (const std::exception& e) {
+            need_to_mesure_speed_ = true;
             LOG_CRITICAL(e.what());
         }
     }
 
     void Downloader::Download(std::string_view file) {
+        if (osu_file_manager_->IsAlreadyInstalled(file)) {
+            LOG_INFO("Map already exist");
+            return;
+        }
         if (download_queue_.count(std::string(file))) {
+            LOG_INFO("File allready in dl queue");
             return;
         }
         auto now = std::chrono::steady_clock::now();
         auto dur = std::chrono::duration_cast<std::chrono::milliseconds>(now - last_dl_start_).count();
         if (dur < dl_timout_millisec_) {
+            LOG_INFO("DL Timeout");
             std::this_thread::sleep_for(std::chrono::milliseconds(dur));
         }
+
         download_queue_.insert(std::string(file));
         LOG_INFO("Downdload "s.append(file));
-        net::dispatch(dl_strand, [self = this->shared_from_this(), file = std::string(file)]() {
+        net::dispatch(dl_strand_, [self = this->shared_from_this(), file = std::string(file)]() {
             try {
                 auto client = self->GetReadyClient();
                 client->Get(self->GetEndpoint(file), self->user_agent_, [self, client, file]
@@ -90,16 +110,56 @@ namespace downloader {
         last_dl_start_ = std::chrono::steady_clock::now();
     }
 
+    bool Downloader::IsNeedToMesureSpeed() const {
+        return need_to_mesure_speed_;
+    }
+
+    bool Downloader::IsSpeedMesured() {
+        bool mesured = true;
+        for (const auto& server : base_servers_) {
+            if (server.status == ServerStatus::UNKNOWN) {
+                mesured = false;
+            }
+        }
+        return mesured;
+    }
+
+    bool Downloader::IsAnyResourseAvailable() {
+        bool available = false;
+        for (auto& server : base_servers_) {
+            if (server.status == ServerStatus::AVAILABLE) {
+                available = true;
+            }
+        }
+        return available;
+    }
+
+    std::string Downloader::GetAccessTestResult() {
+        net::dispatch(dl_status_strand_, [self = this->shared_from_this()]() mutable {
+            self->is_speed_mesured_ = self->IsSpeedMesured();
+            self->is_any_available_ = self->IsAnyResourseAvailable(); 
+            });
+
+        if (is_speed_mesured_) {
+            if (is_any_available_) {
+                return std::string(AccessTestResult::AVAILABLE);
+            }
+            return std::string(AccessTestResult::UNAVAILABLE);
+        }
+        if (is_any_available_) {
+            return std::string(AccessTestResult::AVAILABLE);
+        }
+        return std::string(AccessTestResult::PROCESSING);
+    }
+
     void Downloader::SetUserAgent(std::string_view user_agent) {
         user_agent_ = std::string(user_agent);
     }
 
-    void Downloader::SetUriPrefix(std::string_view uri_prefix) {
+    void Downloader::SetResourceAndPrefix(std::string_view resource, std::string_view uri_prefix) {
         prefix_ = std::string(uri_prefix);
-    }
-
-    void Downloader::SetResource(std::string_view resource) {
         resource_ = std::string(resource);
+        base_servers_.emplace_back(resource, uri_prefix);
     }
 
     void Downloader::AddBaseServer(std::string_view host, std::string_view port) {
@@ -107,31 +167,55 @@ namespace downloader {
     }
 
     void Downloader::SetDownloadsDirectory(std::string_view path) {
-        file_manager_ = std::make_shared<file_manager::FileManager>(std::filesystem::path(path));
+        osu_file_manager_ = std::make_shared<osu_file_manager::OsuFileManager>(std::filesystem::path(path));
     }
 
     void Downloader::OnDownload(std::string_view file, http_domain::DLMetaData&& metadata) {
         if (!metadata.success) {
+            need_to_mesure_speed_ = true;
             MesureServersDownloadSpeed(file);
             return;
         }
         download_queue_.erase(std::string(file));
-        LOG_INFO("Successfuly download "s.append(std::to_string(static_cast<double>(metadata.file_size_) * http_domain::MiB)).append(" MB"));
+        LOG_INFO("Successfuly download "s.append(std::to_string(static_cast<double>(metadata.file_size_) / http_domain::MiB)).append(" MB"));
         SaveAction(std::move(metadata.file_name_));
     }
 
     void Downloader::OnMesureSpeed(Server& server, http_domain::DLMetaData&& metadata) {
+        need_to_mesure_speed_ = !metadata.success;
         if (!metadata.success) {
             server.status = ServerStatus::UNAVAILABLE;
             LOG_ERROR(server.host_ + " UNAVAILABLE");
             return;
         }
-        LOG_ERROR(server.host_ + " EVAILABLE with speed "s.append(std::to_string(metadata.speed_mbs_).append("MB/s")));
+        server.status = ServerStatus::AVAILABLE;
+        LOG_INFO(server.host_ + " EVAILABLE with speed "s.append(std::to_string(metadata.speed_mbs_).append("MB/s")));
         server.speed_mbs_ = metadata.speed_mbs_;
         std::sort(base_servers_.begin(), base_servers_.end());
+        std::string servers;
+        for (const auto& server : base_servers_) {
+            servers += server.host_ + " speed=";
+            if (server.speed_mbs_) {
+                servers += std::to_string(*server.speed_mbs_) + "MB/s ";
+            }
+            else {
+                if (server.status == ServerStatus::UNAVAILABLE) {
+                    servers += "UNAVAILABLE ";
+                }
+                else {
+                    servers += "Not mesured ";
+                }
+            }
+        }
+        LOG_INFO("Servers after speed based sort: "s.append(servers));
         resource_ = base_servers_.back().host_;
         prefix_ = base_servers_.back().prefix_;
         if (!download_queue_.empty()) {
+            std::string dl_queue;
+            for (const auto& elem : download_queue_) {
+                dl_queue += elem + " ";
+            }
+            LOG_INFO(std::to_string(download_queue_.size()).append(" elements in download queue: ").append(dl_queue));
             std::string elem = *download_queue_.begin();
             download_queue_.erase(elem);
             Download(elem);
@@ -139,9 +223,10 @@ namespace downloader {
     }
 
     void Downloader::SaveAction(std::string&& file_name) {
-        net::post([self = this->shared_from_this(), file_name = std::move(file_name)]() mutable {
+        LOG_INFO("IN ON DOWNLOAD FUNC after downloading"s.append(file_name));
+        /*net::post([self = this->shared_from_this(), file_name = std::move(file_name)]() mutable {
             self->file_manager_->AddAction(file_manager::ActionType::Write, std::move(file_name));
-            });
+            });*/
     }
 
     std::shared_ptr<http_domain::Client> Downloader::SetupNonSecuredConnection() {
@@ -180,8 +265,8 @@ namespace downloader {
     }
 
     std::optional<std::filesystem::path> Downloader::GetDownloadsDirectory() const {
-        if (file_manager_) {
-            return file_manager_->GetRootDirectory();
+        if (osu_file_manager_) {
+            return osu_file_manager_->GetRootDirectory();
         }
         return std::nullopt;
     }
@@ -194,23 +279,30 @@ namespace downloader {
         if (!prefix_) {
             throw std::runtime_error("prefix doesn't setted");
         }
+        LOG_INFO("DL LINK "s.append(*prefix_ + std::string(file)));
         return *prefix_ + std::string(file);
     }
 
     std::shared_ptr<http_domain::Client> Downloader::GetReadyClient() {
         std::shared_ptr<http_domain::Client> client = nullptr;
         if (secured_) {
+            LOG_INFO("Create secured client");
             client = SetupSecuredConnection();
         }
         else {
+            LOG_INFO("Create non secured client");
             client = SetupNonSecuredConnection();
         }
         client->SetMaxFileSize(max_file_size_MiB_);
         if (auto dir = GetDownloadsDirectory()) {
+            LOG_INFO("Setting dl dir: "s.append(dir->string()));
             client->SetRootDirectory(*dir);
         }
         else {
-            throw std::runtime_error("Download directory not setted");
+            if (!need_to_mesure_speed_) {
+                LOG_ERROR("Creating dl client withoud dl directory");
+                throw std::runtime_error("Download directory not setted");
+            }
         }
         return client;
     }
