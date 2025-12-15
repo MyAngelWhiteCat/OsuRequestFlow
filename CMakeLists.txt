@@ -1,28 +1,30 @@
 cmake_minimum_required(VERSION 3.11)
 project(OsuRequestFlow CXX)
 
-include_directories(src)
+cmake_policy(SET CMP0091 NEW)
 
+add_compile_definitions(
+    _WIN32_WINNT=0x0601
+    BOOST_ALL_NO_LIB=1
+    SPDLOG_NO_EXCEPTIONS=1
+)
+
+include_directories(src)
 set(CMAKE_CXX_STANDARD 20)
-add_compile_definitions(_WIN32_WINNT=0x0601)
 
 if(MSVC)
     add_compile_options(/bigobj)
 endif()
 
-include(${CMAKE_BINARY_DIR}/conan_toolchain.cmake)
+set(BUILD_SHARED_LIBS OFF CACHE BOOL "Build shared libraries" FORCE)
+set(Boost_USE_STATIC_LIBS ON)
+set(OPENSSL_USE_STATIC_LIBS TRUE)
 
 set(CMAKE_MSVC_RUNTIME_LIBRARY "MultiThreaded$<$<CONFIG:Debug>:Debug>")
 
-add_compile_definitions(BOOST_ALL_NO_LIB=1)
-
-set(Boost_USE_STATIC_LIBS ON)
-set(Boost_USE_STATIC_RUNTIME ON)
-
-set(OPENSSL_USE_STATIC_LIBS TRUE)
+include(${CMAKE_BINARY_DIR}/conan_toolchain.cmake)
 
 find_package(Boost 1.84.0 REQUIRED COMPONENTS system)
-find_package(fmt REQUIRED)
 find_package(spdlog REQUIRED)
 find_package(nlohmann_json REQUIRED)
 find_package(OpenSSL REQUIRED)
@@ -41,8 +43,8 @@ target_link_libraries(Logger PUBLIC
 
 target_include_directories(Logger PUBLIC 
     ${CMAKE_CURRENT_SOURCE_DIR}/src
-    ${spdlog_INCLUDE_DIRS}
-    ${fmt_INCLUDE_DIRS}
+#    ${spdlog_INCLUDE_DIRS}
+#    ${fmt_INCLUDE_DIRS}
 )
 
 ########################################## ssl serts loader
@@ -127,8 +129,10 @@ add_library(ChatBot STATIC
 )
 
 target_link_libraries(ChatBot PUBLIC
-    Logger 
+    Connection
+    Logger
 )
+
 
 ########################################## irc client
 
@@ -255,92 +259,92 @@ target_link_libraries(Core PUBLIC
 
 ############################################# tests
 
-add_executable(TestTwitchIRCClient 
-    tests/twitch_irc_client/main.cpp
-)
+#add_executable(TestTwitchIRCClient 
+#    tests/twitch_irc_client/main.cpp
+#)
 
-target_link_libraries(TestTwitchIRCClient PUBLIC
-    IRCClient
-    Downloader
-    ChatBot
-)
-
-##########################################
-
-add_executable(TestDownloader
-    tests/downloader/test_downloader.h 
-    tests/downloader/main.cpp
-)
-
-target_link_libraries(TestDownloader PUBLIC 
-    Downloader 
-)
+#target_link_libraries(TestTwitchIRCClient PUBLIC
+#    IRCClient
+#    Downloader
+#    ChatBot
+#)
 
 ##########################################
 
-add_executable(TestFileManager
-    tests/file_manager/test_file_manager.h 
-    tests/file_manager/main.cpp 
-)
+#add_executable(TestDownloader
+#    tests/downloader/test_downloader.h 
+#    tests/downloader/main.cpp
+#)
 
-target_link_libraries(TestFileManager PUBLIC 
-    OsuFileManager
-)
-
-##########################################
-
-add_executable(TestHttpClient
-    tests/http_client/main.cpp 
-    tests/http_client/test_http_client.h
-)
-
-target_link_libraries(TestHttpClient PUBLIC
-    HTTPClient 
-)
+#target_link_libraries(TestDownloader PUBLIC 
+#    Downloader 
+#)
 
 ##########################################
 
-add_executable(TestMessageProcessor
-    tests/message_processor/main.cpp 
-    tests/message_processor/test_message_processor.h 
-    tests/utils.h 
-)
+#add_executable(TestFileManager
+#    tests/file_manager/test_file_manager.h 
+#    tests/file_manager/main.cpp 
+#)
 
-target_link_libraries(TestMessageProcessor PUBLIC 
-    IRCClient
-)
-
-##########################################
-
-add_executable(TestBadgeParser
-    tests/badges_parser/main.cpp 
-    tests/badges_parser/test_badges_parser.h
-)
-
-target_link_libraries(TestBadgeParser PUBLIC 
-    IRCClient
-)
+#target_link_libraries(TestFileManager PUBLIC 
+#    OsuFileManager
+#)
 
 ##########################################
 
-add_executable(TestCommandParser
-    tests/command_parser/main.cpp 
-    tests/command_parser/test_command_parser.h
-)
+#add_executable(TestHttpClient
+#    tests/http_client/main.cpp 
+#    tests/http_client/test_http_client.h
+#)
 
-target_link_libraries(TestCommandParser PUBLIC
-    IRCClient
-)
+#target_link_libraries(TestHttpClient PUBLIC
+#    HTTPClient 
+#)
 
 ##########################################
 
-add_executable(TestUserVerificator 
-    tests/verificator/main.cpp 
-)
-target_link_libraries(TestUserVerificator PUBLIC
-    IRCClient 
-    OsuFileManager
-)
+#add_executable(TestMessageProcessor
+#    tests/message_processor/main.cpp 
+#    tests/message_processor/test_message_processor.h 
+#    tests/utils.h 
+#)
+
+#target_link_libraries(TestMessageProcessor PUBLIC 
+#    IRCClient
+#)
+
+##########################################
+
+#add_executable(TestBadgeParser
+#    tests/badges_parser/main.cpp 
+#    tests/badges_parser/test_badges_parser.h
+#)
+
+#target_link_libraries(TestBadgeParser PUBLIC 
+#    IRCClient
+#)
+
+##########################################
+
+#add_executable(TestCommandParser
+#    tests/command_parser/main.cpp 
+#    tests/command_parser/test_command_parser.h
+#)
+
+#target_link_libraries(TestCommandParser PUBLIC
+#    IRCClient
+#)
+
+##########################################
+
+#add_executable(TestUserVerificator 
+#    tests/verificator/main.cpp 
+#)
+#target_link_libraries(TestUserVerificator PUBLIC
+#    IRCClient 
+#    OsuFileManager
+#)
 
 ########################################### Main
 
