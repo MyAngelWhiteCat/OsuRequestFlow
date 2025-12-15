@@ -10,6 +10,7 @@
 #include <iostream>
 
 #include "tcp_listener.h"
+#include "logging.h"
 
 
 namespace http_server {
@@ -81,9 +82,14 @@ namespace http_server {
         }
 
         void HandleRequest(HttpRequest&& request) override {
-            request_handler_(std::move(request), [self = this->shared_from_this()](auto&& response) {
-                self->Write(std::move(response));
-                });
+            try {
+                request_handler_(std::move(request), [self = this->shared_from_this()](auto&& response) {
+                    self->Write(std::move(response));
+                    });
+            }
+            catch (const std::exception& e) {
+                LOG_CRITICAL(e.what());
+            }
         }
 
     };
