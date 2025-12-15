@@ -124,7 +124,7 @@
 
 ## Settings
 
-- **POST** `/api/setting/load`
+- **POST** `/api/settings/load`
   - Body: `empty`
   - Response: `ok` / `error`
   - Description: Загрузить настройки системы
@@ -150,9 +150,14 @@
   - Response: `ok` / `error` (проверка существования пути)
   - Description: Установить папку для загрузок
 
+- **POST** `/api/downloader/settings/folder`
+  - Body: `empty`
+  - Response: `ok` / `error` (проверка существования пути)
+  - Description: Установить папку для загрузок через проводник
+  
 - **GET** `/api/downloader/settings/folder`
   - Body: `{"Path": "string"}` (путь к папке)
-  - Response: `ok` / `error` 
+  - Response: `ok` / `error` (200 ok {"Path": "not setted"} если путь не задан)
   - Description: Узнать папку для загрузок
 
 - **PUT** `/api/downloader/settings/resource_and_prefix`
@@ -164,6 +169,21 @@
   - Body: `{"Resource": "string", "Prefix": "string"}`
   - Response: `ok` / `error`
   - Description: Посмотреть ресурс и префикс для загрузки
+
+- **POST** `/api/downloader/mesure_speed`
+  - Body: `empty`
+  - Response: `ok` / `error` (ошибка на стороне сервера)
+  - Description: Запустить замер скорости загрузки к добавленным серверам.
+
+- **GET** `/api/downloader/dl_server_status`
+  - Body: `{"Status": status}` (string) {Processing, Available, Unavailable}
+  - Response: `ok` / `error`
+  - Description: Посмотреть есть ли хоть один достпуный ресурс
+
+- WIP **GET** `/api/downloader/base_servers`
+  - Body: `[{"Resource": "string", "Prefix": "string"}]`
+  - Response: `ok` / `error`
+  - Description: Посмотреть список базовых серверов
 
 ### User Lists Management
 - **PUT** `/api/white_list/users`

@@ -187,11 +187,11 @@ target_link_libraries(HTTPClient PUBLIC
 
 ########################################## file manager
 
-add_library(FileManager STATIC 
-    src/file_manager.h
-    src/file_manager.cpp
+add_library(OsuFileManager STATIC 
+    src/osu_file_manager.h
+    src/osu_file_manager.cpp
 )
-target_link_libraries(FileManager PUBLIC 
+target_link_libraries(OsuFileManager PUBLIC 
     Logger
 )
 
@@ -204,7 +204,7 @@ add_library(Downloader STATIC
 
 target_link_libraries(Downloader PUBLIC 
     HTTPClient 
-    FileManager
+    OsuFileManager
 )
 
 ########################################## WebSocket server
@@ -284,7 +284,7 @@ add_executable(TestFileManager
 )
 
 target_link_libraries(TestFileManager PUBLIC 
-    FileManager
+    OsuFileManager
 )
 
 ##########################################
@@ -339,7 +339,7 @@ add_executable(TestUserVerificator
 )
 target_link_libraries(TestUserVerificator PUBLIC
     IRCClient 
-    FileManager
+    OsuFileManager
 )
 
 ########################################### Main

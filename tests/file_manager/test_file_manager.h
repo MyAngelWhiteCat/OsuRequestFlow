@@ -5,7 +5,7 @@
 
 namespace test_file_manager {
 
-    void TestWrite(file_manager::FileManager& fm) {
+    void TestWrite(osu_file_manager::OsuFileManager& fm) {
         fm.WriteBinaryInRoot({ 'q', 'w', 'r' }, "test.txt");
         fm.WriteBinaryInRoot({ 'q', 'w', 'r' }, "zest.txw");
         fm.WriteBinaryInRoot({ 'q', 'w', 'r' }, "tzst.txq");
@@ -17,13 +17,13 @@ namespace test_file_manager {
 
     }
 
-    void TestDelete(file_manager::FileManager& fm) {
+    void TestDelete(osu_file_manager::OsuFileManager& fm) {
         fm.DeleteAllWritedFilesFromHistory();
     }
 
     void RunTests() {
         auto path = std::filesystem::path(std::filesystem::current_path().string() + "/test");
-        file_manager::FileManager fm(path);
+        osu_file_manager::OsuFileManager fm(path);
         TestWrite(fm);
         std::this_thread::sleep_for(std::chrono::seconds(3));
         TestDelete(fm);

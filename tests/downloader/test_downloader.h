@@ -35,8 +35,7 @@ namespace test_downloader {
         auto ctx = connection::GetSSLContext();
         std::string resource = "catboy.best";
         auto downloader = std::make_shared<downloader::Downloader>(ioc, ctx);
-        downloader->SetResource(resource);
-        downloader->SetUriPrefix("/d/");
+        downloader->SetResourceAndPrefix(resource, "/d/");
         downloader->SetDownloadsDirectory(std::filesystem::current_path().string() + "/downloads");
         TestDownloadIevanPolka(downloader);
     }
