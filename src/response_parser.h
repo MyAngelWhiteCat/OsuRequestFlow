@@ -17,6 +17,8 @@
 
 namespace http_domain {
 
+    using namespace std::literals;
+
     constexpr size_t KiB = 1024;
     constexpr size_t MiB = 1024 * KiB;
     constexpr size_t GiB = 1024 * MiB;
@@ -40,6 +42,7 @@ namespace http_domain {
         FileResponseParser(int max_file_size_MiB)
             : max_file_size_(MiB* max_file_size_MiB)
         {
+            LOG_DEBUG("File response parser constructed");
             response_parser_.body_limit(max_file_size_);
         }
 
@@ -58,10 +61,12 @@ namespace http_domain {
             LOG_INFO(response.reason());
             std::ofstream log_request("LogRequest.txt", std::ios::app);
             log_request << "RESPONSE" << "\n";
+            log_request << "Status: " << response.reason() << "\n";
             for (const auto& header : response) {
                 log_request << header.name_string() << ": " << header.value() << "\n";
             }
             log_request << "\n\n";
+            LOG_INFO("Save respose in log file");
         }
 
         std::string_view GetFileName() {
@@ -113,11 +118,11 @@ namespace http_domain {
         }
 
         double GetProgress() {
-            if (speed_mesure_mode_) {
-                return static_cast<double>(response_parser_.get().body().size())
+            if constexpr (std::is_same_v<Parser, http::response_parser<http::file_body>>) {
+                return static_cast<double>(std::filesystem::file_size(GetFilePath()))
                     / static_cast<double>(file_size_) * 100;
             }
-            return static_cast<double>(std::filesystem::file_size(GetFilePath()))
+            return static_cast<double>(response_parser_.get().body().size())
                 / static_cast<double>(file_size_) * 100;
         }
 
@@ -135,6 +140,7 @@ namespace http_domain {
         }
 
         void SetSpeedMesureMode(bool is_speed_mesuring) {
+            LOG_DEBUG("Speed mesure mode seted as "s.append(std::to_string(is_speed_mesuring)));
             speed_mesure_mode_ = is_speed_mesuring;
         }
 
@@ -153,6 +159,7 @@ namespace http_domain {
             if (start_pos != std::string::npos && end_pos != std::string::npos) {
                 file_name_ = DecodeURL(content.substr(start_pos, end_pos - start_pos));
             }
+            LOG_DEBUG("File name: "s.append(file_name_));
             return file_name_;
         }
 
