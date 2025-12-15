@@ -54,6 +54,7 @@ namespace downloader {
     }
 
     void Downloader::MesureSpeed(Server& server, std::string_view to_file) {
+        LOG_CRITICAL(std::to_string(base_servers_.size()));
         net::dispatch(dl_strand_, [self = shared_from_this(), &server, to_file = std::string(to_file)]() {
             if (!self->need_to_mesure_speed_) { return; }
             self->resource_ = server.host_;
@@ -160,11 +161,17 @@ namespace downloader {
     void Downloader::SetResourceAndPrefix(std::string_view resource, std::string_view uri_prefix) {
         prefix_ = std::string(uri_prefix);
         resource_ = std::string(resource);
-        base_servers_.emplace_back(resource, uri_prefix);
+        Server server(resource, uri_prefix);
+        if (std::find(base_servers_.begin(), base_servers_.end(), server) == base_servers_.end()) {
+            base_servers_.push_back(std::move(server));
+        }
     }
 
-    void Downloader::AddBaseServer(std::string_view host, std::string_view port) {
-        base_servers_.emplace_back(host, port);
+    void Downloader::AddBaseServer(std::string_view host, std::string_view prefix) {
+        Server server(host, prefix);
+        if (std::find(base_servers_.begin(), base_servers_.end(), server) == base_servers_.end()) {
+            base_servers_.push_back(std::move(server));
+        }
     }
 
     void Downloader::SetDownloadsDirectory(std::string_view path) {

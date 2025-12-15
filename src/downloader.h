@@ -81,7 +81,7 @@ namespace downloader {
         void SetupBaseServers(const std::vector<std::pair<std::string, std::string>>& servers);
         void SetUserAgent(std::string_view user_agent);
         void SetResourceAndPrefix(std::string_view resource, std::string_view uri_prefix);
-        void AddBaseServer(std::string_view host, std::string_view port);
+        void AddBaseServer(std::string_view host, std::string_view prefix);
         void SetDownloadsDirectory(std::string_view path);
         std::shared_ptr<http_domain::Client> SetupNonSecuredConnection();
         std::shared_ptr<http_domain::Client> SetupSecuredConnection();
