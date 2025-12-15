@@ -37,37 +37,32 @@ namespace osu_file_manager {
     }
 
     void OsuFileManager::RemoveDuplicates() {
-        bool is_first = true;
-        bool is_skiped = true;
+        std::unordered_map<std::string, fs::path> id_to_path;
         for (const auto& dir_entry : fs::directory_iterator(root_directory_)) {
-            const auto& first = dir_entry.path();
-            for (const auto& sec_dir_entry : fs::directory_iterator(root_directory_)) {
-                if (is_first) {
-                    is_skiped = true;
-                    is_first = false;
-                    continue;
-                }
-                const auto& second = sec_dir_entry.path();
-                try {
-                    std::string_view first_id = GetMapIdFromMapFolderName(first.string());
-                    std::string_view second_id = GetMapIdFromMapFolderName(second.string());
-                    if (first_id == second_id) {
-                        if (fs::is_directory(second)) {
-                            RemoveDirectory(second);
-                        }
-                        else {
-                            RemoveFile(second);
-                        }
+            std::string map_id = std::string(GetMapIdFromMapFolderName(dir_entry.path().string()));
+            if (auto it = id_to_path.find(map_id); it !=  id_to_path.end()) {
+                if (dir_entry.path().string().size() < it->second.string().size()) {
+                    id_to_path[map_id] = dir_entry.path();
+                } 
+            }
+            else {
+                id_to_path[map_id] = dir_entry.path();
+            }
+        }
+
+        for (const auto& dir_entry : fs::directory_iterator(root_directory_)) {
+            std::string map_id = std::string(GetMapIdFromMapFolderName(dir_entry.path().string()));
+            if (auto it = id_to_path.find(map_id); it != id_to_path.end()) {
+                if (dir_entry.path().string().size() > it->second.string().size()) {
+                    if (dir_entry.is_directory()) {
+                        RemoveDirectory(dir_entry.path());
+                    }
+                    else {
+                        RemoveFile(dir_entry.path());
                     }
                 }
-                catch (const std::exception& e) {
-                    LOG_CRITICAL(e.what());
-                }
             }
-            if (!is_skiped) {
-                is_first = true;
-            }
-            is_skiped = false;
+
         }
 
     }
@@ -82,7 +77,11 @@ namespace osu_file_manager {
     }
 
     std::string_view OsuFileManager::GetMapIdFromMapFolderName(std::string_view folder_name) const {
-        auto id = folder_name.substr(folder_name.find_first_of(' '));
+        size_t id_end = folder_name.find_first_of(' ');
+        auto temp = folder_name.substr(0, id_end);
+        size_t id_start = folder_name.find_last_of('\\');
+        auto id = temp.substr(id_start + 1, id_end);
+        LOG_INFO(std::string(id));
         for (auto ch : id) {
             if (!std::isdigit(ch)) {
                 throw std::runtime_error("Map id should be number");

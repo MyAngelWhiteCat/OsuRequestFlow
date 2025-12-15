@@ -292,11 +292,12 @@ namespace gui_http {
         }
         try {
             core_.RemoveDublicates();
-            SendOK(req, send, "Start removing duplicates...");
         } 
         catch (const std::exception& e) {
             SendServerError(req, send, e.what());
         }
+        SendOK(req, send, "Start removing duplicates...");
+
     }
 
     template <typename Body, typename Allocator, typename Send>

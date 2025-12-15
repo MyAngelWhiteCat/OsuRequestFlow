@@ -942,10 +942,10 @@
             width: 40px;
             height: 40px;
             display: flex;
-            align-items: center;
-            justify-content: center;
-            border-radius: 50%;
-            transition: var(--transition);
+                align-items: center;
+                justify-content: center;
+                border-radius: 50%;
+                transition: var(--transition);
         }
 
             .modal-close:hover {
@@ -1344,6 +1344,9 @@
                     </button>
                     <button class="btn-secondary" onclick="loadCurrentFolder()">
                         <span>🔄</span> Обновить
+                    </button>
+                    <button class="btn btn-danger" onclick="removeDuplicates()">
+                        <span>🗑️</span> Удалить дубликаты
                     </button>
                 </div>
             </div>
@@ -2029,6 +2032,35 @@
         }
         }
 
+async function removeDuplicates() {
+    if (!confirm('Вы уверены, что хотите удалить дубликаты из корневой папки загрузки? Это действие нельзя отменить.')) {
+        return;
+    }
+
+    try {
+        addLog('request', 'POST', '/api/downloader/remove_dublicates');
+        
+        // Используем прямой fetch для обработки текстового ответа
+        const response = await fetch(`${SERVER_URL}/api/downloader/remove_dublicates`, {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json'
+            }
+        });
+        
+        const responseText = await response.text();
+        addLog('response', 'POST', '/api/downloader/remove_dublicates', responseText);
+        
+        if (response.ok && (responseText.trim() === 'ok' || responseText.includes('Start removing duplicates'))) {
+            showToast('Дубликаты успешно удалены из корневой папки', 'success');
+        } else {
+            showToast('Ошибка при удалении дубликатов: ' + responseText, 'error');
+        }
+    } catch (error) {
+        showToast('Ошибка сети: ' + error.message, 'error');
+    }
+}
+
         function startServerMonitoring() {
         if (serverCheckInterval) clearInterval(serverCheckInterval);
 
@@ -2164,14 +2196,14 @@
 
         const elapsed = Date.now() - checkStartTime;
         if (elapsed > 30000) {
-        badge.innerHTML = '<span class="loading"></span> Трафик слишком медленный!';
+        badge.innerHTML = '<span class="loading"></span> Тест продолжается...';
 
         if (!longCheckNotificationShown) {
         showToast('Возможно, есть проблемы на стороне провайдера.', 'warning');
         longCheckNotificationShown = true;
         }
         } else if (elapsed > 10000) {
-        badge.innerHTML = '<span class="loading"></span> Проблемы с интернет соединением';
+        badge.innerHTML = '<span class="loading"></span> Медленно, но продолжаем...';
         } else {
         badge.innerHTML = '<span class="loading"></span> Идет проверка...';
         }
@@ -2213,7 +2245,11 @@
         checkStartTime = null;
         longCheckNotificationShown = false;
 
-        startServerMonitoring();
+        // НЕ запускаем мониторинг после проверки! Цикл должен полностью останавливаться
+        if (serverCheckInterval) {
+        clearInterval(serverCheckInterval);
+        serverCheckInterval = null;
+        }
         }
 
         async function loadUserSettings() {
@@ -2518,7 +2554,8 @@
         await loadUserSettings();
         await loadCurrentFolder();
 
-        startServerMonitoring();
+        // НЕ запускаем мониторинг после сохранения настроек
+        // startServerMonitoring();
 
         saveBtn.innerHTML = '<span>✅</span> Настройки сохранены';
         } else {
@@ -2534,49 +2571,52 @@
         }
 
         async function makeRequest(endpoint, method, data = null) {
-        const url = SERVER_URL + endpoint;
+    const url = SERVER_URL + endpoint;
 
-        try {
+    try {
         const options = {
-        method: method,
-        headers: {
-        'Content-Type': 'application/json'
-        }
+            method: method,
+            headers: {
+                'Content-Type': 'application/json'
+            }
         };
 
         if (method !== 'GET' && data !== null) {
-        options.body = JSON.stringify(data);
+            options.body = JSON.stringify(data);
         }
 
         const response = await fetch(url, options);
-        const contentType = response.headers.get('content-type');
+        
+        // Сначала получаем текст ответа
+        const responseText = await response.text();
+        
         let resultData;
-
-        if (contentType && contentType.includes('application/json')) {
         try {
-        resultData = await response.json();
-        } catch (jsonError) {
-        resultData = await response.text();
-        }
-        } else {
-        resultData = await response.text();
+            // Пытаемся распарсить как JSON
+            resultData = JSON.parse(responseText);
+        } catch {
+            // Если не JSON, оставляем как текст
+            resultData = responseText;
         }
 
         return {
-        success: response.ok,
-        message: resultData,
-        data: response.ok ? resultData : null,
-        status: response.status
+            success: response.ok,
+            message: resultData,
+            data: response.ok ? resultData : null,
+            status: response.status,
+            text: responseText // сохраняем оригинальный текст ответа
         };
-        } catch (error) {
+    } catch (error) {
         console.error('Request error:', error);
         return {
-        success: false,
-        message: 'Ошибка соединения: ' + error.message,
-        data: null
+            success: false,
+            message: 'Ошибка соединения: ' + error.message,
+            data: null,
+            status: 0
         };
-        }
-        }
+    }
+}
+
 
         async function loadSettings() {
         try {
@@ -2592,7 +2632,8 @@
         loadServerSettings();
         loadUserSettings();
         loadUserLists();
-        startServerMonitoring();
+        // НЕ запускаем мониторинг после загрузки настроек
+        // startServerMonitoring();
         markSettingsSaved();
         } else {
         showToast('Ошибка загрузки настроек: ' + result.message, 'error');
@@ -2623,7 +2664,8 @@
         try {
         await loadCurrentFolder();
         await loadChatChannelsList();
-        await startServerMonitoring();
+        // НЕ запускаем мониторинг при обновлении статусов
+        // startServerMonitoring();
         showToast('Все статусы обновлены', 'success');
         } catch (error) {
         showToast('Ошибка обновления статусов: ' + error.message, 'error');
@@ -2678,7 +2720,8 @@
         loadUserSettings();
         loadUserLists();
 
-        startServerMonitoring();
+        // Убрал запуск мониторинга при загрузке
+        // startServerMonitoring();
 
         setTimeout(() => {
         if (document.getElementById('dashboard-section').classList.contains('active')) {
