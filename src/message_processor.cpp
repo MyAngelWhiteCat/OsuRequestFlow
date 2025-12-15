@@ -177,7 +177,7 @@ namespace irc {
             const int ROOMSTATE_CONTENT_INDEX = 1;
             const int ROOMSTATE_TAG_INDEX = 2;
 
-            if (split_raw_message[ROOMSTATE_TAG_INDEX] == domain::Command::ROOMSTATE) {
+            if (split_raw_message.size() > ROOMSTATE_TAG_INDEX && split_raw_message[ROOMSTATE_TAG_INDEX] == domain::Command::ROOMSTATE) {
                 return domain::Message(domain::MessageType::ROOMSTATE
                     , std::string(split_raw_message[ROOMSTATE_CONTENT_INDEX]));
             }
