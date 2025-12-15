@@ -10,6 +10,8 @@
 #include <string_view>
 
 #include <windows.h>
+#include <shobjidl.h>
+
 
 namespace core {
 
