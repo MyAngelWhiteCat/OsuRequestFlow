@@ -372,8 +372,6 @@ namespace core {
                 downloader_->SetResourceAndPrefix(res_it->get<std::string>()
                     , pref_it->get<std::string>());
         }
-        if (auto it = settings.find(SettingsKeys::PREFIX); it != settings.end()) {
-            downloader_->SetUriPrefix(it->get<std::string>());
         }
 
     }
