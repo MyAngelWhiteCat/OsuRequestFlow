@@ -49,10 +49,24 @@ namespace http_domain {
     };
 
     struct DLMetaData {
-        std::string file_name_;
-        size_t file_size_;
-        double speed_mbs_;
+        std::vector<std::string> resolved_addresses_{"Unknown"};
+        std::string host_ = "Unknown";
+        std::string file_name_ = "Unknown";
+        size_t file_size_ = 0;
+        double speed_mbs_ = 0;
         bool success = false;
+
+        template <typename Out>
+        void Print(Out& out) const {
+            out << host_ << " resolved as:\n";
+            for (const auto& addr : resolved_addresses_) {
+                out << addr << "\n";
+            }
+            std::string server_status = success ? "AVAILABLE" : "UNAVAILABLE";
+            out << "server " << server_status << " speed: " << std::to_string(speed_mbs_) << "\n";
+            out << "FileName: " << file_name_ << "\n";
+            out << "FieSize: " << std::to_string(file_size_) << "\n\n";
+        }
     };
 
     class Client : public std::enable_shared_from_this<Client> {
@@ -142,6 +156,10 @@ namespace http_domain {
 
         void SetSpeedMesureMode(bool is_speed_mesuring) {
             speed_mesure_mode_ = is_speed_mesuring;
+        }
+
+        std::optional<std::vector<std::string>> GetResolved() {
+            return connection_.GetResolved();
         }
 
     private:
@@ -267,7 +285,15 @@ namespace http_domain {
                 if (ec) {
                     if (ec == net::error::operation_aborted) {
                         LOG_ERROR("Download cancelled.");
-                        handler_(DLMetaData{});
+                        DLMetaData metadata;
+                        if (auto resolved = client_->GetResolved()) {
+                            metadata.resolved_addresses_ = *resolved;
+                        }
+                        if (client_->host_) {
+                            metadata.host_ = *client_->host_;
+                        }
+                        metadata.success = false;
+                        handler_(std::move(metadata));
                         return;
                     }
                     CheckConnectionError(ec);
@@ -280,6 +306,12 @@ namespace http_domain {
 
                 const int MILLISECONDS_IN_SECOND = 1000;
                 DLMetaData metadata;
+                if (auto resolved = client_->GetResolved()) {
+                    metadata.resolved_addresses_ = *resolved;
+                }
+                if (client_->host_) {
+                    metadata.host_ = *client_->host_;
+                }
                 metadata.file_name_ = std::string(response_parser_.GetFileName());
                 metadata.file_size_ = bytes_readed;
                 metadata.speed_mbs_ = static_cast<double>(bytes_readed / MiB)
