@@ -4,25 +4,33 @@
 
 ## Что это такое?
 
-Представь: ты стримишь Osu!, зрители кидают реквесты и карты начинают устанавливаться сами собой. Именно для этого я и делаю OsuRequestFlow. Пока что название временное, но суть уже понятна.
+Бот для Osu!, который берёт карты по запросам из чата и ставит их сам. Буквально. Показываешь стрим, зритель кидает ссылку — и через момент карта уже в папке с песнями, зашел - вышел в любую карту или нажал f5, и реквест уже выбран и готов к игре. Всё локально на твоём компьютере, никаких сторонних сервисов.
 
-Чат-бот запускается прямо на твоём компьютере, так что зрители могут влиять на происходящее в реальном времени. Основные команды и механики для подписок, донатов и канальных баллов уже в работе. Но главное, что уже работает — это мгновенная установка карт по запросам.
+Это моя первая задумка, и пока что всё довольно просто — зато уже работает. Уже есть фильтры по ролям (можно принимать запросы только от сабов, випов или вообще всех), белые и чёрные списки, и главное — никакого ручного труда.
+
+## Почему всё так странно устроено?
+
+**Локальный сервер и интерфейс в браузере** — не паранойя, а удобство. Всем понятно, как открыть браузер, не нужно таскать лишние окна по экрану, а ещё браузер сам переводит страницы. Изначально я хотел делать это с другом, который пишет фронтенд, но пока что весь интерфейс нарисовал дип-сик, ха-ха. Так что могут быть косяки — как только друг освободится, всё станет красиво и надёжно!
+
+**А зачем вообще это выпускать, если сыро?** — чтобы собрать данные. Мне нужны логи от людей с разными провайдерами и интернет-подключениями, чтобы понять, как сделать сервис стабильным для всех.
+
+**В итоге что будет?** Изначально я хотел это для себя и друзей, чтобы быстрее обмениваться картами на стримах. В планах — собрать в одну программу всё, что нужно стримеру Osu!: чат в OBS, PP-счётчик и прочее, сделав это интуитивно понятным, с минимальной нагрузкой на железо и полностью локально. Есть в этом что-то уютное.
 
 ## Как это работает?
 
-**Основная фишка** — зритель кидает ссылку, и карта начинает качаться. Не бойся, это безопастно, все предусмотренно. Без лишних кликов, без танцев с бубном. Особенно круто для тех, у кого нет Osu!Supporter — система ставит карты сама, пока ты играешь.
+**Основа** — зритель кидает ссылку, карта качается. Всё безопасно, проверено. Никаких танцев с бубном. Особенно кайфово для тех, у кого нет Osu!Supporter — система ставит карты сама, пока ты играешь.
 
 **Настроек минимум:**
-- Укажи папку с картами Osu! (При выборе через проводник учти, что при нажатии кнопки он откроется, но может не развернуться, не нужно кликать много раз, а то устанешь потом закрывать)
-- Выбери, чьи реквесты принимать: всех, подписчиков, VIP, модераторов или только свои. А так же есть белый и черный список :)
+- Укажи папку с картами Osu! (Кнопка "Выбрать папку" откроет проводник — может не сразу развернуться на весь экран. Не кликай по ней сто раз, а то устанешь закрывать окна)
+- Выбери, чьи реквесты принимать: всех, подписчиков, VIP, модераторов или только свои. Есть и белый, и чёрный список :)
 
-Перед установкой система проверяет — если карта уже есть, она не будет качаться заново. Потом можно будет это отключить, если захочется.
+Перед установкой система проверяет, есть ли карта уже в папке — если да, то не качает повторно. Потом можно будет это отключить, если захочешь.
 
 ## Самая сложная часть — серверы
 
 Программа использует публичные бесплатные серверы (огромное спасибо ребятам из [catboy.best](https://catboy.best/)!), но некоторые провайдеры этот трафик не очень любят.
 
-Чтобы не гадать, будет работать или нет, на главном экране есть специальный индикатор:
+Чтобы не гадать, будет работать или нет, на главном экране есть индикатор:
 
 ![Индикатор статуса серверов](look_here.png)
 
@@ -32,7 +40,9 @@
 3. ❌ **Недоступно** — ни один сервер не отвечает, загрузка карт не сработает
 
 Если ты из России — будь готов к последнему варианту. Многие сервера у нас не очень доступны. Система пока проверяет osu.direct, европейский сервер catboy.best и пару зеркал.
-Буквально у меня всё работало только при подключении к вайфаю пивнухи на первом этаже. Интересно, зачем им гигабитный канал с полным набором прокси.
+
+Буквально у меня всё работало только при подключении к вайфаю пивнухи на первом этаже. Интересно, зачем им гигабитный канал с полным набором прокси, если они продают пиво.
+
 ## Про производительность
 
 Я старался сделать так, чтобы бот не мешал играть. В среднем он занимает:
@@ -41,12 +51,16 @@
 
 ## Нужна твоя помощь!
 
-Если что-то не работает, странно себя ведёт или просто есть идеи — пиши! Прикрепляй логи, всего их 3 вида LogRequest (Записи запросов к серверам и их ответы). GeneralLogs (Все мелочи что происходят внутри) и (Показывает немного больше информации о серверах) — так я смогу быстрее разобраться и починить.
-Не переживай. Логи не содержат НИКАКОЙ информации о тебе и твоем ПК.
+Если что-то не работает, странно себя ведёт или просто есть идеи — пиши! Прикрепляй логи — всего их 3 вида:
+- `LogRequest.txt` — запросы к серверам и их ответы
+- `GeneralLogs.txt` — все мелочи, что происходят внутри
+- Ещё один файл с дополнительной информацией о серверах
+
+Так я смогу быстрее разобраться и починить. Не переживай — логи не содержат **НИКАКОЙ** информации о тебе и твоём ПК.
 
 ---
 
-## For English speakers. 
+## For English speakers
 
 # OsuRequestFlow
 
@@ -54,25 +68,33 @@ Alpha version is available: https://github.com/MyAngelWhiteCat/OsuRequestFlow/re
 
 ## What is this?
 
-Imagine this: you're streaming Osu!, viewers send requests, and maps start installing automatically. That's exactly what I'm building with OsuRequestFlow. The name is temporary for now, but the concept is clear.
+An Osu! bot that takes map requests from chat and installs them automatically. Literally. You stream, a viewer drops a link — and in a couple of minutes, the map is in your songs folder. Everything runs locally on your computer, no third-party services.
 
-The chat bot runs directly on your computer, allowing viewers to influence what happens in real time. Core commands and mechanics for subscriptions, donations, and channel points are in development. But the main feature that's already working is instant map installation from requests.
+This is my first idea, and it's pretty simple for now — but it already works. There are role-based filters (you can accept requests only from subs, VIPs, or everyone), whitelist and blacklist, and most importantly — no manual work.
+
+## Why is everything set up so oddly?
+
+**Local server and browser interface** — not paranoia, just convenience. Everyone knows how to open a browser, no need to drag extra windows around, and the browser can translate pages itself. Initially, I wanted to do this with a friend who writes frontend, but for now, DeepSeek drew the whole interface, haha. So there might be some quirks — once my friend is free, everything will become pretty and reliable!
+
+**Why release it if it's raw?** — to collect data. I need logs from people with different providers and internet connections to understand how to make the service stable for everyone.
+
+**What's the end goal?** Initially, I wanted this for myself and friends to exchange maps faster on streams. The plan is to combine everything an Osu! streamer needs into one program: chat in OBS, PP counter, etc., making it intuitive, with minimal load on hardware, and completely local. There's something cozy about that.
 
 ## How does it work?
 
-**The main feature** — a viewer sends a link, and the map starts downloading. Don't worry, it's safe, everything is accounted for. No extra clicks, no complicated steps. Especially great for those without Osu!Supporter — the system installs maps automatically while you play.
+**The core** — a viewer sends a link, the map downloads. Everything is safe, tested. No complicated steps. Especially cool for those without Osu!Supporter — the system installs maps automatically while you play.
 
 **Minimal setup:**
-- Specify your Osu! songs folder (When selecting through the explorer, keep in mind that when you click the button, it will open, but it may not expand, you do not need to click many times, otherwise you will get tired of closing it later.)
-- Choose whose requests to accept: everyone, subscribers, VIPs, moderators, or only yourself. Plus, there are whitelist and blacklist options :)
+- Specify your Osu! songs folder (The "Select folder" button will open the explorer — it might not immediately expand to full screen. Don't click it a hundred times, or you'll get tired of closing windows)
+- Choose whose requests to accept: everyone, subscribers, VIPs, moderators, or only yourself. There's also a whitelist and blacklist :)
 
-Before installing, the system checks if the map already exists — it won't re-download duplicates. You'll be able to disable this check later if you want.
+Before installing, the system checks if the map is already in the folder — if yes, it won't download again. You'll be able to disable this later if you want.
 
 ## The tricky part — servers
 
 The program uses public free servers (huge thanks to the folks at [catboy.best](https://catboy.best/)!), but some internet providers aren't too fond of this traffic.
 
-To avoid guessing whether it'll work or not, there's a special indicator on the main screen:
+To avoid guessing whether it'll work or not, there's an indicator on the main screen:
 
 ![Server status indicator](look_here.png)
 
@@ -81,7 +103,7 @@ To avoid guessing whether it'll work or not, there's a special indicator on the 
 2. ⚠️ **Works, but not ideal** — at least one server responds, you can use it
 3. ❌ **Unavailable** — no servers respond, map downloads won't work
 
-Literally, everything worked for me only when connected to the Wi-Fi of the pub on the ground floor. I wonder why they need a gigabit channel with a full set of proxies.
+Literally, everything worked for me only when connected to the Wi-Fi of the pub on the ground floor. I wonder why they need a gigabit channel with a full set of proxies if they sell beer.
 
 ## About performance
 
@@ -91,8 +113,16 @@ I tried to make sure the bot doesn't interfere with gameplay. On average, it use
 
 ## I need your help!
 
-If something isn't working, behaving strangely, or if you just have ideas — write! Attach logs — there are 3 types: LogRequest (server requests and responses), GeneralLogs (all internal events), and additional server info logs — this helps me figure things out and fix them faster.
-Don't worry. Logs contain NO information about you or your PC.
+If something isn't working, behaving strangely, or if you just have ideas — write! Attach logs — there are 3 types:
+- `LogRequest.txt` — server requests and responses
+- `GeneralLogs.txt` — all internal events
+- Another file with additional server info
+
+This helps me figure things out and fix them faster. Don't worry — logs contain **NO** information about you or your PC.
+
+---
+
+*P.S. Если что, пиши в Issues или кидай логи в Discussions. Без них сложно понять, что ломается у людей на разных провайдерах.*
 
 ---
 
