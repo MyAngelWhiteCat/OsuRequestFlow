@@ -1,9 +1,7 @@
 #pragma once
 // AI on
 #include <spdlog/spdlog.h>
-#include <spdlog/sinks/stdout_color_sinks.h>
-#include <spdlog/async.h>
-#include <iostream>
+
 
 #define LOG_INFO(message) logging::Logger::Info(message)
 #define LOG_ERROR(message) logging::Logger::Error(message)
@@ -15,17 +13,13 @@
 
 namespace logging {
 
-    static std::mutex output_mutex;
-
     class Logger {
     public:
         static void Init();
         static void Shutdown();
 
         static void Info(const std::string& message) {
-            output_mutex.lock();
             spdlog::info(message);
-            output_mutex.unlock();
         }
 
         static void Error(const std::string& message) {
