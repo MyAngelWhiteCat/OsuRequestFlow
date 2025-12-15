@@ -344,7 +344,7 @@ target_link_libraries(TestUserVerificator PUBLIC
 
 ########################################### Main
 
-add_executable(GUI
+add_executable(RequestFlow
     src/response_maker.h
     src/response_maker.cpp
     src/request_domain_names.h
@@ -356,7 +356,7 @@ add_executable(GUI
     src/main.cpp
 )
 
-target_link_libraries(GUI PUBLIC 
+target_link_libraries(RequestFlow PUBLIC 
     Core 
     HTTPServer 
 )
