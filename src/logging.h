@@ -45,9 +45,8 @@ namespace logging {
 
     template <typename ErrorCode>
     static void ReportError(const ErrorCode& ec, std::string_view where) {
-        std::string message = fmt::format("Error in {}: {} (code: {})",
+        spdlog::error("Error in {}: {} (code: {})",
             where, ec.message(), ec.value());
-        LOG_ERROR(message);
     }
 
 } // namespace logging
