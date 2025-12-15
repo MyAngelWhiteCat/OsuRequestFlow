@@ -12,6 +12,7 @@ namespace gui_http {
         static constexpr std::string_view SAVE_SETTINGS = "/api/settings/save"sv;
         static constexpr std::string_view MAX_FILESIZE = "/api/downloader/settings/max_file_size"sv;
         static constexpr std::string_view MESURE_SPEED = "/api/downloader/mesure_speed"sv;
+        static constexpr std::string_view REMOVE_DUBLICATES = "/api/downloader/remove_dublicates"sv;
         static constexpr std::string_view DL_SERVER_STATUS = "/api/downloader/dl_server_status"sv;
         static constexpr std::string_view DOWNLOADS_FOLDER = "/api/downloader/settings/folder"sv;
         static constexpr std::string_view BASE_SERVERS = "/api/downloader/base_servers"sv;
