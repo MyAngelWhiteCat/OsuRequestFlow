@@ -20,6 +20,8 @@
 #include "logging.h"
 #include <boost/beast/core/tcp_stream.hpp>
 #include <boost/beast/core/error.hpp>
+#include <optional>
+#include <vector>
 
 namespace http_domain {
 
@@ -72,6 +74,7 @@ namespace http_domain {
                 logging::ReportError(ec_, "Connection");
                 return false;
             }
+            host_ = std::string(host);
             return true;
         }
 
@@ -79,10 +82,20 @@ namespace http_domain {
             return ssl_connected_ || connected_;
         }
 
+        std::optional<std::vector<std::string>> GetResolved() {
+            return resolved_address_;
+        }
+
+        std::optional<std::string> GetHost() {
+            return host_;
+        }
+
     private:
         std::shared_ptr<ssl::context> ctx_{ nullptr };
         std::variant<beast::tcp_stream, ssl::stream<beast::tcp_stream>> stream_;
         beast::error_code ec_;
+        std::optional<std::vector<std::string>> resolved_address_;
+        std::optional<std::string> host_;
 
         bool ssl_connected_ = false;
         bool connected_ = false;
@@ -103,7 +116,7 @@ namespace http_domain {
         class ConnectionVisitor {
         public:
             explicit ConnectionVisitor(Connection& connection, std::string_view host, std::string_view port)
-                : connection(connection)
+                : connection_(connection)
                 , host_(host)
                 , port_(port)
             {
@@ -112,8 +125,8 @@ namespace http_domain {
             void operator()(beast::tcp_stream& socket) {
                 tcp::resolver resolver(socket.get_executor()); 
                 auto endpoints = resolver.resolve(host_, port_);
-                if (connection.ec_) {
-                    logging::ReportError(connection.ec_, "Resolving");
+                if (connection_.ec_) {
+                    logging::ReportError(connection_.ec_, "Resolving");
                 }
                 else {
                     LOG_INFO("Resolved "s.append(host_).append(":"s).append(port_));
@@ -121,37 +134,39 @@ namespace http_domain {
                         LOG_INFO(endpoints.begin()->endpoint().address().to_string().append(":"s).append(port_));
                     }
                 }
-
-                socket.connect(endpoints, connection.ec_);
-                if (connection.ec_) {
-                    logging::ReportError(connection.ec_, "Connection"sv);
+                socket.connect(endpoints, connection_.ec_);
+                if (connection_.ec_) {
+                    logging::ReportError(connection_.ec_, "Connection"sv);
                     return;
                 }
-                connection.connected_ = true;
+                connection_.connected_ = true;
                 LOG_INFO("CONNECTED");
             }
 
             void operator()(ssl::stream<beast::tcp_stream>& socket) {
                 tcp::resolver resolver(socket.get_executor());
-                auto endpoints = resolver.resolve(host_, port_, connection.ec_);
+                auto endpoints = resolver.resolve(host_, port_, connection_.ec_);
 
-                if (connection.ec_) {
-                    logging::ReportError(connection.ec_, "Resolving");
+                if (connection_.ec_) {
+                    logging::ReportError(connection_.ec_, "Resolving");
                     throw std::runtime_error("cant resolve: "s.append(host_).append(" ").append(port_));
                 }
 
                 LOG_INFO("Resolved "s.append(host_).append(":"s).append(port_));
+                std::vector<std::string> resolved;
                 for (const auto& ep : endpoints) {
-                    LOG_INFO(endpoints.begin()->endpoint().address().to_string().append(":"s).append(port_));
+                    resolved.push_back(endpoints.begin()->endpoint().address().to_string().append(":"s).append(port_));
+                    LOG_INFO(resolved.back());
                 }
+                connection_.resolved_address_ = resolved;
 
                 // AI on
                 SSL_set_tlsext_host_name(socket.native_handle(), host_.c_str());
                 // AI off
 
-                net::connect(socket.lowest_layer(), endpoints, connection.ec_);
-                if (connection.ec_) {
-                    logging::ReportError(connection.ec_, "SSL Connection"sv);
+                net::connect(socket.lowest_layer(), endpoints, connection_.ec_);
+                if (connection_.ec_) {
+                    logging::ReportError(connection_.ec_, "SSL Connection"sv);
                     return;
                 }
                 else {
@@ -162,11 +177,11 @@ namespace http_domain {
                 socket.lowest_layer().set_option(tcp::no_delay(true));
                 // AI off
 
-                socket.handshake(ssl::stream_base::client, connection.ec_);
-                if (connection.ec_) {
+                socket.handshake(ssl::stream_base::client, connection_.ec_);
+                if (connection_.ec_) {
                     ERR_print_errors_fp(stderr);
 
-                    logging::ReportError(connection.ec_, "SSL Handshake");
+                    logging::ReportError(connection_.ec_, "SSL Handshake");
                     socket.lowest_layer().close();
                     return;
                 }
@@ -174,7 +189,7 @@ namespace http_domain {
                 else {
                     LOG_INFO("HANDSHAKE SUCESS");
                 }
-                connection.ssl_connected_ = true;
+                connection_.ssl_connected_ = true;
 
                 // AI on
                 if (SSL_get_verify_result(socket.native_handle()) != X509_V_OK) {
@@ -188,9 +203,10 @@ namespace http_domain {
             }
 
         private:
-            Connection& connection;
+            Connection& connection_;
             std::string host_;
             std::string port_;
+
         };
 
     };
