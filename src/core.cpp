@@ -86,7 +86,7 @@ namespace core {
         }
         std::ifstream in(std::string(SettingsKeys::FILENAME.data(), SettingsKeys::FILENAME.size()));
         try {
-        in >> settings;
+            in >> settings;
         }
         catch (const std::exception& e) {
             LOG_CRITICAL(e.what());
@@ -174,7 +174,7 @@ namespace core {
         std::string path = SelectFolderDialog();
         if (!path.empty()) {
             downloader_->SetDownloadsDirectory(path);
-    }
+        }
     }
 
     void Core::SetMaxFileSize(size_t MiB) {
@@ -371,7 +371,7 @@ namespace core {
             if (auto pref_it = settings.find(SettingsKeys::PREFIX); pref_it != settings.end()) {
                 downloader_->SetResourceAndPrefix(res_it->get<std::string>()
                     , pref_it->get<std::string>());
-        }
+            }
         }
 
     }
