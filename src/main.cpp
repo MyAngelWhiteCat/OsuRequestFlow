@@ -59,14 +59,28 @@ int main() {
     std::cout.imbue(loc);
     std::cerr.imbue(loc);
     std::cin.imbue(loc);
-    
+
     logging::Logger::Init();
 
-    net::io_context ioc;
-    LOG_INFO("Carefully look at this path ");
+    net::io_context ioc(6);
+    LOG_CRITICAL("Debug ver 0312.14122025 Не поддерживает проверку дубликатов и настройки производительности. Работает медленее на +-1800% последней релиз сборки. Использует 6 потоков. Функции белых и черных списков не проходили полноценного тестирования в связи с чем не гарантируют идеальной работы.");
     LOG_INFO(fs::current_path().string());
-    LOG_INFO("If this path have something like йцукенгшщзхъфывапролджячсмитьбю");
-    LOG_INFO("replace .exe to eng only folders path");
+    LOG_INFO("Убедитесь, что путь к RequestFlow.exe (для удобства написан выше) не содержит русских имен");
+    bool found_static = false;
+    for (const auto& dir_entry : fs::directory_iterator(fs::current_path())) {
+        if (dir_entry.is_directory()) {
+            std::string path_ = dir_entry.path().string();
+            std::string folder_name;
+            folder_name = path_.substr(path_.find_last_of('\\') + 1);
+            if (folder_name == "static") {
+                found_static = true;
+            }
+        }
+    }
+    if (!found_static) {
+        LOG_CRITICAL("Папка static не найдена!");
+        return -2;
+    }
     LOG_INFO("if path is OK Press ENTER.");
 
     std::cin.get();
@@ -77,12 +91,12 @@ int main() {
     core.SetupIRCClient(true);
     core.Start();
     core.LoadSettings();
+    //core.MesureDownloadSpeed();
 
     auto address = net::ip::make_address("127.0.0.1");
     boost::asio::ip::tcp::endpoint localhost{ address, 23140 };
-    fs::path root = fs::current_path() / "../static";
+    fs::path root = fs::current_path() / "static";
 
-    
     Strand api_strand = net::make_strand(ioc);
     auto handler = std::make_shared<gui_http::RequestHandler>(core, root, api_strand);
     http_server::ServeHttp(ioc, localhost, [handler](auto&& req, auto&& send) mutable {
