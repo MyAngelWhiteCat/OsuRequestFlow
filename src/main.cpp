@@ -5,7 +5,6 @@
 #include "http_server.h"
 #include "request_handler.h"
 
-#include <boost/asio/impl/io_context.ipp>
 #include <boost/asio/io_context.hpp>
 
 #include <clocale>
@@ -76,7 +75,7 @@ int main() {
     logging::Logger::Init();
 
     net::io_context ioc(6);
-    LOG_CRITICAL("Debug ver 0312.14122025 Не поддерживает проверку дубликатов и настройки производительности. Работает медленее на +-1800% последней релиз сборки. Использует 6 потоков. Функции белых и черных списков не проходили полноценного тестирования в связи с чем не гарантируют идеальной работы.");
+    LOG_CRITICAL("Функции белых и черных списков не проходили полноценного тестирования в связи с чем не гарантируют идеальной работы.");
     LOG_INFO(fs::current_path().string());
     LOG_INFO("Убедитесь, что путь к RequestFlow.exe (для удобства написан выше) не содержит русских имен");
     bool found_static = false;
@@ -91,13 +90,14 @@ int main() {
         }
     }
     if (!found_static) {
-        LOG_CRITICAL("Папка static не найдена!");
+        LOG_CRITICAL("Папка static не найдена!\n");
+        LOG_INFO("Нажмите Enter для выхода...");
+        std::cin.get();
         return -2;
     }
     LOG_INFO("if path is OK Press ENTER.");
 
     std::cin.get();
-
 
     core::Core core(ioc);
     core.SetupConnection(true);
