@@ -3,21 +3,37 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Настройки</title>
+    <title>RequestFlow</title>
+    <link rel="icon" type="image/png" href="favicon.png">
+    <link rel="icon" type="image/png" href="favicon.png">
+    <link rel="icon" type="image/png" href="./favicon.png">
+    <link rel="icon" type="image/png" href="/favicon.png">
+    <link rel="icon" type="image/png" href="http://localhost:23140/favicon.png">
     <style>
         :root {
-            --primary: #667eea;
-            --primary-light: #7c93ff;
-            --success: #48bb78;
-            --warning: #ed8936;
-            --error: #f56565;
-            --text: #e2e8f0;
-            --text-light: #a0aec0;
-            --background: #0f172a;
-            --card: #1e293b;
-            --card-hover: #2d3748;
-            --border: #334155;
-            --shadow: rgba(0, 0, 0, 0.4);
+            --bg-dark: #0a0a12;
+            --bg-card: #11111a;
+            --bg-hover: #1a1a24;
+            --border: #2a2a3a;
+            --text: #e0e0ff;
+            --text-light: #a0a0c0;
+            --purple: #9d4edd;
+            --purple-light: #c77dff;
+            --neon-purple: #e0aaff;
+            --cyan: #00e5ff;
+            --neon-cyan: #80ffea;
+            --green: #00ff9d;
+            --yellow: #ffd166;
+            --orange: #ff7b00;
+            --neon-orange: #ff9e00;
+            --red: #ff3860;
+            --glow: 0 0 20px rgba(157, 78, 221, 0.3);
+            --glow-strong: 0 0 30px rgba(157, 78, 221, 0.5);
+            --glow-orange: 0 0 15px rgba(255, 123, 0, 0.4);
+            --transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+            --radius: 16px;
+            --radius-sm: 8px;
+            --shadow: 0 8px 32px rgba(0, 0, 0, 0.4);
         }
 
         * {
@@ -27,119 +43,279 @@
         }
 
         body {
-            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
-            background: var(--background);
+            font-family: 'Segoe UI', system-ui, -apple-system, sans-serif;
+            background: linear-gradient(135deg, var(--bg-dark) 0%, #1a0b2e 100%);
             color: var(--text);
-            line-height: 1.6;
-            padding: 20px;
+            min-height: 100vh;
+            overflow-x: hidden;
+        }
+
+        .particles {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            pointer-events: none;
+            z-index: -1;
+        }
+
+        .sidebar {
+            position: fixed;
+            left: 0;
+            top: 0;
+            width: 280px;
+            height: 100vh;
+            background: rgba(17, 17, 26, 0.9);
+            backdrop-filter: blur(20px);
+            border-right: 1px solid var(--border);
+            padding: 30px 20px;
+            z-index: 100;
+            display: flex;
+            flex-direction: column;
+            box-shadow: 5px 0 40px rgba(0, 0, 0, 0.3);
+            overflow-y: auto;
+        }
+
+        .logo {
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 12px;
+            margin-bottom: 30px;
+            padding: 18px;
+            background: rgba(255, 123, 0, 0.05);
+            border: 2px solid rgba(255, 123, 0, 0.3);
+            border-radius: var(--radius);
+            position: relative;
+            overflow: hidden;
+            text-align: center;
+            flex-wrap: nowrap;
+            min-width: 0;
+        }
+
+            .logo::before {
+                content: '';
+                position: absolute;
+                top: 0;
+                left: 0;
+                right: 0;
+                height: 3px;
+                background: linear-gradient(90deg, var(--orange), var(--neon-orange));
+                box-shadow: var(--glow-orange);
+            }
+
+        .logo-text {
+            font-size: 1.6rem;
+            font-weight: 800;
+            letter-spacing: 0.5px;
+            background: linear-gradient(45deg, var(--neon-orange), var(--purple-light));
+            -webkit-background-clip: text;
+            background-clip: text;
+            color: transparent;
+            text-shadow: 0 0 15px rgba(255, 123, 0, 0.4);
+            white-space: nowrap;
+            overflow: hidden;
+            text-overflow: ellipsis;
+            flex: 1;
+            text-align: center;
+            max-width: calc(100% - 40px);
+        }
+
+        .nav-section {
+            margin-bottom: 25px;
+            min-width: 0;
+        }
+
+        .nav-title {
+            font-size: 0.85rem;
+            text-transform: uppercase;
+            letter-spacing: 0.8px;
+            color: var(--text-light);
+            margin-bottom: 12px;
+            padding-left: 10px;
+            white-space: nowrap;
+            overflow: hidden;
+            text-overflow: ellipsis;
+        }
+
+        .nav-item {
+            display: flex;
+            align-items: center;
+            gap: 14px;
+            padding: 14px 18px;
+            margin: 5px 0;
+            background: transparent;
+            border: 2px solid transparent;
+            border-radius: var(--radius-sm);
+            color: var(--text-light);
+            font-size: 0.95rem;
+            font-weight: 500;
+            cursor: pointer;
+            transition: var(--transition);
+            position: relative;
+            overflow: hidden;
+            white-space: nowrap;
+            min-width: 0;
+        }
+
+            .nav-item:hover {
+                background: rgba(255, 123, 0, 0.1);
+                border-color: rgba(255, 123, 0, 0.3);
+                color: var(--text);
+                transform: translateX(6px);
+            }
+
+            .nav-item.active {
+                background: linear-gradient(135deg, rgba(157, 78, 221, 0.2), rgba(255, 123, 0, 0.1));
+                border-color: var(--orange);
+                color: var(--text);
+                box-shadow: var(--glow-orange);
+            }
+
+                .nav-item.active::before {
+                    content: '';
+                    position: absolute;
+                    left: 0;
+                    top: 0;
+                    height: 100%;
+                    width: 4px;
+                    background: var(--neon-orange);
+                    box-shadow: 0 0 10px var(--orange);
+                }
+
+        .nav-icon {
+            font-size: 1.3rem;
+            width: 22px;
+            text-align: center;
+            flex-shrink: 0;
+            min-width: 22px;
+        }
+
+        .nav-text {
+            white-space: nowrap;
+            overflow: hidden;
+            text-overflow: ellipsis;
+            flex: 1;
+        }
+
+        .save-all-container {
+            margin-top: auto;
+            margin-bottom: 20px;
+        }
+
+        .save-all-btn {
+            width: 100%;
+            padding: 14px 18px;
+            background: linear-gradient(135deg, var(--orange), #ff5e00);
+            color: white;
+            border: none;
+            border-radius: var(--radius-sm);
+            font-size: 0.95rem;
+            font-weight: 700;
+            cursor: pointer;
+            transition: var(--transition);
+            text-align: center;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 8px;
+            white-space: nowrap;
+        }
+
+            .save-all-btn:hover {
+                transform: translateY(-3px);
+                box-shadow: var(--glow-orange);
+                background: linear-gradient(135deg, var(--neon-orange), var(--orange));
+            }
+
+            .save-all-btn.saved {
+                background: linear-gradient(135deg, var(--green), #00cc88);
+                cursor: default;
+            }
+
+                .save-all-btn.saved:hover {
+                    transform: none;
+                    box-shadow: none;
+                    background: linear-gradient(135deg, var(--green), #00cc88);
+                }
+
+            .save-all-btn:disabled {
+                background: rgba(255, 255, 255, 0.05);
+                border: 2px solid var(--border);
+                color: var(--text-light);
+                cursor: not-allowed;
+                opacity: 0.6;
+            }
+
+                .save-all-btn:disabled:hover {
+                    transform: none;
+                    box-shadow: none;
+                    background: rgba(255, 255, 255, 0.05);
+                }
+
+        .main-content {
+            margin-left: 280px;
+            padding: 40px;
             min-height: 100vh;
         }
 
-        .container {
-            max-width: 1200px;
-            margin: 0 auto;
-        }
-
-        .header {
+        .page-header {
             text-align: center;
-            margin-bottom: 40px;
-            padding-bottom: 20px;
-            border-bottom: 1px solid var(--border);
-        }
-
-            .header h1 {
-                font-size: 2.5rem;
-                margin-bottom: 10px;
-                background: linear-gradient(135deg, var(--primary), var(--primary-light));
-                -webkit-background-clip: text;
-                -webkit-text-fill-color: transparent;
-            }
-
-            .header p {
-                color: var(--text-light);
-                font-size: 1.1rem;
-            }
-
-        /* Stepper */
-        .stepper {
-            display: flex;
-            justify-content: center;
-            gap: 20px;
-            margin-bottom: 40px;
+            margin-bottom: 50px;
             position: relative;
         }
 
-            .stepper::before {
+        .page-title {
+            font-size: 3.5rem;
+            font-weight: 900;
+            margin-bottom: 15px;
+            background: linear-gradient(45deg, var(--orange), var(--purple), var(--cyan));
+            -webkit-background-clip: text;
+            background-clip: text;
+            color: transparent;
+            text-shadow: 0 5px 20px rgba(157, 78, 221, 0.3);
+            animation: gradientShift 8s ease infinite;
+            background-size: 200% 200%;
+            position: relative;
+            padding-bottom: 15px;
+        }
+
+            .page-title::after {
                 content: '';
                 position: absolute;
-                top: 15px;
-                left: 10%;
-                right: 10%;
-                height: 2px;
-                background: var(--border);
-                z-index: 1;
+                bottom: 0;
+                left: 50%;
+                transform: translateX(-50%);
+                width: 200px;
+                height: 3px;
+                background: linear-gradient(90deg, transparent, var(--neon-orange), transparent);
+                box-shadow: 0 0 10px var(--orange);
             }
 
-        .step {
-            display: flex;
-            flex-direction: column;
-            align-items: center;
-            position: relative;
-            z-index: 2;
+        @keyframes gradientShift {
+            0%, 100% {
+                background-position: 0% 50%;
+            }
+
+            50% {
+                background-position: 100% 50%;
+            }
         }
 
-        .step-circle {
-            width: 40px;
-            height: 40px;
-            border-radius: 50%;
-            background: var(--card);
-            border: 2px solid var(--border);
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            font-weight: bold;
-            font-size: 1.2rem;
-            margin-bottom: 10px;
-            transition: all 0.3s ease;
-        }
-
-        .step.active .step-circle {
-            background: var(--primary);
-            border-color: var(--primary-light);
-            color: white;
-        }
-
-        .step.completed .step-circle {
-            background: var(--success);
-            border-color: var(--success);
-            color: white;
-        }
-
-        .step-label {
-            font-size: 0.9rem;
-            color: var(--text-light);
-            text-align: center;
-        }
-
-        .step.active .step-label {
-            color: var(--primary-light);
-            font-weight: 600;
-        }
-
-        /* Step Content */
-        .step-content {
+        .content-section {
             display: none;
-            animation: fadeIn 0.5s ease;
+            animation: slideIn 0.5s ease-out;
         }
 
-            .step-content.active {
+            .content-section.active {
                 display: block;
             }
 
-        @keyframes fadeIn {
+        @keyframes slideIn {
             from {
                 opacity: 0;
-                transform: translateY(20px);
+                transform: translateY(30px);
             }
 
             to {
@@ -148,282 +324,350 @@
             }
         }
 
-        /* Cards Grid */
-        .cards-grid {
+        .dashboard-grid {
             display: grid;
-            grid-template-columns: repeat(auto-fit, minmax(380px, 1fr));
+            grid-template-columns: repeat(auto-fit, minmax(350px, 1fr));
             gap: 25px;
             margin-bottom: 40px;
         }
 
         .card {
-            background: var(--card);
-            border-radius: 16px;
-            padding: 25px;
+            background: linear-gradient(135deg, var(--bg-card) 0%, #13131d 100%);
             border: 1px solid var(--border);
-            transition: all 0.3s ease;
-            box-shadow: 0 10px 25px var(--shadow);
+            border-radius: var(--radius);
+            padding: 30px;
+            transition: var(--transition);
+            position: relative;
+            overflow: hidden;
+            height: 100%;
         }
 
             .card:hover {
+                border-color: var(--orange);
+                box-shadow: var(--glow-orange);
                 transform: translateY(-5px);
-                background: var(--card-hover);
-                box-shadow: 0 15px 35px var(--shadow);
+            }
+
+            .card::before {
+                content: '';
+                position: absolute;
+                top: 0;
+                left: 0;
+                right: 0;
+                height: 3px;
+                background: linear-gradient(90deg, var(--orange), var(--purple));
+                border-radius: var(--radius) var(--radius) 0 0;
+                box-shadow: 0 0 10px var(--orange);
             }
 
         .card-header {
             display: flex;
             align-items: center;
-            gap: 15px;
-            margin-bottom: 20px;
-            padding-bottom: 15px;
+            gap: 18px;
+            margin-bottom: 25px;
+            padding-bottom: 20px;
             border-bottom: 1px solid var(--border);
         }
 
         .card-icon {
-            font-size: 1.8rem;
+            font-size: 2.5rem;
+            background: linear-gradient(45deg, var(--orange), var(--purple));
+            -webkit-background-clip: text;
+            background-clip: text;
+            color: transparent;
+            text-shadow: 0 0 10px rgba(255, 123, 0, 0.3);
         }
 
         .card-title {
-            font-size: 1.3rem;
-            font-weight: 600;
+            font-size: 1.5rem;
+            font-weight: 700;
             color: var(--text);
+            white-space: nowrap;
+            overflow: hidden;
+            text-overflow: ellipsis;
+            max-width: calc(100% - 60px);
         }
 
-        .card-description {
-            color: var(--text-light);
+        .card-content {
             margin-bottom: 25px;
-            font-size: 0.95rem;
-            line-height: 1.5;
         }
 
-        /* Controls */
+        .status-display {
+            background: rgba(255, 255, 255, 0.03);
+            border: 1px solid var(--border);
+            border-radius: var(--radius-sm);
+            padding: 20px;
+            margin: 15px 0;
+        }
+
+        .status-value {
+            font-size: 1.2rem;
+            color: var(--text);
+            font-family: 'Monaco', 'Menlo', monospace;
+            word-break: break-all;
+            padding: 10px;
+            background: rgba(0, 0, 0, 0.2);
+            border-radius: var(--radius-sm);
+        }
+
+        .status-empty {
+            color: var(--text-light);
+            font-style: italic;
+            text-align: center;
+            padding: 20px;
+        }
+
         .control-group {
-            margin-bottom: 20px;
+            margin-bottom: 25px;
         }
 
         .control-label {
             display: block;
-            margin-bottom: 8px;
+            margin-bottom: 10px;
             color: var(--text);
-            font-weight: 500;
-            font-size: 0.95rem;
+            font-weight: 600;
+            font-size: 1rem;
         }
 
         .control-input {
             width: 100%;
-            padding: 14px 16px;
+            padding: 16px 20px;
             background: rgba(255, 255, 255, 0.05);
             border: 1px solid var(--border);
-            border-radius: 10px;
+            border-radius: var(--radius-sm);
             color: var(--text);
             font-size: 1rem;
-            transition: all 0.3s ease;
+            transition: var(--transition);
+            font-family: 'Segoe UI', sans-serif;
         }
 
             .control-input:focus {
                 outline: none;
-                border-color: var(--primary);
-                box-shadow: 0 0 0 3px rgba(102, 126, 234, 0.1);
+                border-color: var(--orange);
+                box-shadow: 0 0 0 3px rgba(255, 123, 0, 0.1);
+                background: rgba(255, 123, 0, 0.05);
             }
 
             .control-input::placeholder {
                 color: var(--text-light);
+                opacity: 0.5;
             }
 
-        /* Action Buttons */
+        #new-channel::placeholder {
+            color: rgba(224, 224, 255, 0.3);
+            font-style: italic;
+        }
+
+        .path-editable {
+            display: flex;
+            align-items: center;
+            gap: 15px;
+            margin: 20px 0;
+        }
+
+        .path-input {
+            flex: 1;
+            padding: 16px 20px;
+            background: rgba(255, 255, 255, 0.05);
+            border: 1px solid var(--border);
+            border-radius: var(--radius-sm);
+            color: var(--text);
+            font-size: 1rem;
+            font-family: 'Monaco', 'Menlo', monospace;
+            min-width: 0;
+        }
+
+            .path-input:focus {
+                outline: none;
+                border-color: var(--orange);
+                box-shadow: 0 0 0 3px rgba(255, 123, 0, 0.1);
+            }
+
         .action-buttons {
             display: flex;
             gap: 15px;
             margin-top: 30px;
         }
 
-        .action-btn {
+        .btn {
             flex: 1;
-            padding: 16px;
-            background: linear-gradient(135deg, var(--primary), var(--primary-light));
+            padding: 16px 24px;
+            background: linear-gradient(135deg, var(--orange), #ff5e00);
             color: white;
             border: none;
-            border-radius: 12px;
+            border-radius: var(--radius-sm);
             font-size: 1rem;
             font-weight: 600;
             cursor: pointer;
-            transition: all 0.3s ease;
+            transition: var(--transition);
             position: relative;
             overflow: hidden;
+            text-align: center;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 8px;
+            min-height: 52px;
+            white-space: nowrap;
+            min-width: 0;
         }
 
-            .action-btn:hover {
-                transform: translateY(-2px);
-                box-shadow: 0 10px 20px rgba(102, 126, 234, 0.3);
-            }
-
-            .action-btn:active {
-                transform: translateY(0);
-            }
-
-            .action-btn:disabled {
-                opacity: 0.6;
-                cursor: not-allowed;
-                transform: none !important;
+            .btn:hover {
+                transform: translateY(-3px);
+                box-shadow: var(--glow-orange);
+                background: linear-gradient(135deg, var(--neon-orange), var(--orange));
+                color: white;
             }
 
         .btn-secondary {
-            background: transparent;
+            background: rgba(255, 255, 255, 0.05);
             border: 2px solid var(--border);
-        }
-
-            .btn-secondary:hover {
-                background: rgba(255, 255, 255, 0.05);
-            }
-
-        /* Instructions */
-        .instructions {
-            background: rgba(102, 126, 234, 0.1);
-            border-radius: 12px;
-            padding: 20px;
-            margin-bottom: 25px;
-            border-left: 4px solid var(--primary);
-        }
-
-        .instructions-title {
-            display: flex;
-            align-items: center;
-            gap: 10px;
-            margin-bottom: 15px;
-            color: var(--primary-light);
-            font-weight: 600;
-        }
-
-        .instructions-content {
-            color: var(--text-light);
-            font-size: 0.95rem;
-            line-height: 1.5;
-        }
-
-            .instructions-content ul {
-                margin-left: 20px;
-                margin-bottom: 10px;
-            }
-
-            .instructions-content li {
-                margin-bottom: 5px;
-            }
-
-        /* Role Cards */
-        .role-card {
-            padding: 15px;
-            margin-bottom: 10px;
-            background: rgba(255, 255, 255, 0.03);
-            border-radius: 10px;
-            border: 1px solid transparent;
-            cursor: pointer;
-            transition: all 0.3s ease;
-        }
-
-            .role-card:hover {
-                background: rgba(255, 255, 255, 0.05);
-                border-color: var(--primary);
-            }
-
-            .role-card.selected {
-                background: rgba(102, 126, 234, 0.15);
-                border-color: var(--primary);
-            }
-
-        .role-header {
-            display: flex;
-            align-items: center;
-            gap: 10px;
-            margin-bottom: 8px;
-        }
-
-        .role-icon {
-            font-size: 1.2rem;
-        }
-
-        .role-name {
-            font-weight: 600;
             color: var(--text);
         }
 
-        .role-level {
-            margin-left: auto;
+            .btn-secondary:hover {
+                border-color: var(--orange);
+                background: rgba(255, 123, 0, 0.1);
+                color: var(--text);
+            }
+
+        .btn-danger {
+            background: linear-gradient(135deg, var(--red), #c2185b);
+            color: white;
+        }
+
+            .btn-danger:hover {
+                background: linear-gradient(135deg, #ff5252, var(--red));
+                box-shadow: 0 0 20px rgba(255, 56, 96, 0.3);
+            }
+
+        .btn-success {
+            background: linear-gradient(135deg, var(--green), #00cc88);
+            color: white;
+        }
+
+            .btn-success:hover {
+                background: linear-gradient(135deg, #00ff9d, var(--green));
+                box-shadow: 0 0 20px rgba(0, 255, 157, 0.3);
+            }
+
+        .btn-warning {
+            background: linear-gradient(135deg, var(--neon-orange), #ff9800);
+            color: #222;
+            font-weight: 700;
+        }
+
+            .btn-warning:hover {
+                background: linear-gradient(135deg, #ffb347, var(--neon-orange));
+                box-shadow: 0 0 20px rgba(255, 158, 0, 0.3);
+                color: #222;
+            }
+
+        .btn-disabled {
+            background: rgba(255, 255, 255, 0.05);
+            border: 2px solid var(--border);
             color: var(--text-light);
-            font-size: 0.9rem;
+            cursor: not-allowed;
+            opacity: 0.6;
         }
 
-        .role-description {
-            color: var(--text-light);
-            font-size: 0.9rem;
-            margin-bottom: 5px;
+            .btn-disabled:hover {
+                transform: none;
+                box-shadow: none;
+                background: rgba(255, 255, 255, 0.05);
+            }
+
+        .icon-btn {
+            width: 48px;
+            height: 48px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            background: rgba(255, 123, 0, 0.1);
+            border: 2px solid var(--orange);
+            border-radius: var(--radius-sm);
+            color: var(--neon-orange);
+            cursor: pointer;
+            transition: var(--transition);
+            font-size: 1.3rem;
+            flex-shrink: 0;
         }
 
-        .role-access {
-            font-size: 0.85rem;
-            color: var(--success);
-        }
+            .icon-btn:hover {
+                background: var(--orange);
+                color: white;
+                box-shadow: var(--glow-orange);
+                transform: scale(1.05);
+            }
 
-        /* Loading Animation */
-        .loading-dots {
-            display: inline-block;
-            width: 20px;
-            height: 20px;
+        .server-status {
+            background: rgba(255, 255, 255, 0.03);
+            border: 2px solid var(--border);
+            border-radius: var(--radius-sm);
+            padding: 25px;
+            margin: 20px 0;
             position: relative;
         }
 
-            .loading-dots::after {
+            .server-status::before {
                 content: '';
                 position: absolute;
-                width: 20px;
-                height: 20px;
                 top: 0;
                 left: 0;
-                border: 2px solid transparent;
-                border-top-color: white;
-                border-radius: 50%;
-                animation: spin 1s linear infinite;
+                right: 0;
+                bottom: 0;
+                border: 1px solid transparent;
+                border-radius: var(--radius-sm);
+                background: linear-gradient(45deg, var(--orange), var(--purple)) border-box;
+                -webkit-mask: linear-gradient(#fff 0 0) padding-box, linear-gradient(#fff 0 0);
+                -webkit-mask-composite: destination-out;
+                mask-composite: exclude;
+                pointer-events: none;
             }
 
-        @keyframes spin {
-            0% {
-                transform: rotate(0deg);
-            }
-
-            100% {
-                transform: rotate(360deg);
-            }
-        }
-
-        /* Connection Status */
-        .connection-status {
-            display: flex;
+        .status-badge {
+            display: inline-flex;
             align-items: center;
             gap: 10px;
-            padding: 12px 20px;
-            background: var(--card);
-            border-radius: 12px;
-            border: 1px solid var(--border);
+            padding: 10px 16px;
+            border-radius: 50px;
+            font-weight: 700;
+            font-size: 0.95rem;
             margin-bottom: 20px;
+            border: 2px solid transparent;
+            color: white;
+            white-space: nowrap;
+            max-width: 100%;
+            overflow: hidden;
+            text-overflow: ellipsis;
+            min-height: 42px;
+            box-sizing: border-box;
+            line-height: 1.3;
         }
 
-        .status-dot {
-            width: 12px;
-            height: 12px;
-            border-radius: 50%;
-            background: var(--success);
-            box-shadow: 0 0 10px var(--success);
-            animation: pulse 2s infinite;
-        }
-
-            .status-dot.connecting {
-                background: var(--warning);
-                box-shadow: 0 0 10px var(--warning);
+            .status-badge.waiting {
+                background: rgba(255, 209, 102, 0.1);
+                border-color: var(--yellow);
+                color: var(--yellow);
             }
 
-            .status-dot.disconnected {
-                background: var(--error);
-                box-shadow: 0 0 10px var(--error);
+            .status-badge.ready {
+                background: rgba(0, 255, 157, 0.1);
+                border-color: var(--green);
+                color: var(--green);
+            }
+
+            .status-badge.error {
+                background: rgba(255, 123, 0, 0.1);
+                border-color: var(--orange);
+                color: var(--neon-orange);
+            }
+
+            .status-badge.fatal {
+                background: rgba(255, 56, 96, 0.1);
+                border-color: var(--red);
+                color: var(--red);
+                animation: pulse 2s infinite;
             }
 
         @keyframes pulse {
@@ -432,345 +676,934 @@
             }
 
             50% {
-                opacity: 0.5;
+                opacity: 0.7;
             }
         }
 
-        /* Scrollbar */
-        ::-webkit-scrollbar {
-            width: 8px;
+        .server-info {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+            gap: 15px;
+            margin: 20px 0;
         }
 
-        ::-webkit-scrollbar-track {
-            background: var(--card);
-            border-radius: 4px;
+        .info-item {
+            background: rgba(0, 0, 0, 0.2);
+            border: 1px solid var(--border);
+            border-radius: var(--radius-sm);
+            padding: 15px;
         }
 
-        ::-webkit-scrollbar-thumb {
-            background: var(--border);
-            border-radius: 4px;
+        .info-label {
+            font-size: 0.9rem;
+            color: var(--text-light);
+            margin-bottom: 5px;
+            white-space: nowrap;
+            overflow: hidden;
+            text-overflow: ellipsis;
         }
 
-            ::-webkit-scrollbar-thumb:hover {
-                background: var(--primary);
+        .info-value {
+            font-size: 1.1rem;
+            color: var(--text);
+            font-weight: 600;
+            word-break: break-all;
+        }
+
+        .settings-form {
+            background: rgba(255, 255, 255, 0.03);
+            border: 2px solid var(--border);
+            border-radius: var(--radius-sm);
+            padding: 30px;
+            margin: 25px 0;
+            position: relative;
+        }
+
+            .settings-form::before {
+                content: '';
+                position: absolute;
+                top: 0;
+                left: 0;
+                right: 0;
+                height: 2px;
+                background: linear-gradient(90deg, var(--orange), transparent);
             }
 
-        /* Responsive */
+        .form-title {
+            font-size: 1.4rem;
+            color: var(--text);
+            margin-bottom: 25px;
+            padding-bottom: 15px;
+            border-bottom: 1px solid var(--border);
+        }
+
+        .form-row {
+            display: flex;
+            gap: 20px;
+            margin-bottom: 20px;
+        }
+
+        .form-group {
+            flex: 1;
+            min-width: 0;
+        }
+
+        .file-size-section {
+            margin-bottom: 40px;
+        }
+
+        .file-size-form {
+            background: rgba(255, 255, 255, 0.03);
+            border: 2px solid var(--border);
+            border-radius: var(--radius-sm);
+            padding: 25px;
+            margin-top: 20px;
+            position: relative;
+        }
+
+            .file-size-form::before {
+                content: '';
+                position: absolute;
+                top: 0;
+                left: 0;
+                right: 0;
+                height: 2px;
+                background: linear-gradient(90deg, var(--orange), transparent);
+            }
+
+        .logs-console {
+            background: rgba(10, 10, 18, 0.9);
+            border: 2px solid var(--border);
+            border-radius: var(--radius);
+            overflow: hidden;
+            display: flex;
+            flex-direction: column;
+            height: 600px;
+        }
+
+        .logs-header {
+            padding: 20px;
+            background: rgba(17, 17, 26, 0.8);
+            border-bottom: 1px solid var(--border);
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+
+        .logs-title {
+            font-size: 1.5rem;
+            color: var(--text);
+            font-weight: 700;
+        }
+
+        .logs-controls {
+            display: flex;
+            gap: 10px;
+        }
+
+        .logs-content {
+            flex: 1;
+            overflow-y: auto;
+            padding: 20px;
+            font-family: 'Monaco', 'Menlo', monospace;
+            font-size: 0.9rem;
+            line-height: 1.5;
+        }
+
+        .log-entry {
+            margin-bottom: 12px;
+            padding: 12px 16px;
+            border-radius: var(--radius-sm);
+            background: rgba(255, 255, 255, 0.02);
+            border-left: 4px solid var(--border);
+            animation: slideInRight 0.3s ease;
+        }
+
+            .log-entry.request {
+                border-left-color: var(--purple);
+            }
+
+            .log-entry.response {
+                border-left-color: var(--green);
+            }
+
+            .log-entry.error {
+                border-left-color: var(--red);
+            }
+
+            .log-entry.warning {
+                border-left-color: var(--orange);
+            }
+
+        .log-time {
+            color: var(--text-light);
+            font-size: 0.8rem;
+            margin-right: 10px;
+        }
+
+        .log-method {
+            font-weight: 700;
+            padding: 2px 8px;
+            border-radius: 4px;
+            font-size: 0.85rem;
+            margin-right: 8px;
+            color: white;
+            white-space: nowrap;
+        }
+
+            .log-method.get {
+                background: rgba(0, 229, 255, 0.2);
+                color: var(--cyan);
+            }
+
+            .log-method.post {
+                background: rgba(157, 78, 221, 0.2);
+                color: var(--purple-light);
+            }
+
+            .log-method.put {
+                background: rgba(255, 123, 0, 0.2);
+                color: var(--neon-orange);
+            }
+
+            .log-method.delete {
+                background: rgba(255, 56, 96, 0.2);
+                color: var(--red);
+            }
+
+        .quick-actions {
+            display: flex;
+            gap: 20px;
+            justify-content: center;
+            margin: 40px 0;
+            flex-wrap: wrap;
+        }
+
+        .quick-btn {
+            padding: 18px 36px;
+            background: linear-gradient(135deg, rgba(255, 123, 0, 0.2), rgba(0, 229, 255, 0.2));
+            border: 2px solid rgba(255, 123, 0, 0.3);
+            border-radius: var(--radius);
+            color: var(--text);
+            font-size: 1.1rem;
+            font-weight: 600;
+            cursor: pointer;
+            transition: var(--transition);
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            white-space: nowrap;
+        }
+
+            .quick-btn:hover {
+                background: linear-gradient(135deg, rgba(255, 123, 0, 0.3), rgba(0, 229, 255, 0.3));
+                border-color: var(--orange);
+                box-shadow: var(--glow-orange);
+                transform: translateY(-5px);
+            }
+
+        .modal {
+            display: none;
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: rgba(0, 0, 0, 0.8);
+            z-index: 1000;
+            align-items: center;
+            justify-content: center;
+        }
+
+            .modal.active {
+                display: flex;
+            }
+
+        .modal-content {
+            background: var(--bg-card);
+            border: 2px solid var(--orange);
+            border-radius: var(--radius);
+            padding: 30px;
+            max-width: 500px;
+            width: 90%;
+            position: relative;
+            box-shadow: var(--glow-orange);
+        }
+
+        .modal-close {
+            position: absolute;
+            top: 15px;
+            right: 15px;
+            background: none;
+            border: none;
+            color: var(--text);
+            font-size: 2rem;
+            cursor: pointer;
+            width: 40px;
+            height: 40px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            border-radius: 50%;
+            transition: var(--transition);
+        }
+
+            .modal-close:hover {
+                background: rgba(255, 123, 0, 0.1);
+                color: var(--orange);
+            }
+
+        .modal-title {
+            font-size: 1.8rem;
+            margin-bottom: 25px;
+            color: var(--text);
+            text-align: center;
+        }
+
+        .user-lists-container {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+            gap: 20px;
+            margin: 20px 0;
+        }
+
+        .user-list-box {
+            background: rgba(255, 255, 255, 0.03);
+            border: 1px solid var(--border);
+            border-radius: var(--radius-sm);
+            padding: 20px;
+        }
+
+        .user-list-title {
+            font-size: 1.1rem;
+            font-weight: 600;
+            margin-bottom: 15px;
+            padding-bottom: 10px;
+            border-bottom: 1px solid var(--border);
+            color: var(--text);
+        }
+
+        .user-list-items {
+            min-height: 100px;
+            max-height: 200px;
+            overflow-y: auto;
+            padding: 10px;
+            background: rgba(0, 0, 0, 0.2);
+            border-radius: var(--radius-sm);
+        }
+
+        .user-list-item {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 8px 12px;
+            margin-bottom: 5px;
+            background: rgba(255, 255, 255, 0.05);
+            border-radius: var(--radius-sm);
+        }
+
+        .user-list-actions {
+            display: flex;
+            gap: 10px;
+            margin-top: 10px;
+        }
+
+        .loading {
+            display: inline-block;
+            width: 18px;
+            height: 18px;
+            border: 3px solid rgba(255, 255, 255, 0.3);
+            border-radius: 50%;
+            border-top-color: var(--orange);
+            animation: spin 1s ease-in-out infinite;
+        }
+
+        @keyframes spin {
+            to {
+                transform: rotate(360deg);
+            }
+        }
+
+        @media (max-width: 1200px) {
+            .sidebar {
+                width: 240px;
+            }
+
+            .main-content {
+                margin-left: 240px;
+                padding: 30px;
+            }
+
+            .logo-text {
+                font-size: 1.4rem;
+            }
+        }
+
         @media (max-width: 768px) {
-            .cards-grid {
+            .sidebar {
+                width: 100%;
+                height: auto;
+                position: relative;
+                padding: 20px;
+            }
+
+            .main-content {
+                margin-left: 0;
+                padding: 20px;
+            }
+
+            .dashboard-grid {
                 grid-template-columns: 1fr;
             }
 
-            .stepper {
+            .form-row {
                 flex-direction: column;
-                align-items: center;
-                gap: 30px;
             }
 
-                .stepper::before {
-                    display: none;
-                }
+            .quick-actions {
+                flex-direction: column;
+            }
 
             .action-buttons {
                 flex-direction: column;
+            }
+
+            .user-lists-container {
+                grid-template-columns: 1fr;
+            }
+
+            .page-title {
+                font-size: 2.8rem;
+            }
+
+            .save-all-container {
+                margin-top: 30px;
+                margin-bottom: 0;
+            }
+
+            .logo-text {
+                font-size: 1.6rem;
+            }
+
+            .status-badge {
+                font-size: 0.9rem;
+                padding: 8px 14px;
+                min-height: 38px;
+            }
+        }
+
+        @media (max-width: 480px) {
+            .page-title {
+                font-size: 2.2rem;
+            }
+
+            .card {
+                padding: 20px;
+            }
+
+            .modal-content {
+                padding: 30px 20px;
+            }
+
+            .logo-text {
+                font-size: 1.4rem;
+            }
+
+            .status-badge {
+                font-size: 0.85rem;
+                padding: 7px 12px;
+                min-height: 36px;
+                gap: 8px;
+            }
+
+            .btn {
+                padding: 14px 20px;
+                font-size: 0.95rem;
+            }
+        }
+
+        .toast {
+            position: fixed;
+            top: 20px;
+            right: 20px;
+            padding: 16px 24px;
+            border-radius: var(--radius-sm);
+            color: white;
+            font-weight: 600;
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            gap: 15px;
+            min-width: 300px;
+            max-width: 400px;
+            z-index: 9999;
+            animation: slideInRight 0.3s ease, fadeOut 0.3s ease 4.7s;
+            animation-fill-mode: forwards;
+            box-shadow: 0 8px 25px rgba(0,0,0,0.3);
+        }
+
+        .toast-success {
+            background: linear-gradient(135deg, var(--green), #00cc88);
+            border-left: 4px solid var(--green);
+        }
+
+        .toast-error {
+            background: linear-gradient(135deg, var(--red), #c2185b);
+            border-left: 4px solid var(--red);
+        }
+
+        .toast-warning {
+            background: linear-gradient(135deg, var(--orange), #ff9800);
+            border-left: 4px solid var(--orange);
+        }
+
+        .toast-info {
+            background: linear-gradient(135deg, var(--purple), #7b2cbf);
+            border-left: 4px solid var(--purple);
+        }
+
+        @keyframes slideInRight {
+            from {
+                transform: translateX(100%);
+                opacity: 0;
+            }
+
+            to {
+                transform: translateX(0);
+                opacity: 1;
+            }
+        }
+
+        @keyframes fadeOut {
+            to {
+                opacity: 0;
+                transform: translateX(100%);
             }
         }
     </style>
 </head>
 <body>
-    <div class="container">
-        <div class="header">
-            <h1>Настройки</h1>
-            <p>Настройка параметров</p>
-            <div style="margin-top: 20px; display: flex; justify-content: center;">
-                <button class="action-btn" onclick="loadAndContinue()" style="max-width: 400px;">
-                    Продолжить с загруженными настройками
-                </button>
+    <div class="particles" id="particles"></div>
+
+    <div class="sidebar">
+        <div class="logo">
+            <span class="logo-text">RequestFlow</span>
+        </div>
+
+        <div class="nav-section">
+            <div class="nav-title">Основные</div>
+            <div class="nav-item active" data-section="dashboard">
+                <span class="nav-icon">🏠</span>
+                <span class="nav-text">Панель управления</span>
+            </div>
+            <div class="nav-item" data-section="directory">
+                <span class="nav-icon">📂</span>
+                <span class="nav-text">Директория</span>
+            </div>
+            <div class="nav-item" data-section="chat-management">
+                <span class="nav-icon">💬</span>
+                <span class="nav-text">Управление чатом</span>
             </div>
         </div>
 
-        <!-- Stepper -->
-        <div class="stepper">
-            <div class="step active" data-step="1">
-                <div class="step-circle">1</div>
-                <div class="step-label">Директория</div>
+        <div class="nav-section">
+            <div class="nav-title">Настройки</div>
+            <div class="nav-item" data-section="downloader">
+                <span class="nav-icon">📥</span>
+                <span class="nav-text">Загрузчик</span>
             </div>
-            <div class="step" data-step="2">
-                <div class="step-circle">2</div>
-                <div class="step-label">Загрузчик</div>
-            </div>
-            <div class="step" data-step="3">
-                <div class="step-circle">3</div>
-                <div class="step-label">Чат</div>
-            </div>
-            <div class="step" data-step="4">
-                <div class="step-circle">4</div>
-                <div class="step-label">Пользователи</div>
+            <div class="nav-item" data-section="users">
+                <span class="nav-icon">👥</span>
+                <span class="nav-text">Пользователи</span>
             </div>
         </div>
 
-        <!-- Step 1: Directory Settings -->
-        <div class="step-content active" id="step-1">
-            <div class="instructions">
-                <div class="instructions-title">
-                    📌 Инструкция
-                </div>
-                <div class="instructions-content">
-                    <p><strong>Путь для сохранения osu! карт</strong></p>
-                    <ul>
-                        <li>Укажите полный путь к папке Songs в вашей установке osu!</li>
-                        <li>Пример: <code>D:\osu!\Songs</code> или <code>C:\Games\osu!\Songs</code></li>
-                        <li>Папка должна существовать и иметь права на запись</li>
-                    </ul>
-                </div>
+        <div class="nav-section">
+            <div class="nav-title">Отладка</div>
+            <div class="nav-item" data-section="logs">
+                <span class="nav-icon">📋</span>
+                <span class="nav-text">Логи</span>
+            </div>
+            <div class="nav-item" data-section="feedback">
+                <span class="nav-icon">💭</span>
+                <span class="nav-text">Обратная связь</span>
+            </div>
+        </div>
+
+        <div class="save-all-container">
+            <button class="save-all-btn" id="save-all-btn" onclick="saveAllSettings()" disabled>
+                <span>💾</span> Сохранить все настройки
+            </button>
+        </div>
+    </div>
+
+    <div class="main-content">
+        <div class="content-section active" id="dashboard-section">
+            <div class="page-header">
+                <h1 class="page-title">Панель управления</h1>
             </div>
 
-            <div class="cards-grid">
+            <div class="dashboard-grid">
                 <div class="card">
                     <div class="card-header">
                         <span class="card-icon">📂</span>
-                        <span class="card-title">Настройки директории</span>
+                        <span class="card-title">Директория загрузки</span>
                     </div>
-                    <p class="card-description">
-                        Укажите путь для сохранения загруженных карт
-                    </p>
-                    <div class="control-group">
-                        <label class="control-label">Путь к папке Songs</label>
-                        <input type="text" class="control-input" id="folder-path"
-                               value="D:\osu!\Songs"
-                               placeholder="Введите полный путь...">
+                    <div class="card-content">
+                        <div class="status-display">
+                            <div class="status-value" id="current-folder">
+                                <span class="loading"></span> Загрузка...
+                            </div>
+                        </div>
                     </div>
                     <div class="action-buttons">
-                        <button class="action-btn" onclick="saveDirectorySettings()">
-                            Сохранить и продолжить
+                        <button class="btn" onclick="navigateToSection('directory')">
+                            <span>⚙️</span> Управление
                         </button>
-                    </div>
-                </div>
-            </div>
-        </div>
-
-        <!-- Step 2: Downloader Settings -->
-        <div class="step-content" id="step-2">
-            <div class="instructions">
-                <div class="instructions-title">
-                    📌 Рекомендуемые значения
-                </div>
-                <div class="instructions-content">
-                    <p><strong>Максимальный размер файла:</strong> 350 MB (диапазон: 50-1024 MB)</p>
-                    <p><strong>Источник загрузки (выберите один):</strong></p>
-                    <ul>
-                        <li><strong>Сравнить и выбрать лучший:</strong> https://catboy.best/compare</li>
-                        <li><strong>catboy.best:</strong> Вебсайт: "catboy.best", Префикс пути: "/d/"</li>
-                        <li><strong>osu.direct:</strong> Вебсайт: "osu.direct", Префикс пути: "/api/d/"</li>
-                        <li><strong>nerinyan.moe:</strong> Вебсайт: "nerinyan.moe", Префикс пути: "/d/"</li>
-                    </ul>
-                </div>
-            </div>
-
-            <div class="cards-grid">
-                <div class="card">
-                    <div class="card-header">
-                        <span class="card-icon">📏</span>
-                        <span class="card-title">Ограничение размера</span>
-                    </div>
-                    <p class="card-description">
-                        Максимальный размер скачиваемых файлов
-                    </p>
-                    <div class="control-group">
-                        <label class="control-label">Максимальный размер (MB)</label>
-                        <input type="number" class="control-input" id="file-size"
-                               value="350" min="50" max="1024">
-                    </div>
-                </div>
-
-                <div class="card">
-                    <div class="card-header">
-                        <span class="card-icon">🔗</span>
-                        <span class="card-title">Источник загрузки</span>
-                    </div>
-                    <p class="card-description">
-                        Выберите источник для загрузки карт
-                    </p>
-                    <div class="control-group">
-                        <label class="control-label">Вебсайт</label>
-                        <input type="text" class="control-input" id="website-address"
-                               placeholder="catboy.best">
-                    </div>
-                    <div class="control-group">
-                        <label class="control-label">Префикс пути</label>
-                        <input type="text" class="control-input" id="path-prefix"
-                               placeholder="/d/">
-                    </div>
-                    <div class="action-buttons">
-                        <button class="action-btn btn-secondary" onclick="goToStep(1)">
-                            Назад
-                        </button>
-                        <button class="action-btn" onclick="saveDownloaderSettings()">
-                            Сохранить и продолжить
-                        </button>
-                    </div>
-                </div>
-            </div>
-        </div>
-
-        <!-- Step 3: Chat Connection -->
-        <div class="step-content" id="step-3">
-            <div class="instructions">
-                <div class="instructions-title">
-                    ⚡ Настройки подключения
-                </div>
-                <div class="instructions-content">
-                    <p><strong>Задержка переподключения:</strong> 30 секунд (10-120 сек)</p>
-                    <p>Используется при разрывах соединения. Не нужно перезапускать программу.</p>
-                    <p><strong>Пример названия чата:</strong> darkyisoffline</p>
-                </div>
-            </div>
-
-            <div class="connection-status">
-                <div class="status-dot disconnected" id="connection-status"></div>
-                <span id="connection-text">Не подключено</span>
-            </div>
-
-            <div class="cards-grid">
-                <div class="card">
-                    <div class="card-header">
-                        <span class="card-icon">🔄</span>
-                        <span class="card-title">Автопереподключение</span>
-                    </div>
-                    <p class="card-description">
-                        Настройки восстановления соединения
-                    </p>
-                    <div class="control-group">
-                        <label class="control-label">Задержка (секунды)</label>
-                        <input type="number" class="control-input" id="reconnect-delay"
-                               value="30" min="10" max="120">
                     </div>
                 </div>
 
                 <div class="card">
                     <div class="card-header">
                         <span class="card-icon">💬</span>
-                        <span class="card-title">Подключение к чату</span>
+                        <span class="card-title">Чтение чата</span>
                     </div>
-                    <p class="card-description">
-                        Введите название чата для подключения
-                    </p>
-                    <div class="control-group">
-                        <label class="control-label">Название чата</label>
-                        <input type="text" class="control-input" id="chat-room"
-                               placeholder="darkyisoffline">
+                    <div class="card-content">
+                        <div id="chat-channels" class="status-display">
+                            <span class="loading"></span> Загрузка каналов...
+                        </div>
                     </div>
                     <div class="action-buttons">
-                        <button class="action-btn btn-secondary" onclick="goToStep(2)">
-                            Назад
-                        </button>
-                        <button class="action-btn" onclick="connectToChat()" id="connect-btn">
-                            Подключиться
+                        <button class="btn" onclick="navigateToSection('chat-management')">
+                            <span>⚙️</span> Управление
                         </button>
                     </div>
-                    <div class="result-area" id="result-chat"></div>
+                </div>
+
+                <div class="card">
+                    <div class="card-header">
+                        <span class="card-icon">🚀</span>
+                        <span class="card-title">Сервер загрузки</span>
+                    </div>
+                    <div class="card-content">
+                        <div class="server-status">
+                            <div class="status-badge waiting" id="server-status-badge">
+                                <span class="loading"></span> Проверка...
+                            </div>
+                        </div>
+                    </div>
+                    <div class="action-buttons">
+                        <button class="btn" onclick="startAvailabilityCheck()" id="check-availability-btn">
+                            <span>📊</span> Проверить доступность
+                        </button>
+                    </div>
+                </div>
+            </div>
+
+            <div class="quick-actions">
+                <button class="quick-btn" onclick="loadSettings()">
+                    <span>📂</span>
+                    <span>Загрузить настройки</span>
+                </button>
+                <button class="quick-btn" onclick="saveSettings()">
+                    <span>💾</span>
+                    <span>Сохранить настройки</span>
+                </button>
+                <button class="quick-btn" onclick="checkAllStatuses()">
+                    <span>🔄</span>
+                    <span>Обновить статус</span>
+                </button>
+            </div>
+        </div>
+
+        <div class="content-section" id="directory-section">
+            <div class="page-header">
+                <h1 class="page-title">Управление директорией</h1>
+            </div>
+
+            <div class="card">
+                <div class="card-header">
+                    <span class="card-icon">📂</span>
+                    <span class="card-title">Текущий путь</span>
+                </div>
+                <div class="card-content">
+                    <div class="path-editable">
+                        <input type="text" class="path-input" id="folder-path-input"
+                               placeholder="Введите путь к папке Songs...">
+                        <button class="icon-btn" onclick="saveFolderPath()" title="Сохранить">
+                            💾
+                        </button>
+                    </div>
+                    <p style="color: var(--text-light); margin: 15px 0; font-size: 0.95rem;">
+                        Пример: <code>C:\Games\osu!\Songs</code> или <code>D:\osu!\Songs</code>
+                    </p>
+                </div>
+                <div class="action-buttons">
+                    <button class="btn btn-success" onclick="pickFolderWithExplorer()">
+                        <span>📁</span> Выбрать через проводник
+                    </button>
+                    <button class="btn-secondary" onclick="loadCurrentFolder()">
+                        <span>🔄</span> Обновить
+                    </button>
                 </div>
             </div>
         </div>
 
-        <!-- Step 4: User Management -->
-        <div class="step-content" id="step-4">
-            <div class="instructions">
-                <div class="instructions-title">
-                    👥 Управление доступом
+        <div class="content-section" id="chat-management-section">
+            <div class="page-header">
+                <h1 class="page-title">Управление чатом</h1>
+            </div>
+
+            <div class="card">
+                <div class="card-header">
+                    <span class="card-icon">💬</span>
+                    <span class="card-title">Подключенные каналы</span>
                 </div>
-                <div class="instructions-content">
-                    <p><strong>Выберите уровень доступа:</strong></p>
-                    <ul>
-                        <li><strong>0 - Все пользователи:</strong> Любой пользователь чата</li>
-                        <li><strong>1 - Подписчики и выше:</strong> Подписчики, VIP, модераторы, стример</li>
-                        <li><strong>2 - VIP и выше:</strong> VIP, модераторы, стример (рекомендуется)</li>
-                        <li><strong>3 - Модераторы и стример:</strong> Для ограниченного доступа</li>
-                        <li><strong>4 - Только стример:</strong> Для тестирования или приватных стримов</li>
-                    </ul>
-                    <p><strong>Режим "Только доверенные":</strong></p>
-                    <ul>
-                        <li>❌ Выключено: доступ по ролям (рекомендуется)</li>
-                        <li>✅ Включено: только пользователи из списка Allowed Users</li>
-                    </ul>
+                <div class="card-content">
+                    <div id="chat-channels-list" class="status-display">
+                        <span class="loading"></span> Загрузка каналов...
+                    </div>
+                    <div class="control-group" style="margin-top: 30px;">
+                        <label class="control-label">Подключиться к новому каналу</label>
+                        <input type="text" class="control-input" id="new-channel"
+                               placeholder="myangelwhitecat" style="opacity: 0.6;">
+                        <p style="color: var(--text-light); font-size: 0.9rem; margin-top: 8px;">
+                            Введите название канала Twitch для подключения
+                        </p>
+                    </div>
+                </div>
+                <div class="action-buttons">
+                    <button class="btn btn-success" onclick="joinChannel()">
+                        <span>➕</span> Подключиться
+                    </button>
+                    <button class="btn-secondary" onclick="refreshChannels()">
+                        <span>🔄</span> Обновить список
+                    </button>
+                </div>
+            </div>
+        </div>
+
+        <div class="content-section" id="downloader-section">
+            <div class="page-header">
+                <h1 class="page-title">Настройки загрузчика</h1>
+            </div>
+
+            <div class="file-size-section">
+                <h2 class="form-title">Размер файла</h2>
+                <div class="file-size-form">
+                    <div class="form-group">
+                        <label class="control-label">Максимальный размер файла (MB)</label>
+                        <input type="number" class="control-input" id="max-file-size"
+                               value="100" min="50" max="1024">
+                        <p style="color: var(--text-light); font-size: 0.9rem; margin-top: 8px;">
+                            Диапазон: 50-1024 MB. Рекомендуется: 350 MB
+                        </p>
+                    </div>
+                    <div class="action-buttons">
+                        <button class="btn btn-success" onclick="saveFileSizeSettings()">
+                            <span>💾</span> Сохранить размер файла
+                        </button>
+                        <button class="btn-secondary" onclick="loadFileSizeSettings()">
+                            <span>📥</span> Загрузить текущий
+                        </button>
+                    </div>
                 </div>
             </div>
 
-            <div class="cards-grid">
-                <div class="card">
-                    <div class="card-header">
-                        <span class="card-icon">🎖️</span>
-                        <span class="card-title">Уровень доступа</span>
+            <div class="settings-form">
+                <h3 class="form-title">Ресурс загрузки</h3>
+                <div class="form-row">
+                    <div class="form-group">
+                        <label class="control-label">Сервер</label>
+                        <input type="text" class="control-input" id="download-server"
+                               placeholder="catboy.best">
                     </div>
-                    <p class="card-description">
-                        Минимальная роль для доступа к командам
-                    </p>
+                    <div class="form-group">
+                        <label class="control-label">Префикс пути</label>
+                        <input type="text" class="control-input" id="download-prefix"
+                               placeholder="/d/">
+                    </div>
+                </div>
+                <div style="margin-top: 20px; color: var(--text-light); font-size: 0.9rem;">
+                    <p>Доступные серверы:</p>
+                    <ul style="margin-left: 20px; margin-top: 5px;">
+                        <li>catboy.best — /d/</li>
+                        <li>osu.direct — /api/d/</li>
+                        <li>nerinyan.moe — /d/</li>
+                    </ul>
+                </div>
+                <div class="action-buttons">
+                    <button class="btn btn-success" onclick="saveServerSettings()">
+                        <span>💾</span> Сохранить сервер и префикс
+                    </button>
+                    <button class="btn-secondary" onclick="loadServerSettings()">
+                        <span>📥</span> Загрузить текущие
+                    </button>
+                </div>
+            </div>
+        </div>
 
-                    <div class="control-group">
-                        <label class="control-label">Выберите уровень:</label>
-                        <div id="role-options">
-                            <!-- Roles will be populated by JavaScript -->
+        <div class="content-section" id="users-section">
+            <div class="page-header">
+                <h1 class="page-title">Управление пользователями</h1>
+            </div>
+
+            <div class="settings-form">
+                <h3 class="form-title">Уровень доступа</h3>
+                <div class="control-group">
+                    <label class="control-label">Минимальная роль для доступа</label>
+                    <select class="control-input" id="role-level">
+                        <option value="0">0 - Все пользователи</option>
+                        <option value="1">1 - Подписчики и выше</option>
+                        <option value="2" selected>2 - VIP и выше (рекомендуется)</option>
+                        <option value="3">3 - Модераторы и стример</option>
+                        <option value="4">4 - Только стример</option>
+                    </select>
+                </div>
+                <div class="control-group">
+                    <label class="control-label">Режим доступа</label>
+                    <select class="control-input" id="access-mode">
+                        <option value="false">Доступ по ролям</option>
+                        <option value="true">Только доверенные пользователи</option>
+                    </select>
+                </div>
+            </div>
+
+            <div class="settings-form">
+                <h3 class="form-title">Управление списками пользователей</h3>
+
+                <div class="user-lists-container">
+                    <div class="user-list-box">
+                        <div class="user-list-title">Разрешенные пользователи</div>
+                        <div class="user-list-items" id="whitelist-items">
+                            <span class="status-empty">Загрузка...</span>
                         </div>
                     </div>
-
-                    <div class="control-group">
-                        <label class="control-label">Только доверенные пользователи</label>
-                        <select class="control-input" id="trusted-only">
-                            <option value="false">❌ Выключено - доступ по ролям (рекомендуется)</option>
-                            <option value="true">✅ Включено - только из списка Allowed Users</option>
-                        </select>
+                    <div class="user-list-box">
+                        <div class="user-list-title">Заблокированные пользователи</div>
+                        <div class="user-list-items" id="blacklist-items">
+                            <span class="status-empty">Загрузка...</span>
+                        </div>
                     </div>
                 </div>
 
-                <div class="card">
-                    <div class="card-header">
-                        <span class="card-icon">✅</span>
-                        <span class="card-title">Разрешенные пользователи</span>
-                    </div>
-                    <p class="card-description">
-                        Добавьте пользователей в белый список
-                    </p>
-                    <div class="control-group">
-                        <label class="control-label">Имя пользователя</label>
-                        <input type="text" class="control-input" id="allow-user"
+                <div class="form-row" style="margin-top: 25px;">
+                    <div class="form-group">
+                        <label class="control-label">Разрешенные пользователи</label>
+                        <input type="text" class="control-input" id="allow-user-input"
                                placeholder="Введите username...">
+                        <div class="user-list-actions">
+                            <button class="btn btn-success" onclick="addToWhitelist()">
+                                <span>➕</span> Добавить
+                            </button>
+                            <button class="btn btn-danger" onclick="removeFromWhitelist()">
+                                <span>🗑️</span> Удалить
+                            </button>
+                        </div>
                     </div>
-                    <button class="action-btn" onclick="allowUser(this)">
-                        Добавить
-                    </button>
-                    <button class="action-btn btn-secondary" onclick="removeAllowedUser(this)">
-                        Удалить
-                    </button>
-                </div>
-
-                <div class="card">
-                    <div class="card-header">
-                        <span class="card-icon">❌</span>
-                        <span class="card-title">Заблокированные пользователи</span>
-                    </div>
-                    <p class="card-description">
-                        Пользователи без доступа
-                    </p>
-                    <div class="control-group">
-                        <label class="control-label">Имя пользователя</label>
-                        <input type="text" class="control-input" id="block-user"
+                    <div class="form-group">
+                        <label class="control-label">Заблокированные пользователи</label>
+                        <input type="text" class="control-input" id="block-user-input"
                                placeholder="Введите username...">
+                        <div class="user-list-actions">
+                            <button class="btn btn-danger" onclick="addToBlacklist()">
+                                <span>⛔</span> Заблокировать
+                            </button>
+                            <button class="btn btn-success" onclick="removeFromBlacklist()">
+                                <span>✅</span> Разблокировать
+                            </button>
+                        </div>
                     </div>
-                    <button class="action-btn" onclick="blockUser(this)">
-                        Заблокировать
-                    </button>
-                    <button class="action-btn btn-secondary" onclick="removeBlockedUser(this)">
-                        Разблокировать
+                </div>
+                <div style="margin-top: 25px;">
+                    <button class="btn btn-warning" onclick="saveUserSettings()" style="width: 100%;">
+                        <span>💾</span> Сохранить настройки пользователей
                     </button>
                 </div>
+            </div>
+        </div>
+
+        <div class="content-section" id="logs-section">
+            <div class="page-header">
+                <h1 class="page-title">Консоль логов</h1>
+            </div>
+
+            <div class="logs-console">
+                <div class="logs-header">
+                    <h3 class="logs-title">Журнал событий</h3>
+                    <div class="logs-controls">
+                        <button class="btn btn-danger" onclick="clearLogs()">
+                            <span>🗑️</span> Очистить
+                        </button>
+                        <button class="btn-secondary" onclick="toggleAutoScroll()" id="auto-scroll-btn">
+                            <span>📜</span> Автопрокрутка: Вкл
+                        </button>
+                        <button class="btn btn-success" onclick="exportLogs()">
+                            <span>💾</span> Экспорт
+                        </button>
+                    </div>
+                </div>
+                <div class="logs-content" id="logs-content">
+                    <div class="log-entry">
+                        <span class="log-time">[00:00:00]</span>
+                        <span>Система логов инициализирована</span>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <div class="content-section" id="feedback-section">
+            <div class="page-header">
+                <h1 class="page-title">Обратная связь</h1>
+            </div>
+
+            <div class="card">
+                <div class="card-header">
+                    <span class="card-icon">💭</span>
+                    <span class="card-title">Отзывы и предложения</span>
+                </div>
+                <div class="card-content">
+                    <p style="color: var(--text-light); margin-bottom: 20px; line-height: 1.6;">
+                        Если вы обнаружили ошибку в работе программы или у вас есть предложения по улучшению,
+                        пожалуйста, создайте issue на GitHub или свяжитесь с разработчиком.
+                    </p>
+                    <ul style="color: var(--text-light); margin-left: 20px; line-height: 1.8;">
+                        <li>Сообщить об ошибке в работе программы</li>
+                        <li>Предложить новую функциональность</li>
+                        <li>Задать вопрос по использованию</li>
+                        <li>Сообщить о проблемах совместимости</li>
+                    </ul>
+                </div>
+                <div class="action-buttons">
+                    <button class="btn" onclick="window.open('https://github.com/MyAngelWhiteCat/OsuRequestFlow/issues/new', '_blank')">
+                        <span>📝</span> Создать Issue на GitHub
+                    </button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div class="modal" id="channel-modal">
+        <div class="modal-content">
+            <button class="modal-close" onclick="closeChannelModal()">×</button>
+            <h3 class="modal-title">Управление каналами</h3>
+
+            <div class="control-group">
+                <label class="control-label">Новый канал</label>
+                <input type="text" class="control-input" id="modal-channel-input"
+                       placeholder="myangelwhitecat" style="opacity: 0.6;">
+            </div>
+
+            <div id="modal-channels-list" style="margin: 25px 0; max-height: 300px; overflow-y: auto;">
+
             </div>
 
             <div class="action-buttons">
-                <button class="action-btn btn-secondary" onclick="goToStep(3)">
-                    Назад
+                <button class="btn btn-success" onclick="joinChannelFromModal()">
+                    <span>➕</span> Подключиться
                 </button>
-                <button class="action-btn" onclick="saveAllSettings()">
-                    Сохранить все настройки
+                <button class="btn-secondary" onclick="closeChannelModal()">
+                    <span>✖️</span> Закрыть
                 </button>
             </div>
         </div>
@@ -778,375 +1611,932 @@
 
     <script>
         const SERVER_URL = 'http://127.0.0.1:23140';
-        let currentStep = 1;
-        let selectedRoleLevel = 2; // По умолчанию VIP
-        let isConnected = false;
+        let serverCheckInterval = null;
+        let logs = [];
+        let autoScroll = true;
+        let isServerCheckActive = true;
+        let isCheckActive = false;
+        let checkStartTime = null;
+        let longCheckNotificationShown = false;
 
-        // Данные о ролях
-        const roles = [
-        {
-        level: 0,
-        icon: '🔓',
-        name: 'Все пользователи',
-        description: 'Любой пользователь чата',
-        access: 'Кто имеет доступ: любой пользователь чата',
-        when: 'Когда использовать: для открытых стримов'
-        },
-        {
-        level: 1,
-        icon: '⭐',
-        name: 'Подписчики и выше',
-        description: 'Подписчики, VIP, модераторы, стример',
-        access: 'Кто имеет доступ: подписчики, VIP, модераторы, стример',
-        when: 'Когда использовать: для стримов с подписчиками'
-        },
-        {
-        level: 2,
-        icon: '🎖️',
-        name: 'VIP пользователи и выше',
-        description: 'VIP, модераторы, стример',
-        access: 'Кто имеет доступ: VIP, модераторы, стример',
-        when: 'Когда использовать: по умолчанию, хороший баланс'
-        },
-        {
-        level: 3,
-        icon: '👮',
-        name: 'Модераторы и стример',
-        description: 'Только модераторы и стример',
-        access: 'Кто имеет доступ: модераторы и стример',
-        when: 'Когда использовать: для ограниченного доступа'
-        },
-        {
-        level: 4,
-        icon: '👑',
-        name: 'Только стример',
-        description: 'Только стример',
-        access: 'Кто имеет доступ: только стример',
-        when: 'Когда использовать: для тестирования или приватных стримов'
-        }
-        ];
+        let hasUnsavedChanges = false;
+        let originalSettings = {};
 
-        // Инициализация
-        document.addEventListener('DOMContentLoaded', function() {
-        try {
-        initRoleCards();
-        // Проверяем доступность всех функций
-        console.log('Инициализация завершена');
-        console.log('Доступные функции:', {
-        goToStep: typeof goToStep,
-        saveDirectorySettings: typeof saveDirectorySettings,
-        saveDownloaderSettings: typeof saveDownloaderSettings,
-        connectToChat: typeof connectToChat,
-        loadAndContinue: typeof loadAndContinue,
-        showMainSettingsPage: typeof showMainSettingsPage
-        });
-        } catch (error) {
-        console.error('Ошибка при инициализации:', error);
-        }
-        });
-
-        // Глобальная обработка ошибок
-        window.addEventListener('error', function(event) {
-        console.error('Глобальная ошибка:', event.error);
-        });
-
-        // Навигация по шагам
-        function goToStep(step) {
-        if (step < 1 || step > 4) return;
-
-        // Скрыть текущий шаг
-        document.querySelector(`#step-${currentStep}`).classList.remove('active');
-        document.querySelector(`.step[data-step="${currentStep}"]`).classList.remove('active');
-
-        // Показать новый шаг
-        currentStep = step;
-        document.querySelector(`#step-${currentStep}`).classList.add('active');
-        document.querySelector(`.step[data-step="${currentStep}"]`).classList.add('active');
-
-        // Отметить предыдущие шаги как выполненные
-        document.querySelectorAll('.step').forEach(stepEl => {
-        const stepNum = parseInt(stepEl.dataset.step);
-        if (stepNum < currentStep) {
-        stepEl.classList.add('completed');
-        } else if (stepNum > currentStep) {
-        stepEl.classList.remove('completed');
-        }
-        });
+        function initParticles() {
+        const particles = document.getElementById('particles');
+        for (let i = 0; i < 50; i++) {
+        const particle = document.createElement('div');
+        particle.style.cssText = `
+        position: absolute;
+        width: 2px;
+        height: 2px;
+        background: linear-gradient(45deg, var(--orange), var(--purple));
+        border-radius: 50%;
+        animation: float ${3 + Math.random() * 4}s ease-in-out infinite;
+        animation-delay: ${Math.random() * 5}s;
+        `;
+        particle.style.left = `${Math.random() * 100}%`;
+        particle.style.top = `${Math.random() * 100}%`;
+        particles.appendChild(particle);
         }
 
-        // Инициализация карточек ролей
-        function initRoleCards() {
-        const container = document.getElementById('role-options');
+        const style = document.createElement('style');
+        style.textContent = `
+        @keyframes float {
+        0%, 100% { transform: translate(0, 0); opacity: 0.3; }
+        50% { transform: translate(${Math.random() * 100 - 50}px, ${Math.random() * 100 - 50}px); opacity: 0.8; }
+        }
+        `;
+        document.head.appendChild(style);
+        }
+
+        function updateSaveButtonState() {
+        const saveBtn = document.getElementById('save-all-btn');
+
+        if (hasUnsavedChanges) {
+        saveBtn.disabled = false;
+        saveBtn.classList.remove('saved');
+        saveBtn.innerHTML = '<span>💾</span> Сохранить все настройки';
+        saveBtn.title = 'Есть несохраненные изменения';
+        } else {
+        saveBtn.disabled = true;
+        saveBtn.classList.add('saved');
+        saveBtn.innerHTML = '<span>✅</span> Настройки сохранены';
+        saveBtn.title = 'Все изменения сохранены';
+        }
+        }
+
+        function markSettingsChanged() {
+        hasUnsavedChanges = true;
+        updateSaveButtonState();
+        }
+
+        function markSettingsSaved() {
+        hasUnsavedChanges = false;
+        updateSaveButtonState();
+        }
+
+        function navigateToSection(section) {
+        document.querySelectorAll('.nav-item').forEach(item => {
+        item.classList.remove('active');
+        if (item.dataset.section === section) {
+        item.classList.add('active');
+        }
+        });
+
+        document.querySelectorAll('.content-section').forEach(section => {
+        section.classList.remove('active');
+        });
+
+        document.getElementById(`${section}-section`).classList.add('active');
+
+        switch(section) {
+        case 'directory':
+        loadCurrentFolder();
+        break;
+        case 'chat-management':
+        loadChatChannelsList();
+        break;
+        case 'downloader':
+        loadFileSizeSettings();
+        loadServerSettings();
+        break;
+        case 'users':
+        loadUserSettings();
+        loadUserLists();
+        break;
+        case 'logs':
+        updateLogsDisplay();
+        break;
+        }
+        }
+
+        function addLog(type, method, endpoint, data = null) {
+        const timestamp = new Date().toLocaleTimeString();
+        const logEntry = {
+        id: Date.now(),
+        type,
+        timestamp,
+        method,
+        endpoint,
+        data: data ? JSON.stringify(data, null, 2) : null
+        };
+
+        logs.unshift(logEntry);
+        if (logs.length > 100) logs = logs.slice(0, 100);
+        updateLogsDisplay();
+        }
+
+        function updateLogsDisplay() {
+        const container = document.getElementById('logs-content');
         container.innerHTML = '';
 
-        roles.forEach(role => {
-        const card = document.createElement('div');
-        card.className = `role-card ${role.level === selectedRoleLevel ? 'selected' : ''}`;
-        card.dataset.level = role.level;
-        card.onclick = () => selectRole(role.level);
-
-        card.innerHTML = `
-        <div class="role-header">
-        <span class="role-icon">${role.icon}</span>
-        <span class="role-name">${role.name}</span>
-        <span class="role-level">Уровень ${role.level}</span>
-        </div>
-        <div class="role-description">${role.description}</div>
-        <div class="role-access">${role.access}</div>
+        logs.forEach(log => {
+        const div = document.createElement('div');
+        div.className = `log-entry ${log.type}`;
+        div.innerHTML = `
+        <span class="log-time">[${log.timestamp}]</span>
+        <span class="log-method ${log.method.toLowerCase()}">${log.method}</span>
+        <span class="log-endpoint">${log.endpoint}</span>
+        ${log.data ? `<div style="margin-top: 5px; color: var(--text-light); font-size: 0.85rem; font-family: monospace; white-space: pre-wrap;">${log.data}</div>` : ''}
         `;
-
-        container.appendChild(card);
+        container.appendChild(div);
         });
+
+        if (autoScroll && container.firstChild) {
+        container.scrollTop = 0;
+        }
         }
 
-        // Выбор роли
-        function selectRole(level) {
-        selectedRoleLevel = level;
+        function clearLogs() {
+        logs = [];
+        updateLogsDisplay();
+        addLog('response', 'INFO', 'Логи очищены');
+        }
 
-        // Обновить визуальное выделение
-        document.querySelectorAll('.role-card').forEach(card => {
-        if (parseInt(card.dataset.level) === level) {
-        card.classList.add('selected');
+        function toggleAutoScroll() {
+        autoScroll = !autoScroll;
+        const btn = document.getElementById('auto-scroll-btn');
+        btn.innerHTML = `<span>📜</span> Автопрокрутка: ${autoScroll ? 'Вкл' : 'Выкл'}`;
+        }
+
+        function exportLogs() {
+        const logText = logs.map(log =>
+        `[${log.timestamp}] ${log.method} ${log.endpoint} ${log.data ? log.data : ''}`
+        ).join('\n');
+
+        const blob = new Blob([logText], { type: 'text/plain' });
+        const url = URL.createObjectURL(blob);
+        const a = document.createElement('a');
+        a.href = url;
+        a.download = `requestflow_logs_${new Date().toISOString().slice(0, 10)}.txt`;
+        document.body.appendChild(a);
+        a.click();
+        document.body.removeChild(a);
+        URL.revokeObjectURL(url);
+
+        addLog('response', 'INFO', 'Логи экспортированы');
+        }
+
+        async function loadCurrentFolder() {
+        try {
+        console.log('Loading current folder...');
+        addLog('request', 'GET', '/api/downloader/settings/folder');
+        const result = await makeRequest('/api/downloader/settings/folder', 'GET');
+        addLog('response', 'GET', '/api/downloader/settings/folder', result.data);
+
+        if (result.success) {
+        const path = result.data?.Path || result.data?.path || "not setted";
+        if (path === "not setted") {
+        document.getElementById('current-folder').innerHTML =
+        '<span style="color: var(--orange); font-style: italic;">Не установлена</span>';
+        document.getElementById('folder-path-input').value = '';
         } else {
-        card.classList.remove('selected');
+        document.getElementById('current-folder').textContent = path;
+        document.getElementById('folder-path-input').value = path;
         }
-        });
+        } else {
+        document.getElementById('current-folder').innerHTML =
+        `<span style="color: var(--red);">Ошибка: ${result.message}</span>`;
+        }
+        } catch (error) {
+        console.error('Error loading folder:', error);
+        addLog('error', 'GET', '/api/downloader/settings/folder', error.message);
+        document.getElementById('current-folder').innerHTML =
+        `<span style="color: var(--red);">Ошибка сети: ${error.message}</span>`;
+        }
         }
 
-        // Сохранение настроек директории
-        async function saveDirectorySettings() {
-        const path = document.getElementById('folder-path').value.trim();
+        async function saveFolderPath() {
+        const path = document.getElementById('folder-path-input').value.trim();
         if (!path) {
-        alert('Пожалуйста, укажите путь к папке');
+        alert('Введите путь к папке');
         return;
         }
 
+        try {
+        addLog('request', 'PUT', '/api/downloader/settings/folder', { Path: path });
         const result = await makeRequest('/api/downloader/settings/folder', 'PUT', { Path: path });
+        addLog('response', 'PUT', '/api/downloader/settings/folder', result);
 
         if (result.success) {
-        goToStep(2);
+        document.getElementById('current-folder').textContent = path;
+        showToast('Путь успешно сохранен', 'success');
+        markSettingsChanged();
         } else {
-        alert('Ошибка сохранения: ' + result.message);
+        showToast('Ошибка сохранения: ' + result.message, 'error');
+        }
+        } catch (error) {
+        showToast('Ошибка сети: ' + error.message, 'error');
         }
         }
 
-        // Сохранение настроек загрузчика
-        async function saveDownloaderSettings() {
-        const size = parseInt(document.getElementById('file-size').value);
+        async function pickFolderWithExplorer() {
+        try {
+        addLog('request', 'POST', '/api/downloader/settings/folder');
+        const result = await makeRequest('/api/downloader/settings/folder', 'POST');
+        addLog('response', 'POST', '/api/downloader/settings/folder', result);
+
+        if (result.success) {
+        showToast('Выберите папку в открывшемся проводнике', 'info');
+        setTimeout(loadCurrentFolder, 1000);
+        markSettingsChanged();
+        } else {
+        showToast('Ошибка: ' + result.message, 'error');
+        }
+        } catch (error) {
+        showToast('Ошибка сети: ' + error.message, 'error');
+        }
+        }
+
+        async function loadChatChannelsList() {
+        try {
+        addLog('request', 'GET', '/api/irc_client/join');
+        const result = await makeRequest('/api/irc_client/join', 'GET');
+        addLog('response', 'GET', '/api/irc_client/join', result.data);
+
+        const container = document.getElementById('chat-channels-list');
+        const channelsContainer = document.getElementById('chat-channels');
+
+        if (result.success && Array.isArray(result.data)) {
+        const channels = result.data
+        .filter(c => c && (c.Channel || c.channel))
+        .map(c => c.Channel || c.channel);
+
+        if (channels.length > 0) {
+        let html = '';
+        channels.forEach(channel => {
+        html += `
+        <div style="display: flex; justify-content: space-between; align-items: center; padding: 12px; margin-bottom: 8px; background: rgba(255,255,255,0.03); border-radius: var(--radius-sm); border-left: 3px solid var(--orange);">
+        <span>${channel}</span>
+        <button onclick="leaveChannel('${channel}')" style="padding: 6px 12px; background: rgba(255,56,96,0.1); color: var(--red); border: 1px solid var(--red); border-radius: 6px; cursor: pointer; font-size: 0.9rem;">
+        Отключиться
+        </button>
+        </div>
+        `;
+        });
+        container.innerHTML = html;
+        channelsContainer.innerHTML = channels.map(c =>
+        `<div style="margin: 5px 0; padding: 8px; background: rgba(255,123,0,0.1); border-radius: 6px; border-left: 3px solid var(--orange);">${c}</div>`
+        ).join('');
+        } else {
+        container.innerHTML = '<div class="status-empty">Нет подключенных каналов</div>';
+        channelsContainer.innerHTML = '<span style="color: var(--text-light); font-style: italic;">Нет подключенных каналов</span>';
+        }
+        } else {
+        container.innerHTML = '<div class="status-empty">Ошибка загрузки</div>';
+        }
+        } catch (error) {
+        console.error('Error loading channels:', error);
+        addLog('error', 'GET', '/api/irc_client/join', error.message);
+        }
+        }
+
+        async function joinChannel() {
+        const channel = document.getElementById('new-channel').value.trim();
+        if (!channel) {
+        showToast('Введите название канала', 'warning');
+        return;
+        }
+
+        try {
+        addLog('request', 'POST', '/api/irc_client/join', { Channel: channel });
+        const result = await makeRequest('/api/irc_client/join', 'POST', { Channel: channel });
+        addLog('response', 'POST', '/api/irc_client/join', result);
+
+        if (result.success) {
+        showToast(`Подключились к каналу: ${channel}`, 'success');
+        document.getElementById('new-channel').value = '';
+        loadChatChannelsList();
+        markSettingsChanged();
+        } else {
+        showToast('Ошибка подключения: ' + result.message, 'error');
+        }
+        } catch (error) {
+        showToast('Ошибка сети: ' + error.message, 'error');
+        }
+        }
+
+        async function leaveChannel(channel) {
+        if (!confirm(`Отключиться от канала ${channel}?`)) return;
+
+        try {
+        addLog('request', 'POST', '/api/irc_client/part', { Channel: channel });
+        const result = await makeRequest('/api/irc_client/part', 'POST', { Channel: channel });
+        addLog('response', 'POST', '/api/irc_client/part', result);
+
+        if (result.success) {
+        showToast(`Отключились от канала: ${channel}`, 'success');
+        loadChatChannelsList();
+        markSettingsChanged();
+        } else {
+        showToast('Ошибка отключения: ' + result.message, 'error');
+        }
+        } catch (error) {
+        showToast('Ошибка сети: ' + error.message, 'error');
+        }
+        }
+
+        async function loadFileSizeSettings() {
+        try {
+        addLog('request', 'GET', '/api/downloader/settings/max_file_size');
+        const sizeResult = await makeRequest('/api/downloader/settings/max_file_size', 'GET');
+        addLog('response', 'GET', '/api/downloader/settings/max_file_size', sizeResult.data);
+
+        if (sizeResult.success && sizeResult.data) {
+        const fileSize = sizeResult.data.FileSize || sizeResult.data.fileSize || 100;
+        document.getElementById('max-file-size').value = fileSize;
+        originalSettings.maxFileSize = fileSize;
+        }
+        } catch (error) {
+        console.error('Error loading file size settings:', error);
+        addLog('error', 'GET', '/api/downloader/settings/max_file_size', error.message);
+        }
+        }
+
+        async function saveFileSizeSettings() {
+        const size = parseInt(document.getElementById('max-file-size').value);
+
         if (isNaN(size) || size < 50 || size > 1024) {
-        alert('Размер файла должен быть от 50 до 1024 MB');
+        showToast('Размер файла должен быть от 50 до 1024 MB', 'warning');
         return;
         }
 
-        const website = document.getElementById('website-address').value.trim();
-        const prefix = document.getElementById('path-prefix').value.trim();
+        try {
+        addLog('request', 'PUT', '/api/downloader/settings/max_file_size', { FileSize: size });
+        const result = await makeRequest('/api/downloader/settings/max_file_size', 'PUT', { FileSize: size });
+        addLog('response', 'PUT', '/api/downloader/settings/max_file_size', result);
 
-        if (!website || !prefix) {
-        // Автозаполнение рекомендуемых значений
-        if (!website && !prefix) {
-        document.getElementById('website-address').value = 'catboy.best';
-        document.getElementById('path-prefix').value = '/d/';
+        if (result.success) {
+        showToast('Размер файла сохранен', 'success');
+        originalSettings.maxFileSize = size;
+        markSettingsChanged();
         } else {
-        alert('Пожалуйста, заполните оба поля источника загрузки');
+        showToast('Ошибка сохранения размера файла', 'error');
+        }
+        } catch (error) {
+        showToast('Ошибка сети: ' + error.message, 'error');
+        }
+        }
+
+        async function loadServerSettings() {
+        try {
+        addLog('request', 'GET', '/api/downloader/settings/resource_and_prefix');
+        const serverResult = await makeRequest('/api/downloader/settings/resource_and_prefix', 'GET');
+        addLog('response', 'GET', '/api/downloader/settings/resource_and_prefix', serverResult.data);
+
+        if (serverResult.success && serverResult.data) {
+        document.getElementById('download-server').value = serverResult.data.Resource || serverResult.data.resource || '';
+        document.getElementById('download-prefix').value = serverResult.data.Prefix || serverResult.data.prefix || '';
+
+        originalSettings.server = serverResult.data.Resource || serverResult.data.resource || '';
+        originalSettings.prefix = serverResult.data.Prefix || serverResult.data.prefix || '';
+        }
+        } catch (error) {
+        console.error('Error loading server settings:', error);
+        addLog('error', 'GET', '/api/downloader/settings/resource_and_prefix', error.message);
+        }
+        }
+
+        async function saveServerSettings() {
+        const server = document.getElementById('download-server').value.trim();
+        const prefix = document.getElementById('download-prefix').value.trim();
+
+        if (!server || !prefix) {
+        showToast('Заполните оба поля сервера и префикса', 'warning');
         return;
         }
-        }
 
-        // Сохраняем размер файла
-        const sizeResult = await makeRequest('/api/downloader/settings/max_file_size', 'PUT', {
-        FileSize: size
+        try {
+        addLog('request', 'PUT', '/api/downloader/settings/resource_and_prefix',
+        { Resource: server, Prefix: prefix });
+        const result = await makeRequest('/api/downloader/settings/resource_and_prefix', 'PUT', {
+        Resource: server,
+        Prefix: prefix
         });
+        addLog('response', 'PUT', '/api/downloader/settings/resource_and_prefix', result);
 
-        // Сохраняем источник
-        const sourceResult = await makeRequest('/api/downloader/settings/resourse_and_prefix', 'PUT', {
-        Resourse: website || 'catboy.best',
-        Prefix: prefix || '/d/'
-        });
-
-        if (sizeResult.success && sourceResult.success) {
-        goToStep(3);
+        if (result.success) {
+        showToast('Настройки сервера сохранены', 'success');
+        originalSettings.server = server;
+        originalSettings.prefix = prefix;
+        markSettingsChanged();
         } else {
-        alert('Ошибка сохранения настроек загрузчика');
+        showToast('Ошибка сохранения настроек сервера', 'error');
+        }
+        } catch (error) {
+        showToast('Ошибка сети: ' + error.message, 'error');
         }
         }
 
-        // Подключение к чату
-        async function connectToChat() {
-        const room = document.getElementById('chat-room').value.trim();
-        if (!room) {
-        alert('Пожалуйста, введите название чата');
+        function startServerMonitoring() {
+        if (serverCheckInterval) clearInterval(serverCheckInterval);
+
+        console.log('Starting server monitoring...');
+
+        const checkServer = async () => {
+        if (!isServerCheckActive || isCheckActive) return;
+
+        try {
+        const badge = document.getElementById('server-status-badge');
+
+        try {
+        const statusResponse = await fetch(`${SERVER_URL}/api/downloader/dl_server_status`);
+        if (statusResponse.ok) {
+        const statusData = await statusResponse.json();
+        console.log('Server status response:', statusData);
+
+        const status = statusData.Status; // "Processing", "Available", "Unavailable"
+
+        if (status === 'Available') {
+        badge.className = 'status-badge ready';
+        badge.innerHTML = '✅ Сервер доступен';
+        } else if (status === 'Unavailable') {
+        badge.className = 'status-badge fatal';
+        badge.innerHTML = '❌ Нет доступных серверов';
+        } else { // Processing
+        badge.className = 'status-badge waiting';
+        badge.innerHTML = '⏳ Требуется проверка';
+        }
+        }
+        } catch (error) {
+        console.error('Status request failed:', error);
+        badge.className = 'status-badge error';
+        badge.innerHTML = '⚠️ Ошибка проверки';
+        }
+
+        } catch (error) {
+        console.error('Server check error:', error);
+        const badge = document.getElementById('server-status-badge');
+        badge.className = 'status-badge error';
+        badge.innerHTML = '⚠️ Ошибка проверки';
+        }
+        };
+
+        checkServer();
+
+        serverCheckInterval = setInterval(checkServer, 5000);
+        }
+
+        async function startAvailabilityCheck() {
+        if (isCheckActive) {
         return;
         }
 
-        const delay = parseInt(document.getElementById('reconnect-delay').value);
+        const btn = document.getElementById('check-availability-btn');
+        const originalState = {
+        text: btn.innerHTML,
+        disabled: btn.disabled,
+        classList: [...btn.classList]
+        };
 
-        // Сохраняем настройки переподключения
-        await makeRequest('/api/irc_client/settings/set_reconnect_timeout', 'PUT', {
-        ReconnectTimeout: delay
-        });
-
-        const btn = document.getElementById('connect-btn');
-        btn.innerHTML = '<span class="loading-dots"></span> Подключение...';
+        btn.innerHTML = '<span class="loading"></span> Идет проверка...';
         btn.disabled = true;
+        btn.classList.add('btn-disabled');
+        btn.classList.remove('btn');
 
-        // Обновляем статус
-        updateConnectionStatus('connecting', 'Подключение...');
+        isServerCheckActive = false;
+        if (serverCheckInterval) {
+        clearInterval(serverCheckInterval);
+        serverCheckInterval = null;
+        }
 
-        const result = await makeRequest('/api/irc_client/join', 'POST', {
-        Channel: room
-        });
+        isCheckActive = true;
+        checkStartTime = Date.now();
+        longCheckNotificationShown = false;
+
+        const badge = document.getElementById('server-status-badge');
+        badge.className = 'status-badge waiting';
+        badge.innerHTML = '<span class="loading"></span> Идет проверка...';
+
+        try {
+        addLog('request', 'POST', '/api/downloader/mesure_speed');
+        const result = await makeRequest('/api/downloader/mesure_speed', 'POST');
+        addLog('response', 'POST', '/api/downloader/mesure_speed', result);
 
         if (result.success) {
-        isConnected = true;
-        updateConnectionStatus('connected', `Подключено к ${room}`);
-        goToStep(4);
+        showToast('Проверка доступности серверов начата', 'info');
+
+        startCheckCycle(btn, originalState);
         } else {
-        updateConnectionStatus('disconnected', 'Ошибка подключения');
-        alert('Ошибка подключения: ' + result.message);
+        showToast('Ошибка запуска проверки: ' + result.message, 'error');
+        resetCheckState(btn, originalState);
+        }
+        } catch (error) {
+        showToast('Ошибка сети: ' + error.message, 'error');
+        resetCheckState(btn, originalState);
+        }
         }
 
-        btn.innerHTML = 'Подключиться';
-        btn.disabled = false;
+        function startCheckCycle(btn, originalState) {
+        if (serverCheckInterval) {
+        clearInterval(serverCheckInterval);
         }
 
-        // Обновление статуса подключения
-        function updateConnectionStatus(status, text) {
-        const dot = document.getElementById('connection-status');
-        const textEl = document.getElementById('connection-text');
+        serverCheckInterval = setInterval(async () => {
+        try {
+        const badge = document.getElementById('server-status-badge');
 
-        dot.className = 'status-dot';
-        dot.classList.add(status);
-        textEl.textContent = text;
+        try {
+        const statusResponse = await fetch(`${SERVER_URL}/api/downloader/dl_server_status`);
+        if (statusResponse.ok) {
+        const statusData = await statusResponse.json();
+        const status = statusData.Status; // "Processing", "Available", "Unavailable"
+
+        if (status === 'Available') {
+        clearInterval(serverCheckInterval);
+        serverCheckInterval = null;
+        badge.className = 'status-badge ready';
+        badge.innerHTML = '✅ Сервер доступен';
+        resetCheckState(btn, originalState);
+        showToast('Проверка завершена. Сервер доступен.', 'success');
+
+        } else if (status === 'Unavailable') {
+        clearInterval(serverCheckInterval);
+        serverCheckInterval = null;
+        badge.className = 'status-badge fatal';
+        badge.innerHTML = '❌ Нет доступных серверов';
+        resetCheckState(btn, originalState);
+        showToast('Проверка завершена. Нет доступных серверов.', 'error');
+
+        } else { // Processing
+        badge.className = 'status-badge waiting';
+
+        const elapsed = Date.now() - checkStartTime;
+        if (elapsed > 30000) {
+        badge.innerHTML = '<span class="loading"></span> Трафик слишком медленный!';
+
+        if (!longCheckNotificationShown) {
+        showToast('Возможно, есть проблемы на стороне провайдера.', 'warning');
+        longCheckNotificationShown = true;
+        }
+        } else if (elapsed > 10000) {
+        badge.innerHTML = '<span class="loading"></span> Проблемы с интернет соединением';
+        } else {
+        badge.innerHTML = '<span class="loading"></span> Идет проверка...';
         }
 
-        // Управление пользователями
-        async function allowUser(button) {
-        const username = document.getElementById('allow-user').value.trim();
+        btn.innerHTML = '<span class="loading"></span> Идет проверка...';
+        btn.disabled = true;
+        btn.classList.add('btn-disabled');
+        }
+        }
+        } catch (error) {
+        console.error('Status request failed:', error);
+        badge.className = 'status-badge error';
+        badge.innerHTML = '⚠️ Ошибка проверки';
+        }
+
+        } catch (error) {
+        console.error('Check cycle error:', error);
+        const badge = document.getElementById('server-status-badge');
+        badge.className = 'status-badge error';
+        badge.innerHTML = '⚠️ Ошибка проверки';
+
+        clearInterval(serverCheckInterval);
+        serverCheckInterval = null;
+        resetCheckState(btn, originalState);
+        }
+        }, 2000);
+        }
+
+        function resetCheckState(btn, originalState) {
+        btn.innerHTML = originalState.text;
+        btn.disabled = originalState.disabled;
+        btn.classList.remove('btn-disabled');
+        originalState.classList.forEach(cls => {
+        if (cls !== 'btn-disabled') btn.classList.add(cls);
+        });
+
+        isServerCheckActive = true;
+        isCheckActive = false;
+        checkStartTime = null;
+        longCheckNotificationShown = false;
+
+        startServerMonitoring();
+        }
+
+        async function loadUserSettings() {
+        try {
+        addLog('request', 'GET', '/api/validator/settings/role_filter_level');
+        const roleResult = await makeRequest('/api/validator/settings/role_filter_level', 'GET');
+        addLog('response', 'GET', '/api/validator/settings/role_filter_level', roleResult.data);
+
+        if (roleResult.success && roleResult.data) {
+        const roleLevel = roleResult.data.RoleFilterLevel || roleResult.data.roleFilterLevel || 2;
+        document.getElementById('role-level').value = roleLevel;
+        originalSettings.roleLevel = roleLevel;
+        }
+
+        addLog('request', 'GET', '/api/validator/settings/whitelist_only');
+        const modeResult = await makeRequest('/api/validator/settings/whitelist_only', 'GET');
+        addLog('response', 'GET', '/api/validator/settings/whitelist_only', modeResult.data);
+
+        if (modeResult.success && modeResult.data) {
+        const accessMode = modeResult.data.Enabled || modeResult.data.enabled || false;
+        document.getElementById('access-mode').value = accessMode;
+        originalSettings.accessMode = accessMode;
+        }
+        } catch (error) {
+        console.error('Error loading user settings:', error);
+        addLog('error', 'GET', 'Настройки пользователей', error.message);
+        }
+        }
+
+        async function loadUserLists() {
+        try {
+        addLog('request', 'GET', '/api/white_list/users');
+        const whiteResult = await makeRequest('/api/white_list/users', 'GET');
+        addLog('response', 'GET', '/api/white_list/users', whiteResult.data);
+
+        const whiteContainer = document.getElementById('whitelist-items');
+        if (whiteResult.success && Array.isArray(whiteResult.data)) {
+        whiteContainer.innerHTML = whiteResult.data.map(user =>
+        `<div class="user-list-item">
+        <span>${user}</span>
+        <button onclick="removeUserFromWhitelist('${user}')" style="color: var(--red); background: none; border: none; cursor: pointer; font-size: 1.2rem;">×</button>
+        </div>`
+        ).join('');
+        if (whiteResult.data.length === 0) {
+        whiteContainer.innerHTML = '<span class="status-empty">Список пуст</span>';
+        }
+        }
+
+        addLog('request', 'GET', '/api/black_list/users');
+        const blackResult = await makeRequest('/api/black_list/users', 'GET');
+        addLog('response', 'GET', '/api/black_list/users', blackResult.data);
+
+        const blackContainer = document.getElementById('blacklist-items');
+        if (blackResult.success && Array.isArray(blackResult.data)) {
+        blackContainer.innerHTML = blackResult.data.map(user =>
+        `<div class="user-list-item">
+        <span>${user}</span>
+        <button onclick="removeUserFromBlacklist('${user}')" style="color: var(--orange); background: none; border: none; cursor: pointer; font-size: 1.2rem;">×</button>
+        </div>`
+        ).join('');
+        if (blackResult.data.length === 0) {
+        blackContainer.innerHTML = '<span class="status-empty">Список пуст</span>';
+        }
+        }
+        } catch (error) {
+        console.error('Error loading user lists:', error);
+        addLog('error', 'GET', 'Списки пользователей', error.message);
+        }
+        }
+
+        async function saveUserSettings() {
+        const roleLevel = parseInt(document.getElementById('role-level').value);
+        const accessMode = document.getElementById('access-mode').value === 'true';
+
+        try {
+        addLog('request', 'PUT', '/api/validator/settings/role_filter_level', { RoleFilterLevel: roleLevel });
+        const roleResult = await makeRequest('/api/validator/settings/role_filter_level', 'PUT', {
+        RoleFilterLevel: roleLevel
+        });
+        addLog('response', 'PUT', '/api/validator/settings/role_filter_level', roleResult);
+
+        addLog('request', 'PUT', '/api/validator/settings/whitelist_only', { Enabled: accessMode });
+        const modeResult = await makeRequest('/api/validator/settings/whitelist_only', 'PUT', {
+        Enabled: accessMode
+        });
+        addLog('response', 'PUT', '/api/validator/settings/whitelist_only', modeResult);
+
+        if (roleResult.success && modeResult.success) {
+        showToast('Настройки пользователей сохранены', 'success');
+        originalSettings.roleLevel = roleLevel;
+        originalSettings.accessMode = accessMode;
+        markSettingsChanged();
+        } else {
+        showToast('Ошибка сохранения настроек', 'error');
+        }
+        } catch (error) {
+        showToast('Ошибка сети: ' + error.message, 'error');
+        }
+        }
+
+        async function addToWhitelist() {
+        const username = document.getElementById('allow-user-input').value.trim();
         if (!username) {
-        alert('Введите имя пользователя');
+        showToast('Введите имя пользователя', 'warning');
         return;
         }
 
-        setLoading(button, true);
-        const result = await makeRequest('/api/white_list/users', 'PUT', {
-        UserName: username
-        });
+        try {
+        addLog('request', 'PUT', '/api/white_list/users', { UserName: username });
+        const result = await makeRequest('/api/white_list/users', 'PUT', { UserName: username });
+        addLog('response', 'PUT', '/api/white_list/users', result);
 
         if (result.success) {
-        alert(`Пользователь ${username} добавлен в белый список`);
-        document.getElementById('allow-user').value = '';
+        showToast(`Пользователь ${username} добавлен в белый список`, 'success');
+        document.getElementById('allow-user-input').value = '';
+        loadUserLists();
+        markSettingsChanged();
         } else {
-        alert('Ошибка: ' + result.message);
+        showToast('Ошибка: ' + result.message, 'error');
         }
-        setLoading(button, false);
+        } catch (error) {
+        showToast('Ошибка сети: ' + error.message, 'error');
+        }
         }
 
-        async function removeAllowedUser(button) {
-        const username = document.getElementById('allow-user').value.trim();
+        async function removeFromWhitelist() {
+        const username = document.getElementById('allow-user-input').value.trim();
         if (!username) {
-        alert('Введите имя пользователя');
+        showToast('Введите имя пользователя', 'warning');
         return;
         }
 
-        setLoading(button, true);
-        const result = await makeRequest('/api/white_list/users', 'DELETE', {
-        UserName: username
-        });
+        await removeUserFromWhitelist(username);
+        }
+
+        async function removeUserFromWhitelist(username) {
+        try {
+        addLog('request', 'DELETE', '/api/white_list/users', { UserName: username });
+        const result = await makeRequest('/api/white_list/users', 'DELETE', { UserName: username });
+        addLog('response', 'DELETE', '/api/white_list/users', result);
 
         if (result.success) {
-        alert(`Пользователь ${username} удален из белого списка`);
-        document.getElementById('allow-user').value = '';
+        showToast(`Пользователь ${username} удален из белого списка`, 'success');
+        document.getElementById('allow-user-input').value = '';
+        loadUserLists();
+        markSettingsChanged();
         } else {
-        alert('Ошибка: ' + result.message);
+        showToast('Ошибка: ' + result.message, 'error');
         }
-        setLoading(button, false);
+        } catch (error) {
+        showToast('Ошибка сети: ' + error.message, 'error');
+        }
         }
 
-        async function blockUser(button) {
-        const username = document.getElementById('block-user').value.trim();
+        async function addToBlacklist() {
+        const username = document.getElementById('block-user-input').value.trim();
         if (!username) {
-        alert('Введите имя пользователя');
+        showToast('Введите имя пользователя', 'warning');
         return;
         }
 
-        setLoading(button, true);
-        const result = await makeRequest('/api/black_list/users', 'PUT', {
-        UserName: username
-        });
+        try {
+        addLog('request', 'PUT', '/api/black_list/users', { UserName: username });
+        const result = await makeRequest('/api/black_list/users', 'PUT', { UserName: username });
+        addLog('response', 'PUT', '/api/black_list/users', result);
 
         if (result.success) {
-        alert(`Пользователь ${username} заблокирован`);
-        document.getElementById('block-user').value = '';
+        showToast(`Пользователь ${username} заблокирован`, 'success');
+        document.getElementById('block-user-input').value = '';
+        loadUserLists();
+        markSettingsChanged();
         } else {
-        alert('Ошибка: ' + result.message);
+        showToast('Ошибка: ' + result.message, 'error');
         }
-        setLoading(button, false);
+        } catch (error) {
+        showToast('Ошибка сети: ' + error.message, 'error');
+        }
         }
 
-        async function removeBlockedUser(button) {
-        const username = document.getElementById('block-user').value.trim();
+        async function removeFromBlacklist() {
+        const username = document.getElementById('block-user-input').value.trim();
         if (!username) {
-        alert('Введите имя пользователя');
+        showToast('Введите имя пользователя', 'warning');
         return;
         }
 
-        setLoading(button, true);
-        const result = await makeRequest('/api/black_list/users', 'DELETE', {
-        UserName: username
-        });
+        await removeUserFromBlacklist(username);
+        }
+
+        async function removeUserFromBlacklist(username) {
+        try {
+        addLog('request', 'DELETE', '/api/black_list/users', { UserName: username });
+        const result = await makeRequest('/api/black_list/users', 'DELETE', { UserName: username });
+        addLog('response', 'DELETE', '/api/black_list/users', result);
 
         if (result.success) {
-        alert(`Пользователь ${username} разблокирован`);
-        document.getElementById('block-user').value = '';
+        showToast(`Пользователь ${username} разблокирован`, 'success');
+        document.getElementById('block-user-input').value = '';
+        loadUserLists();
+        markSettingsChanged();
         } else {
-        alert('Ошибка: ' + result.message);
+        showToast('Ошибка: ' + result.message, 'error');
         }
-        setLoading(button, false);
+        } catch (error) {
+        showToast('Ошибка сети: ' + error.message, 'error');
+        }
         }
 
-        // Сохранение всех настроек
+        function openChannelModal() {
+        document.getElementById('channel-modal').classList.add('active');
+        loadModalChannels();
+        }
+
+        function closeChannelModal() {
+        document.getElementById('channel-modal').classList.remove('active');
+        }
+
+        async function loadModalChannels() {
+        try {
+        const result = await makeRequest('/api/irc_client/join', 'GET');
+        const container = document.getElementById('modal-channels-list');
+
+        if (result.success && Array.isArray(result.data)) {
+        const channels = result.data
+        .filter(c => c && (c.Channel || c.channel))
+        .map(c => c.Channel || c.channel);
+
+        if (channels.length > 0) {
+        let html = '';
+        channels.forEach(channel => {
+        html += `
+        <div style="display: flex; justify-content: space-between; align-items: center; padding: 12px; margin-bottom: 8px; background: rgba(255,255,255,0.03); border-radius: var(--radius-sm);">
+        <span>${channel}</span>
+        <button onclick="leaveChannelFromModal('${channel}')" style="padding: 6px 12px; background: rgba(255,56,96,0.1); color: var(--red); border: 1px solid var(--red); border-radius: 6px; cursor: pointer;">
+        Отключиться
+        </button>
+        </div>
+        `;
+        });
+        container.innerHTML = html;
+        } else {
+        container.innerHTML = '<div style="text-align: center; color: var(--text-light); padding: 20px;">Нет подключенных каналов</div>';
+        }
+        }
+        } catch (error) {
+        console.error('Error loading modal channels:', error);
+        container.innerHTML = '<div style="text-align: center; color: var(--red); padding: 20px;">Ошибка загрузки</div>';
+        }
+        }
+
+        async function leaveChannelFromModal(channel) {
+        if (!confirm(`Отключиться от канала ${channel}?`)) return;
+
+        try {
+        await makeRequest('/api/irc_client/part', 'POST', { Channel: channel });
+        loadModalChannels();
+        loadChatChannelsList();
+        showToast(`Отключились от канала: ${channel}`, 'success');
+        markSettingsChanged();
+        } catch (error) {
+        showToast('Ошибка сети: ' + error.message, 'error');
+        }
+        }
+
+        async function joinChannelFromModal() {
+        const channel = document.getElementById('modal-channel-input').value.trim();
+        if (!channel) {
+        showToast('Введите название канала', 'warning');
+        return;
+        }
+
+        try {
+        await makeRequest('/api/irc_client/join', 'POST', { Channel: channel });
+        showToast(`Подключились к каналу: ${channel}`, 'success');
+        document.getElementById('modal-channel-input').value = '';
+        loadModalChannels();
+        loadChatChannelsList();
+        markSettingsChanged();
+        } catch (error) {
+        showToast('Ошибка сети: ' + error.message, 'error');
+        }
+        }
+
         async function saveAllSettings() {
-        const trustedOnly = document.getElementById('trusted-only').value === 'true';
+        const saveBtn = document.getElementById('save-all-btn');
+        const originalText = saveBtn.innerHTML;
 
-        // Сохраняем уровень доступа
-        const levelResult = await makeRequest('/api/validator/settings/role_filter_level', 'PUT', {
-        RoleFilterLevel: selectedRoleLevel
-        });
+        saveBtn.innerHTML = '<span class="loading"></span> Сохранение...';
+        saveBtn.disabled = true;
 
-        // Сохраняем режим доверенных пользователей
-        const trustedResult = await makeRequest('/api/validator/settings/set_whitelist_only', 'PUT', {
-        IsOn: trustedOnly
-        });
+        try {
+        addLog('request', 'POST', '/api/settings/save');
+        const result = await makeRequest('/api/settings/save', 'POST');
+        addLog('response', 'POST', '/api/settings/save', result);
 
-        // Сохраняем все настройки
-        const saveResult = await makeRequest('/api/settings/save', 'POST');
+        if (result.success) {
+        showToast('Все настройки успешно сохранены', 'success');
+        markSettingsSaved();
 
-        if (levelResult.success && trustedResult.success && saveResult.success) {
-        alert('Все настройки успешно сохранены!');
-        // Перенаправляем на главную страницу настроек
-        window.location.href = 'settings.html';
+        await loadFileSizeSettings();
+        await loadServerSettings();
+        await loadUserSettings();
+        await loadCurrentFolder();
+
+        startServerMonitoring();
+
+        saveBtn.innerHTML = '<span>✅</span> Настройки сохранены';
         } else {
-        alert('Произошла ошибка при сохранении настроек');
+        showToast('Ошибка сохранения: ' + result.message, 'error');
+        saveBtn.innerHTML = originalText;
+        saveBtn.disabled = false;
         }
-        }
-
-        // Вспомогательные функции
-        function setLoading(button, isLoading) {
-        if (isLoading) {
-        button.innerHTML = '<span class="loading-dots"></span> Обработка...';
-        button.disabled = true;
-        } else {
-        const originalText = button.textContent.replace('Обработка...', '').trim();
-        button.innerHTML = originalText;
-        button.disabled = false;
+        } catch (error) {
+        showToast('Ошибка сети: ' + error.message, 'error');
+        saveBtn.innerHTML = originalText;
+        saveBtn.disabled = false;
         }
         }
 
         async function makeRequest(endpoint, method, data = null) {
-        try {
         const url = SERVER_URL + endpoint;
-        console.log(`Отправка запроса: ${method} ${url}`, data);
-        
+
+        try {
         const options = {
         method: method,
         headers: {
@@ -1154,45 +2544,160 @@
         }
         };
 
-        if (data) {
+        if (method !== 'GET' && data !== null) {
         options.body = JSON.stringify(data);
         }
 
         const response = await fetch(url, options);
-        const result = await response.text();
+        const contentType = response.headers.get('content-type');
+        let resultData;
 
-        console.log(`Ответ от сервера:`, { status: response.status, result });
+        if (contentType && contentType.includes('application/json')) {
+        try {
+        resultData = await response.json();
+        } catch (jsonError) {
+        resultData = await response.text();
+        }
+        } else {
+        resultData = await response.text();
+        }
 
         return {
         success: response.ok,
-        message: result,
+        message: resultData,
+        data: response.ok ? resultData : null,
         status: response.status
         };
         } catch (error) {
-        console.error('Ошибка при выполнении запроса:', error);
+        console.error('Request error:', error);
         return {
         success: false,
-        message: 'Ошибка соединения: ' + error.message
+        message: 'Ошибка соединения: ' + error.message,
+        data: null
         };
         }
         }
 
-        // Загрузка настроек и переход на главную страницу настроек
-        async function loadAndContinue() {
+        async function loadSettings() {
         try {
+        addLog('request', 'POST', '/api/settings/load');
         const result = await makeRequest('/api/settings/load', 'POST');
-        
+        addLog('response', 'POST', '/api/settings/load', result);
+
         if (result.success) {
-        // Перенаправляем на главную страницу настроек
-        window.location.href = 'settings.html';
+        showToast('Настройки успешно загружены', 'success');
+        loadCurrentFolder();
+        loadChatChannelsList();
+        loadFileSizeSettings();
+        loadServerSettings();
+        loadUserSettings();
+        loadUserLists();
+        startServerMonitoring();
+        markSettingsSaved();
         } else {
-        alert('Ошибка загрузки настроек: ' + result.message);
+        showToast('Ошибка загрузки настроек: ' + result.message, 'error');
         }
         } catch (error) {
-        console.error('Ошибка в loadAndContinue:', error);
-        alert('Ошибка: ' + error.message);
+        showToast('Ошибка: ' + error.message, 'error');
         }
         }
+
+        async function saveSettings() {
+        try {
+        addLog('request', 'POST', '/api/settings/save');
+        const result = await makeRequest('/api/settings/save', 'POST');
+        addLog('response', 'POST', '/api/settings/save', result);
+
+        if (result.success) {
+        showToast('Все настройки успешно сохранены', 'success');
+        markSettingsSaved();
+        } else {
+        showToast('Ошибка сохранения: ' + result.message, 'error');
+        }
+        } catch (error) {
+        showToast('Ошибка: ' + error.message, 'error');
+        }
+        }
+
+        async function checkAllStatuses() {
+        try {
+        await loadCurrentFolder();
+        await loadChatChannelsList();
+        await startServerMonitoring();
+        showToast('Все статусы обновлены', 'success');
+        } catch (error) {
+        showToast('Ошибка обновления статусов: ' + error.message, 'error');
+        }
+        }
+
+        function refreshChannels() {
+        loadChatChannelsList();
+        showToast('Список каналов обновлен', 'info');
+        }
+
+        function showToast(message, type = 'info') {
+        document.querySelectorAll('.toast').forEach(toast => toast.remove());
+
+        const toast = document.createElement('div');
+        toast.className = `toast toast-${type}`;
+        toast.innerHTML = `
+        <span>${message}</span>
+        <button onclick="this.parentElement.remove()" style="background: none; border: none; color: white; font-size: 1.2rem; cursor: pointer; opacity: 0.7; transition: opacity 0.2s; padding: 0 0 0 10px;">×</button>
+        `;
+
+        document.body.appendChild(toast);
+
+        setTimeout(() => {
+        if (toast.parentElement) {
+        toast.remove();
+        }
+        }, 5000);
+        }
+
+        document.addEventListener('DOMContentLoaded', function() {
+        initParticles();
+
+        document.querySelectorAll('.nav-item').forEach(item => {
+        item.addEventListener('click', function() {
+        navigateToSection(this.dataset.section);
+        });
+        });
+
+        document.getElementById('max-file-size').addEventListener('change', markSettingsChanged);
+        document.getElementById('download-server').addEventListener('input', markSettingsChanged);
+        document.getElementById('download-prefix').addEventListener('input', markSettingsChanged);
+        document.getElementById('role-level').addEventListener('change', markSettingsChanged);
+        document.getElementById('access-mode').addEventListener('change', markSettingsChanged);
+        document.getElementById('folder-path-input').addEventListener('input', markSettingsChanged);
+        document.getElementById('new-channel').addEventListener('input', markSettingsChanged);
+
+        loadCurrentFolder();
+        loadChatChannelsList();
+        loadFileSizeSettings();
+        loadServerSettings();
+        loadUserSettings();
+        loadUserLists();
+
+        startServerMonitoring();
+
+        setTimeout(() => {
+        if (document.getElementById('dashboard-section').classList.contains('active')) {
+        console.log('Автоматическая проверка доступности сервера при загрузке главной страницы');
+        startAvailabilityCheck();
+        }
+        }, 1000);
+
+        updateSaveButtonState();
+
+        addLog('response', 'INFO', 'Система инициализирована', {
+        timestamp: new Date().toISOString(),
+        server: SERVER_URL
+        });
+        });
+
+        window.addEventListener('beforeunload', function() {
+        if (serverCheckInterval) clearInterval(serverCheckInterval);
+        });
     </script>
 </body>
 </html>
