@@ -8,7 +8,10 @@
 - разархивируй в папку, путь к которой содержит только английские символы
 - запусти RequestFlow.exe и ознакомься с выводом консоли -> нажми Enter
 - открывается GUI 
-- Перед тобой будут 3 основные настройки -директория с картами осу -твич канал, чат которого читает бот и статус серверов, о нем [ниже](#серверы-загрузки-карт)
+- Перед тобой будут 3 основные настройки
+  - директория с картами осу
+  - чат которого читает бот
+  - статус серверов, о нем [ниже](#servers)
 - Подключить к своему твич чату, далее введи путь к картам osu или выбери его через проводник (он может не развернуться, после нажатия проверь нижнюю панель там будет новое окно)
 - Готово! Не заубдь сохранить настройки, чтобы не повторять эти действия каждый раз - кнопка сохранения будет в левом нижнем углу.
 
@@ -27,7 +30,7 @@
 
 Перед установкой система не проверяет, есть ли карта уже в папке — если да, то качает повторно. Потом можно будет это отключить. Добавлю отдельную настройку
 
-## Cерверы загрузки карт
+## Servers
 
 Программа использует публичные бесплатные серверы (огромное спасибо ребятам из [catboy.best](https://catboy.best/)!), но в текущих реалиях провайдеры этот трафик не очень любят.  
 
@@ -100,8 +103,8 @@ Alpha version is already available [via this link](https://github.com/MyAngelWhi
 1. **[Download](https://github.com/MyAngelWhiteCat/OsuRequestFlow/releases/tag/Alpha0.03)** the archive.
 2. **Unzip** it into a folder whose path contains only English characters.
 3. **Run** `RequestFlow.exe` and read the console output -> press `Enter`.
-4. The **GUI opens in your browser**.
-5. **Select** your osu! songs folder and **connect** to your Twitch channel.
+4. The **GUI opens in your browser**. Translate the page via your browser options (this is why GUI use browser btw)
+5. **Select** your osu! songs folder and **connect** to your Twitch channel. **Check** server status is **green**
 6. **Done!**
 
 ## What is this?
