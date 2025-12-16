@@ -80,10 +80,10 @@ namespace downloader {
     }
 
     void Downloader::Download(std::string_view file) {
-        if (osu_file_manager_->IsAlreadyInstalled(file)) {
-            LOG_INFO("Map already exist");
-            return;
-        }
+        //if (osu_file_manager_->IsAlreadyInstalled(file)) {
+        //    LOG_INFO("Map already exist");
+        //    return;
+        //}
         if (download_queue_.count(std::string(file))) {
             LOG_INFO("File allready in dl queue");
             return;
@@ -180,6 +180,7 @@ namespace downloader {
 
     void Downloader::OnDownload(std::string_view file, http_domain::DLMetaData&& metadata) {
         if (!metadata.success) {
+            osu_file_manager_->RemoveFileFromRoot(metadata.file_name_);
             need_to_mesure_speed_ = true;
             MesureServersDownloadSpeed(file);
             return;

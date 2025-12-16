@@ -24,6 +24,7 @@ namespace osu_file_manager {
             }
         }
         fs::path GetRootDirectory() const;
+        void RemoveFileFromRoot(std::string_view file_name);
         void RemoveFile(const fs::path& path);
         void RemoveDirectory_(const fs::path& path);
         void RemoveDuplicates();

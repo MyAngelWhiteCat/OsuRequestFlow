@@ -25,73 +25,83 @@ namespace irc {
             std::vector<domain::Message> read_result;
             std::string raw_message;
 
-            if (!last_read_incomplete_message_.empty()) {
-                raw_message = last_read_incomplete_message_;
-                last_read_incomplete_message_.clear();
-            }
-
-            for (int i = 0; i < raw_bytes.size(); ++i) {
-                if (domain::IsCRLF(raw_bytes, i)) {
-                    read_result.push_back(IdentifyMessageType(raw_message));
-                    raw_message.clear();
-                    ++i;
-                    continue;
+            try {
+                if (!last_read_incomplete_message_.empty()) {
+                    raw_message = last_read_incomplete_message_;
+                    last_read_incomplete_message_.clear();
                 }
-                raw_message += raw_bytes[i];
+
+                for (int i = 0; i < raw_bytes.size(); ++i) {
+                    if (domain::IsCRLF(raw_bytes, i)) {
+                        read_result.push_back(IdentifyMessageType(raw_message));
+                        raw_message.clear();
+                        ++i;
+                        continue;
+                    }
+                    raw_message += raw_bytes[i];
+                }
+                if (!raw_message.empty()) {
+                    last_read_incomplete_message_ = raw_message;
+                }
             }
-            if (!raw_message.empty()) {
-                last_read_incomplete_message_ = raw_message;
+            catch (const std::exception& e) {
+                LOG_CRITICAL(e.what());
             }
 
             return read_result;
         }
 
         domain::Message MessageProcessor::IdentifyMessageType(std::string_view raw_message) {
-            auto split_raw_message = domain::Split(raw_message);
-            domain::Message message(domain::MessageType::UNKNOWN, std::string(raw_message));
+            try {
+                auto split_raw_message = domain::Split(raw_message);
+                domain::Message message(domain::MessageType::UNKNOWN, std::string(raw_message));
 
-            // 99.99% of all messages. No any unnecessary operations required!
-            if (split_raw_message.size() >= USER_MESSAGE_MINIMUM_SIZE) {
-                if (auto msg = CheckForUserMessage(split_raw_message, raw_message)) {
-                    return *msg;
-                }
-            }
-
-            switch (split_raw_message.size()) {
-            case (EMPTY):
-                return domain::Message(domain::MessageType::EMPTY, "");
-
-            case (JOIN_PART_EXPECTED):
-                return CheckForJoinPart(split_raw_message, raw_message); // TODO: split to 2 methods
-
-            default:
-                if (split_raw_message.size() >= PING_MESSAGE_MINIMUM_SIZE) {
-                    if (auto msg = CheckForPing(split_raw_message, raw_message)) {
+                // 99.99% of all messages. No any unnecessary operations required!
+                if (split_raw_message.size() >= USER_MESSAGE_MINIMUM_SIZE) {
+                    if (auto msg = CheckForUserMessage(split_raw_message, raw_message)) {
                         return *msg;
                     }
                 }
-                if (split_raw_message.size() >= ROOMSTATE_MINIMUM_SIZE) {
-                    if (auto msg = CheckForRoomstate(split_raw_message)) {
-                        return message.TakeTypeAndMegre(std::move(*msg));
-                    }
-                }
 
-                if (split_raw_message.size() >= STATUSCODE_MINIMUM_SIZE) {
-                    if (auto msg = CheckForStatusCode(split_raw_message)) {
-                        return message.TakeTypeAndMegre(std::move(*msg));
-                    }
-                }
+                switch (split_raw_message.size()) {
+                case (EMPTY):
+                    return domain::Message(domain::MessageType::EMPTY, "");
 
-                if (split_raw_message.size() >= CAPRES_MINIMUM_SIZE) {
-                    if (auto msg = CheckForCapRes(split_raw_message)) {
-                        return message.TakeTypeAndMegre(std::move(*msg));
+                case (JOIN_PART_EXPECTED):
+                    return CheckForJoinPart(split_raw_message, raw_message); // TODO: split to 2 methods
+
+                default:
+                    if (split_raw_message.size() >= PING_MESSAGE_MINIMUM_SIZE) {
+                        if (auto msg = CheckForPing(split_raw_message, raw_message)) {
+                            return *msg;
+                        }
                     }
-                    else if (auto msg = CheckForClearChat(split_raw_message)) {
-                        return message.TakeTypeAndMegre(std::move(*msg));
+                    if (split_raw_message.size() >= ROOMSTATE_MINIMUM_SIZE) {
+                        if (auto msg = CheckForRoomstate(split_raw_message)) {
+                            return message.TakeTypeAndMegre(std::move(*msg));
+                        }
+                    }
+
+                    if (split_raw_message.size() >= STATUSCODE_MINIMUM_SIZE) {
+                        if (auto msg = CheckForStatusCode(split_raw_message)) {
+                            return message.TakeTypeAndMegre(std::move(*msg));
+                        }
+                    }
+
+                    if (split_raw_message.size() >= CAPRES_MINIMUM_SIZE) {
+                        if (auto msg = CheckForCapRes(split_raw_message)) {
+                            return message.TakeTypeAndMegre(std::move(*msg));
+                        }
+                        else if (auto msg = CheckForClearChat(split_raw_message)) {
+                            return message.TakeTypeAndMegre(std::move(*msg));
+                        }
                     }
                 }
+                return message;
             }
-            return message;
+            catch (const std::exception& e) {
+                LOG_CRITICAL(e.what());
+            }
         }
 
         std::optional<domain::Message> MessageProcessor::CheckForCapRes(const std::vector<std::string_view>& split_raw_message) {

@@ -18,6 +18,10 @@ namespace osu_file_manager {
         return root_directory_;
     }
 
+    void OsuFileManager::RemoveFileFromRoot(std::string_view file_name) {
+        RemoveFile(root_directory_ / file_name);
+    }
+
     void OsuFileManager::RemoveFile(const fs::path& path) {
         if (fs::remove(path)) {
             LOG_INFO("Deleted " + path.string());
