@@ -83,7 +83,7 @@ nerinyan.moe
 
 # OsuRequestFlow
 
-Alpha version is available: https://github.com/MyAngelWhiteCat/OsuRequestFlow/releases/tag/RequestFlowAlpha
+Alpha version [is available](https://github.com/MyAngelWhiteCat/OsuRequestFlow/releases/tag/Alpha_fixed)
 
 ## What is this?
 
@@ -102,6 +102,7 @@ it's pretty simple for now — but it already works. There are role-based filter
 ## How does it work?
 
 **The core** — a viewer sends a link, the map downloads. Everything is safe, tested. No complicated steps. Especially cool for those without Osu!Supporter — the system installs maps automatically while you play.
+An anonymous twitch login is used to read the chat. After connecting to your chosen channel, it starts checking each message for a link to the OSU card. The link can be anywhere, no specific format is required. Only std is supported. ctb and mania are ignored for now. The domain and uri are checked, and the download itself takes place from the mirrors. You will not download any third-party files from the left links. The download itself, as well as the reading of the chat, takes place over HTTPS protocol. The program opens only one local port 23140 for a loopback connection without exposing you to any risk. The external ports do not open. WinAPI occasionally twitches - for example, to open Explorer when selecting a directory, you need to delete this function on Linux, after which you can build the project yourself.
 
 **Minimal setup:**
 - Specify your Osu! songs folder (The "Select folder" button will open the explorer — it might not immediately expand to full screen. Don't click it a hundred times, or you'll get tired of closing windows)
