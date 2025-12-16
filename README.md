@@ -1,7 +1,7 @@
 # OsuRequestFlow
 [English version](#for-english-speakers)
 
-Альфа-версия уже доступна [по ссылке](https://github.com/MyAngelWhiteCat/OsuRequestFlow/releases/tag/Alpha_fixed)
+Альфа-версия уже доступна [по ссылке](https://github.com/MyAngelWhiteCat/OsuRequestFlow/releases/tag/Alpha0.03)
 
 ## Что это такое?
 
@@ -84,7 +84,7 @@ nerinyan.moe
 
 # OsuRequestFlow
 
-Alpha version [is available](https://github.com/MyAngelWhiteCat/OsuRequestFlow/releases/tag/Alpha_fixed)
+Alpha version [is available](https://github.com/MyAngelWhiteCat/OsuRequestFlow/releases/tag/Alpha0.03)
 
 ## What is this?
 
