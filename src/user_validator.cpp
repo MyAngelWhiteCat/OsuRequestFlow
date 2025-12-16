@@ -10,11 +10,12 @@ namespace commands {
             if (black_list_->count(std::string(user_name))) {
                 return false;
             }
-
-            if (whitelist_only_) {
-                return white_list_->count(std::string(user_name));
+            if (white_list_->count(std::string(user_name))) {
+                return true;
             }
-
+            if (whitelist_only_) {
+                return false;
+            }
             return role_filter_.CheckRole(role);
         }
 
