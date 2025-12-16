@@ -3,15 +3,20 @@
 
 Альфа-версия уже доступна [по ссылке](https://github.com/MyAngelWhiteCat/OsuRequestFlow/releases/tag/Alpha0.03)
 
-Быстрый старт - [скачай](https://github.com/MyAngelWhiteCat/OsuRequestFlow/releases/tag/Alpha0.03) -> разархивируй -> запусти RequestFlow.exe -> проверь путь (прочитаешь вывод консоли) -> жмешь Enter -> выбираешь папку с картами osu! и подключаеься к своему твич каналу. Готово!
+Быстрый старт 
+- [скачай](https://github.com/MyAngelWhiteCat/OsuRequestFlow/releases/tag/Alpha0.03)
+- разархивируй в папку, путь к которой содержит только английские символы
+- запусти RequestFlow.exe и ознакомься с выводом консоли -> нажми Enter
+- открывается GUI 
+- выбери папку с картами osu! и подключаеься к своему твич каналу.
+- Готово!
 
 ## Что это такое?
 
-Бот для Osu!, который автоматически скачивает карты, ссылки на которые отправляются в чат твича. Буквально. Ведешь стрим, зритель кидает ссылку — и через момент карта уже в папке с песнями, f5, и реквест уже выбран и готов к игре. Всё локально на твоём компьютере, никаких сторонних сервисов.
+Бот для Osu!, который автоматически скачивает карты, ссылки на которые отправляются в чат твича. Буквально. Ведешь стрим, зритель кидает ссылку — и через момент карта уже готова к игре.
 
-Пока что всё довольно просто. Есть фильтры по ролям (можно принимать запросы только от сабов, випов или вообще всех), белые и чёрные списки
 
-**Основа** — зритель кидает ссылку, карта качается. Всё безопасно, проверено. Никаких танцев с бубном. Особенно кайфово для тех, у кого нет Osu!Supporter — система ставит карты сама, пока ты играешь.
+**Основа** — зритель кидает ссылку, карта качается. Всё безопасно. Особенно удобно для тех, у кого нет Osu!Supporter.
 
 **Настроек минимум:**
 - Укажи папку с картами Osu! (Кнопка "Выбрать папку" откроет проводник — может не сразу развернуться. Не кликай по ней сто раз, а то устанешь закрывать окна)
@@ -40,9 +45,9 @@
 
 Как же быть? 
 
-Используй запрет https://github.com/Flowseal/zapret-discord-youtube
+Немного измени конфигурацию zapret, а если у тебя его еще нет, то скачай его [по ссылке](https://github.com/Flowseal/zapret-discord-youtube)
 
-В list-general добавь:
+Далее list-general добавь:
 osu.direct
 catboy.best
 nerinyan.moe
@@ -52,6 +57,8 @@ nerinyan.moe
 ![3 простых шага](zapret_guide.png)
 
 После чего проблем с загрузкой не будет. 
+
+В будующмх версиях в этом не будет необходимости
 
 ## Почему всё так странно устроено?
 
@@ -86,62 +93,74 @@ nerinyan.moe
 
 # OsuRequestFlow
 
-Alpha version [is available](https://github.com/MyAngelWhiteCat/OsuRequestFlow/releases/tag/Alpha0.03)
+Alpha version is already available [via this link](https://github.com/MyAngelWhiteCat/OsuRequestFlow/releases/tag/Alpha0.03).
+
+## Quick Start
+1. **[Download](https://github.com/MyAngelWhiteCat/OsuRequestFlow/releases/tag/Alpha0.03)** the archive.
+2. **Unzip** it into a folder whose path contains only English characters.
+3. **Run** `RequestFlow.exe` and read the console output -> press `Enter`.
+4. The **GUI opens in your browser**.
+5. **Select** your osu! songs folder and **connect** to your Twitch channel.
+6. **Done!**
 
 ## What is this?
 
-An Osu! bot that takes map requests from chat and installs them automatically. Literally. You stream, a viewer drops a link — and in a couple of seconds, the map is in your songs folder. Everything runs locally on your computer, no third-party services.
+An Osu! bot that automatically downloads maps from links sent in the Twitch chat. Literally. You stream, a viewer sends a link — and a moment later the map is ready to play.
 
-it's pretty simple for now — but it already works. There are role-based filters (you can accept requests only from subs, VIPs, or everyone), whitelist and blacklist, and most importantly — no manual work.
-
-## Why is everything set up so oddly?
-
-**Local server and browser interface** — not paranoia, just convenience. Everyone knows how to open a browser, no need to drag extra windows around, and the browser can translate pages itself. Initially, I wanted to do this with a friend who writes frontend, but for now, DeepSeek drew the whole interface, haha. So there might be some quirks — once my friend is free, everything will become pretty and reliable!
-
-**Why release it if it's raw?** — to collect data. I need logs from people with different providers and internet connections to understand how to make the service stable for everyone.
-
-**What's the end goal?** Initially, I wanted this for myself and friends to exchange maps faster on streams. The plan is to combine everything an Osu! streamer needs into one program: chat in OBS, PP counter, etc., making it intuitive, with minimal load on hardware, and completely local. There's something cozy about that.
-
-## How does it work?
-
-**The core** — a viewer sends a link, the map downloads. Everything is safe, tested. No complicated steps. Especially cool for those without Osu!Supporter — the system installs maps automatically while you play.
-An anonymous twitch login is used to read the chat. After connecting to your chosen channel, it starts checking each message for a link to the OSU card. The link can be anywhere, no specific format is required. Only std is supported. ctb and mania are ignored for now. The domain and uri are checked, and the download itself takes place from the mirrors. You will not download any third-party files from the left links. The download itself, as well as the reading of the chat, takes place over HTTPS protocol. The program opens only one local port 23140 for a loopback connection without exposing you to any risk. The external ports do not open. WinAPI occasionally twitches - for example, to open Explorer when selecting a directory, you need to delete this function on Linux, after which you can build the project yourself.
+**The core** — a viewer sends a link, the map downloads. Everything is safe. Especially convenient for those who don't have Osu!Supporter.
 
 **Minimal setup:**
-- Specify your Osu! songs folder (The "Select folder" button will open the explorer — it might not immediately expand to full screen. Don't click it a hundred times, or you'll get tired of closing windows)
-- Choose whose requests to accept: everyone, subscribers, VIPs, moderators, or only yourself. There's also a whitelist and blacklist :)
+*   Specify your Osu! songs folder (The "Select folder" button opens File Explorer — it might not expand immediately. Don't click it a hundred times, or you'll get tired of closing windows).
+*   Choose whose requests to accept: everyone, subscribers, VIPs, moderators, or only yourself. There's also a whitelist and a blacklist :)
 
-Before installing, the system checks if the map is already in the folder — if yes, it won't download again. You'll be able to disable this later if you want.
+In the directory settings, there is an option to delete duplicate maps. This is useful for when the "check for existing map" feature is disabled, allowing you to clean up all duplicates with one click after a stream.
 
-## The tricky part — servers
+Currently, before installation, the system does **not** check if the map is already in the folder — if it is, it downloads it again. This will be configurable in the future with a separate setting.
 
-The program uses public free servers (huge thanks to the folks at [catboy.best](https://catboy.best/)!), but some internet providers aren't too fond of this traffic.
+## The Headache — Servers
 
-To avoid guessing whether it'll work or not, there's an indicator on the main screen:
+The program uses public free servers (huge thanks to the folks at [catboy.best](https://catboy.best/)!), but currently, some ISPs are not very fond of this traffic.
+
+To avoid guessing whether it will work or not, there is an indicator on the main screen:
 
 ![Server status indicator](look_here.png)
 
 **Three possible states:**
-1. ✅ **Everything's great** — all servers available, system picked the fastest one
-2. ⚠️ **Works, but not ideal** — at least one server responds, you can use it
-3. ❌ **Unavailable** — no servers respond, map downloads won't work
+1.  ✅ **All good** — all servers are available, the system has selected the fastest one.
+2.  ⚠️ **Working, but not ideal** — at least one server responds, you can use it.
+3.  ❌ **Unavailable** — no servers respond, map downloads will not work.
 
-Literally, everything worked for me only when connected to the Wi-Fi of the pub on the ground floor. I wonder why they need a gigabit channel with a full set of proxies if they sell beer.
 
-## About performance
+## Why is everything set up so oddly?
+
+**Local server and browser interface** — not paranoia, but convenience. Everyone knows how to open a browser, no need to drag extra windows around, and browsers can translate pages themselves. Initially, I wanted to do this with a friend who writes frontend, but for now, the entire interface is made by DeepSeek. So there might be bugs — once my friend is free, everything will become pretty and reliable!
+
+**Why release it in such a raw state?** — to gather data. I need logs from people with different providers and internet connections to understand how to make the service stable for everyone, even without using Zаpret.
+
+**What's the end goal?** Initially, I wanted this for myself and friends to exchange maps faster on streams. The plan is to combine everything an Osu! streamer needs into one program: chat in OBS, a PP counter, etc., making it intuitive, with minimal load on hardware, and completely local. There's something cozy about that.
+
+## How does it work?
+
+An anonymous Twitch login is used to read the chat. After connecting to your chosen channel, it starts checking every message for a link to an osu! map. The link can be anywhere; no specific format is required. Only **std** is supported for now. **ctb** and **mania** are ignored. The domain and URI are validated, and the download itself happens from trusted mirrors. You will **not** download any third-party files from random links.
+
+Both the download and chat reading use the **HTTPS** protocol. The program opens only one **local port 23140** for loopback connections, exposing you to **no risk**. No external ports are opened.
+
+The program occasionally uses WinAPI — for example, to open File Explorer when selecting a directory. **On Linux, this function needs to be removed**, after which you can build the project yourself.
+
+## About Performance
 
 I tried to make sure the bot doesn't interfere with gameplay. On average, it uses:
-- **Memory:** ~15 MB (I'll optimize it later)
-- **CPU:** 1-5% during active periods
+*   **Memory:** ~15 MB (will be optimized later)
+*   **CPU:** 1-5% during active periods
 
-## I need your help!
+## I Need Your Help!
 
-If something isn't working, behaving strangely, or if you just have ideas — write! Attach logs — there are 3 types:
-- `LogRequest.txt` — server requests and responses
-- `GeneralLogs.txt` — all internal events
-- `LogAccessTestResult` Another file with additional server info
+If something isn't working, behaving strangely, or if you just have ideas — please write! Attach the logs — there are 3 types:
+1.  `LogRequest.txt` — requests to servers and their responses.
+2.  `GeneralLogs.txt` — all the small internal events.
+3.  `LogAccessTestResult` — additional information about servers.
 
-This helps me figure things out and fix them faster. Don't worry — logs contain **NO** information about you or your PC.
+This way I can figure things out and fix them faster. Don't worry — the logs contain **NO** information about you or your PC.
 
 ---
 
