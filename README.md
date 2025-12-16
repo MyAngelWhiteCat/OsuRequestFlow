@@ -1,5 +1,5 @@
 # OsuRequestFlow
-[English](#english)
+[English version](#english)
 
 Альфа-версия уже доступна [по ссылке](https://github.com/MyAngelWhiteCat/OsuRequestFlow/releases/tag/Alpha_fixed)
 
