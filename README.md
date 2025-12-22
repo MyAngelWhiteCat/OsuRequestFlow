@@ -4,7 +4,7 @@
 Альфа-версия уже доступна [по ссылке](https://github.com/MyAngelWhiteCat/OsuRequestFlow/releases/tag/Alpha0.03)
 
 Быстрый старт 
-- [скачай](https://github.com/MyAngelWhiteCat/OsuRequestFlow/releases/tag/Alpha0.03)
+- [скачай](https://github.com/MyAngelWhiteCat/OsuRequestFlow/releases/latest)
 - разархивируй в папку, путь к которой содержит только английские символы
 - запусти RequestFlow.exe и ознакомься с выводом консоли -> нажми Enter
 - открывается GUI 
@@ -13,12 +13,11 @@
   - Имя twitch канала, чат которого читает бот
   - статус серверов, о нем [ниже](#servers)
 - Подключить к своему твич чату, далее введи путь к картам osu или выбери его через проводник (он может не развернуться, после нажатия проверь нижнюю панель там будет новое окно)
-- Готово! Не заубдь сохранить настройки, чтобы не повторять эти действия каждый раз - кнопка сохранения будет в левом нижнем углу.
+- Готово! Не забудь сохранить настройки, чтобы не повторять эти действия каждый раз - кнопка сохранения будет в левом нижнем углу.
 
 ## Что это такое?
 
 Бот для Osu!, который автоматически скачивает карты, ссылки на которые отправляются в чат твича. Буквально. Ведешь стрим, зритель кидает ссылку — и через момент карта уже готова к игре.
-
 
 **Основа** — зритель кидает ссылку, карта качается. Всё безопасно. Особенно удобно для тех, у кого нет Osu!Supporter.
 
@@ -52,9 +51,11 @@
 Немного измени конфигурацию zapret, а если у тебя его еще нет, то скачай его [по ссылке](https://github.com/Flowseal/zapret-discord-youtube)
 
 Далее list-general добавь:
+```
 osu.direct
 catboy.best
 nerinyan.moe
+```
 
 После чего попробуй разные конфигурации. У меня работает на ALT1
 
@@ -62,7 +63,7 @@ nerinyan.moe
 
 После чего проблем с загрузкой не будет. 
 
-В будующмх версиях в этом не будет необходимости
+В будущих версиях в этом не будет необходимости.
 
 ## Почему всё так странно устроено?
 
@@ -70,11 +71,13 @@ nerinyan.moe
 
 **А зачем вообще это выпускать, если сыро?** — чтобы собрать данные. Нужны логи от людей с разными провайдерами и интернет-подключениями, чтобы понять, как сделать сервис стабильным для всех, даже без использования запрета
 
-**В итоге что будет?** Изначально я хотел сделать это для себя и друзей, чтобы быстрее обмениваться картами на стримах. В планах — собрать в одну программу всё, что нужно стримеру Osu!: чат в OBS, PP-каунтер и прочее, сделав это интуитивно понятным, с минимальной нагрузкой на железо и полностью локально. Есть в этом что-то уютное.
+**В итоге что будет?** — Изначально я хотел сделать это для себя и друзей, чтобы быстрее обмениваться картами на стримах. В планах — собрать в одну программу всё, что нужно стримеру Osu!: чат в OBS, PP-каунтер и прочее, сделав это интуитивно понятным, с минимальной нагрузкой на железо и полностью локально. Есть в этом что-то уютное.
 
 ## Как это работает?
 
-Используется анонимный твич логин для чтения чата. После подключения к выбранному вами каналу, он начинает проверять каждое сообщение на наличие в нем ссылки на карту осу. Ссылка может быть в любом месте, определнный формат не требуется. Поддерживается только std. ctb и mania пока игнорируются. Проверяется домен и uri, а сама загрузка происходит с зеркал. Никаких сторонних файлов с левых ссылок вы не скачаете. Сама загрузка, как и чтение чата, происходит по протоколу HTTPS. Программа открывает только один локальный порт 23140 для loopback соединения не подвергая вас никакому риску. Внешние порты не открываются. Переодически дергается WinApi - например для открытия проводника при выборе директории, на линукс данную функцию нужно удалять, после чего можно собрать проект самостоятельно. 
+- Для чтения чата используется анонимный twitch юзер. 
+- После подключения к выбранному вами каналу, программа начинает проверять каждое сообщение на наличие в нем ссылки на карту осу. Ссылка может быть в любом месте, определённый формат не требуется. Поддерживается только std режим (ctb и mania пока игнорируются). Проверяется домен и uri, а сама загрузка происходит с зеркал. Никаких сторонних файлов с левых ссылок вы не скачаете. Загрузка и чтение чата происходит по протоколу HTTPS.
+- Программа открывает локальный порт 23140 для доступа к веб-интерфейсу. Внешние порты не открываются. Переодически дергается WinApi - например для открытия проводника при выборе директории, на линукс данную функцию нужно удалять, после чего можно собрать проект самостоятельно. 
 
 ## Про производительность
 
@@ -145,11 +148,10 @@ To avoid guessing whether it will work or not, there is an indicator on the main
 
 ## How does it work?
 
-An anonymous Twitch login is used to read the chat. After connecting to your chosen channel, it starts checking every message for a link to an osu! map. The link can be anywhere; no specific format is required. Only **std** is supported for now. **ctb** and **mania** are ignored. The domain and URI are validated, and the download itself happens from trusted mirrors. You will **not** download any third-party files from random links.
-
-Both the download and chat reading use the **HTTPS** protocol. The program opens only one **local port 23140** for loopback connections, exposing you to **no risk**. No external ports are opened.
-
-The program occasionally uses WinAPI — for example, to open File Explorer when selecting a directory. **On Linux, this function needs to be removed**, after which you can build the project yourself.
+- An anonymous Twitch user is used to read the chat.
+- After connecting to your chosen channel, it starts checking every message for a link to an osu! map. The link can be anywhere; no specific format is required. Currently, only **std** is supported (**ctb** and **mania** are will be ignored for while). The domain and URI are validated, and the download itself happens from trusted mirrors. You will **not** download any third-party files from random links.
+- Both the download and chat reading use the **HTTPS** protocol. The program opens only **local port 23140** for accessing to web-interface, exposing you to **no risk**.
+- The program occasionally uses WinAPI — for example, to open File Explorer when selecting a directory. **On Linux, this function needs to be removed**, after which you can build the project yourself.
 
 ## About Performance
 
@@ -169,7 +171,7 @@ This way I can figure things out and fix them faster. Don't worry — the logs c
 ---
 
 *P.S. Если что, пиши в Issues или кидай логи в Discussions. Без них сложно понять, что ломается.*
-
+*P.S. If there some troubles - create Issue or send Log-files into "Discussion". Without them is pretty hard to examine the problem.
 ---
 
 ## For Developers
