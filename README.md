@@ -1,7 +1,7 @@
 # OsuRequestFlow
 [English version](#for-english-speakers)
 
-Альфа-версия уже доступна [по ссылке](https://github.com/MyAngelWhiteCat/OsuRequestFlow/releases/tag/Alpha0.03)
+Альфа-версия уже доступна [по ссылке](https://github.com/MyAngelWhiteCat/OsuRequestFlow/releases/latest)
 
 Быстрый старт 
 - [скачай](https://github.com/MyAngelWhiteCat/OsuRequestFlow/releases/latest)
@@ -100,10 +100,10 @@ nerinyan.moe
 
 # OsuRequestFlow
 
-Alpha version is already available [via this link](https://github.com/MyAngelWhiteCat/OsuRequestFlow/releases/tag/Alpha0.03).
+Alpha version is already available [via this link](https://github.com/MyAngelWhiteCat/OsuRequestFlow/releases/latest).
 
 ## Quick Start
-1. **[Download](https://github.com/MyAngelWhiteCat/OsuRequestFlow/releases/tag/Alpha0.03)** the archive.
+1. **[Download](https://github.com/MyAngelWhiteCat/OsuRequestFlow/releases/latest)** the archive.
 2. **Unzip** it into a folder whose path contains only English characters.
 3. **Run** `RequestFlow.exe` and read the console output -> press `Enter`.
 4. The **GUI opens in your browser**. Translate the page via your browser options (this is why GUI use browser btw)
