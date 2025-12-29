@@ -3,7 +3,7 @@
 
 Альфа-версия уже доступна [по ссылке](https://github.com/MyAngelWhiteCat/OsuRequestFlow/releases/latest)
 
-Быстрый старт 
+## Быстрый старт 
 - [скачай](https://github.com/MyAngelWhiteCat/OsuRequestFlow/releases/latest)
 - разархивируй в папку, путь к которой содержит только английские символы
 - запусти RequestFlow.exe и ознакомься с выводом консоли -> нажми Enter - открывается GUI 
