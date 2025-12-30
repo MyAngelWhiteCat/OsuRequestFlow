@@ -160,9 +160,7 @@ namespace http_domain {
                 }
                 connection_.resolved_address_ = resolved;
 
-                // AI on
                 SSL_set_tlsext_host_name(socket.native_handle(), host_.c_str());
-                // AI off
 
                 net::connect(socket.lowest_layer(), endpoints, connection_.ec_);
                 if (connection_.ec_) {
