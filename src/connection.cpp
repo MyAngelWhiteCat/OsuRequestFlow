@@ -104,7 +104,7 @@ namespace connection {
 
     void Connection::ConnectionVisitor::operator()(tcp::socket& socket) {
         tcp::resolver resolver(socket.get_executor()); // :(
-        auto endpoints = resolver.resolve(host_, port_);
+        auto endpoints = resolver.resolve(host_, port_, connection_.ec_);
         if (connection_.ec_) {
             logging::ReportError(connection_.ec_, "Resolving");
         }
@@ -114,6 +114,7 @@ namespace connection {
                 LOG_INFO(endpoints.begin()->endpoint().address().to_string().append(":"s).append(port_));
             }
         }
+
         net::connect(socket, endpoints, connection_.ec_);
         if (connection_.ec_) {
             logging::ReportError(connection_.ec_, "Connection"sv);
