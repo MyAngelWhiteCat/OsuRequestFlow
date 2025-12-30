@@ -1,5 +1,6 @@
 cmake_minimum_required(VERSION 3.11)
 project(OsuRequestFlow CXX)
+set(CMAKE_CXX_STANDARD 20)
 
 cmake_policy(SET CMP0091 NEW)
 
@@ -10,7 +11,6 @@ add_compile_definitions(
 )
 
 include_directories(src)
-set(CMAKE_CXX_STANDARD 20)
 
 if(MSVC)
     add_compile_options(/bigobj)
@@ -132,7 +132,6 @@ target_link_libraries(ChatBot PUBLIC
     Connection
     Logger
 )
-
 
 ########################################## irc client
 
