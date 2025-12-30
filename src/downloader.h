@@ -69,6 +69,7 @@ namespace downloader {
         bool operator==(const Server& other) const {
             return host_ == other.host_ && prefix_ == other.prefix_;
         }
+
     };
 
 
