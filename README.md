@@ -199,6 +199,7 @@ The code uses a large number of not very good practices, there are quite severe 
 
 ### Main
 - Разбить все файлы на заголовки и реализации
+- Переименовать префикс на pathname
 
 ### IRC Client
  - Сделать авторизацию OAuth 2.0 flow взаимодействующую с GUI
