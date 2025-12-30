@@ -98,7 +98,7 @@ int main() {
     LOG_INFO("if path is OK Press ENTER.");
 
     std::cin.get();
-
+    
     core::Core core(ioc);
     core.SetupConnection(true);
     core.SetupDownloader(true);
