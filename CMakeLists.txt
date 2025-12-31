@@ -33,8 +33,8 @@ find_package(ZLIB REQUIRED)
 ############################################# libraries
 
 add_library(Logger STATIC 
-    src/logging.h
-    src/logging.cpp
+    src/logger/logging.h
+    src/logger/logging.cpp
 )
 
 target_link_libraries(Logger PUBLIC
@@ -50,8 +50,8 @@ target_include_directories(Logger PUBLIC
 ########################################## ssl serts loader
 
 add_library(SSLCertsLoader STATIC 
-    src/ca_sertificates_loader.h 
-    src/ca_sertificates_loader.cpp
+    src/ssl_certs_loader/ca_sertificates_loader.h 
+    src/ssl_certs_loader/ca_sertificates_loader.cpp
 )
 
 target_include_directories(SSLCertsLoader PUBLIC
@@ -74,13 +74,13 @@ endif()
 ########################################## http server
 
 add_library(HTTPServer STATIC 
-    src/decode_url.h 
-    src/http_server.h 
-    src/http_server.cpp 
-    src/root_directory.h 
-    src/root_directory.cpp
-    src/domain_fields.h
-    src/tcp_listener.h
+    src/http_server/decode_url.h 
+    src/http_server/http_server.h 
+    src/http_server/http_server.cpp 
+    src/http_server/root_directory.h 
+    src/http_server/root_directory.cpp
+    src/http_server/domain_fields.h
+    src/http_server/tcp_listener.h
 )
 
 target_include_directories(HTTPServer PUBLIC
@@ -101,8 +101,8 @@ target_link_libraries(HTTPServer PUBLIC
 ########################################## Connection
 
 add_library(Connection STATIC 
-    src/connection.h
-    src/connection.cpp
+    src/connection/connection.h
+    src/connection/connection.cpp
 )
 
 target_link_libraries(Connection PUBLIC 
@@ -117,37 +117,40 @@ target_link_libraries(Connection PUBLIC
 ########################################## Chat bot
 
 add_library(ChatBot STATIC 
-    src/command.h 
-    src/command_executor.h 
-    src/command_executor.cpp
-    src/command_parser.h
-    src/command_parser.cpp
-    src/user_validator.h
-    src/user_validator.cpp
-    src/chat_bot.h 
-    src/chat_bot.cpp
+    src/chat_bot/command.h 
+    src/chat_bot/command.cpp
+    src/chat_bot/command_executor.h 
+    src/chat_bot/user_validator.h
+    src/chat_bot/user_validator.cpp
+    src/chat_bot/chat_bot.h 
+    src/chat_bot/chat_bot.cpp
 )
 
 target_link_libraries(ChatBot PUBLIC
     Connection
     Logger
+    Boost::system
+    Boost::thread
+    ZLIB::ZLIB
 )
 
 ########################################## irc client
 
 add_library(IRCClient STATIC
-    src/irc_client.h
+    src/twitch_irc_client/irc_client.h
+    src/twitch_irc_client/irc_client.cpp
 
-    src/message.h
-    src/message.cpp
-    src/message_handler.h
-    src/message_processor.h 
-    src/message_processor.cpp
+    src/twitch_irc_client/message.h
+    src/twitch_irc_client/message.cpp
+    src/twitch_irc_client/message_handler.h
+    src/twitch_irc_client/message_handler.cpp
+    src/twitch_irc_client/message_processor.h 
+    src/twitch_irc_client/message_processor.cpp
 
-    src/domain.h
+    src/twitch_irc_client/domain.h
 
-    src/auth_data.h
-    src/auth_data.cpp
+    src/twitch_irc_client/auth_data.h
+    src/twitch_irc_client/auth_data.cpp
 )
 
 target_link_libraries(IRCClient PUBLIC 
@@ -158,25 +161,20 @@ target_link_libraries(IRCClient PUBLIC
 ########################################## http client
 
 add_library(HTTPClient STATIC
-    tests/http_client/main.cpp 
-    tests/http_client/test_http_client.h
+    src/http_client/http_client.h 
+    src/http_client/http_client.cpp
 
-    src/http_client.h 
-    src/http_client.cpp
-
-    src/request_builder.h 
-    src/request_builder.cpp
+    src/http_client/request_builder.h 
+    src/http_client/request_builder.cpp
     
-    src/response_parser.h
-    src/response_parser.cpp
+    src/http_client/response_parser.h
+    src/http_client/response_parser.cpp
 
-    src/random_user_agent.h
-    src/random_user_agent.cpp
+    src/http_client/random_user_agent.h
+    src/http_client/random_user_agent.cpp
     
-    src/connection_pool.h 
-    src/connection_pool.cpp 
-
-    src/decode_url.h
+    src/http_client/connection_pool.h 
+    src/http_client/connection_pool.cpp 
 )
 
 target_link_libraries(HTTPClient PUBLIC 
@@ -191,8 +189,8 @@ target_link_libraries(HTTPClient PUBLIC
 ########################################## file manager
 
 add_library(OsuFileManager STATIC 
-    src/osu_file_manager.h
-    src/osu_file_manager.cpp
+    src/osu_file_manager/osu_file_manager.h
+    src/osu_file_manager/osu_file_manager.cpp
 )
 target_link_libraries(OsuFileManager PUBLIC 
     Logger
@@ -201,8 +199,8 @@ target_link_libraries(OsuFileManager PUBLIC
 ########################################## downloader
 
 add_library(Downloader STATIC
-    src/downloader.h 
-    src/downloader.cpp
+    src/downloader/downloader.h 
+    src/downloader/downloader.cpp
 )
 
 target_link_libraries(Downloader PUBLIC 
@@ -213,7 +211,7 @@ target_link_libraries(Downloader PUBLIC
 ########################################## WebSocket server
 
 add_library(WebSocketServer STATIC 
-    src/websoc_server.h 
+    src/websocket_server/websoc_server.h 
 )
 
 target_include_directories(WebSocketServer PUBLIC
@@ -234,8 +232,8 @@ target_link_libraries(WebSocketServer PUBLIC
 ########################################## ChatWidget
 
 add_library(ChatWidget STATIC
-    src/chat_widget.h
-    src/chat_widget.cpp
+    src/websocket_server/chat_widget.h
+    src/websocket_server/chat_widget.cpp
 )
 
 target_link_libraries(ChatWidget PUBLIC 
@@ -245,8 +243,8 @@ target_link_libraries(ChatWidget PUBLIC
 ########################################## core
 
 add_library(Core STATIC
-    src/core.h 
-    src/core.cpp 
+    src/core/core.h 
+    src/core/core.cpp 
 )
 
 target_link_libraries(Core PUBLIC 
@@ -348,15 +346,15 @@ target_link_libraries(Core PUBLIC
 ########################################### Main
 
 add_executable(RequestFlow
-    src/response_maker.h
-    src/response_maker.cpp
-    src/request_domain_names.h
-    src/request_handler.h 
-    src/request_validator.h 
-    src/request_validator.cpp 
-    src/api_request_handler.h 
-    src/file_request_handler.h 
-    src/main.cpp
+    src/gui/response_maker.h
+    src/gui/response_maker.cpp
+    src/gui/request_domain_names.h
+    src/gui/request_handler.h 
+    src/gui/request_validator.h 
+    src/gui/request_validator.cpp 
+    src/gui/api_request_handler.h 
+    src/gui/file_request_handler.h 
+    src/gui/main.cpp
 )
 
 target_link_libraries(RequestFlow PUBLIC 
