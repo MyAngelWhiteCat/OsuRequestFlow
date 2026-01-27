@@ -73,7 +73,7 @@ namespace core {
         std::shared_ptr<downloader::Downloader> downloader_;
 
         const std::string OSU_BEATMAPS_URL = "https://osu.ppy.sh/beatmapsets/";
-        const std::string OSU_GAME_MODE = "osu";
+        std::string OSU_GAME_MODE = "osu";
 
         std::optional<std::string> CheckForOsuMapURLAndGetID(std::string_view url);
         bool CheckGameMode(std::string_view url);
@@ -169,7 +169,7 @@ namespace core {
         std::shared_ptr<irc::Client> client_{ nullptr };
         irc::domain::AuthorizeData auth_data_;
 
-        std::string main_mode_name_ = "dl_osu_map";
+        const std::string main_mode_name_ = "dl_osu_map";
 
         void CheckReadyness();
         json GetUserVerificatorSettings();
