@@ -1,7 +1,14 @@
 #include "chat_bot/chat_bot.h"
 #include "logger/logging.h"
 
+#include <exception>
+#include <string>
+#include <string_view>
 #include <utility>
+
+#include <boost/asio/post.hpp>
+#include <twitch_irc_client/message.h>
+
 
 namespace chat_bot {
 
@@ -13,7 +20,7 @@ namespace chat_bot {
         return command_start_;
     }
 
-    void ChatBot::AddCommand(std::string_view command_name, commands::Command&& command) {
+    void ChatBot::AddCommand(std::string_view command_name, Command&& command) {
         name_to_command_[std::string(command_name)] = std::move(command);
     }
 
@@ -21,7 +28,7 @@ namespace chat_bot {
         name_to_mode_[std::string(mode_name)] = std::move(mode);
     }
 
-    commands::Command* ChatBot::GetCommand(std::string_view command_name) {
+    Command* ChatBot::GetCommand(std::string_view command_name) {
         if (auto it = name_to_command_.find(std::string(command_name));
             it != name_to_command_.end()) {
             return &it->second;
