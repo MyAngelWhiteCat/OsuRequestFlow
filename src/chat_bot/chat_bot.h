@@ -45,7 +45,7 @@ namespace chat_bot {
 
     private:
         net::io_context& ioc_;
-        std::unordered_map<std::string, commands::Command> name_to_command_;
+        std::unordered_map<std::string, Command> name_to_command_;
         std::unordered_map<std::string, Mode> name_to_mode_;
         char command_start_ = '!';
 
