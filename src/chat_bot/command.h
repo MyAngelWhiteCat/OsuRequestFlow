@@ -32,15 +32,19 @@ namespace commands {
         void SetMinimumUserRole(irc::domain::Role role);
 
         void SetWhiteListOnly(bool status);
+        bool GetWhiteListOnly() const;
+
         void AddUserInWhiteList(std::string_view user_name);
         void AddUsersInWhiteList(const std::vector<std::string>& users_names);
         void RemoveUserFromWhiteList(std::string_view user_name);
+
         void AddUserInBlackList(std::string_view user_name);
         void AddUsersInBlackList(const std::vector<std::string>& users_names);
         void RemoveUserFromBlackList(std::string_view user_name);
+
         void SetRoleLevel(int level);
         int GetRoleLevel();
-        bool GetWhiteListOnly() const;
+
         std::unordered_set<std::string>* GetWhiteList();
         std::unordered_set<std::string>* GetBlackList();
 
