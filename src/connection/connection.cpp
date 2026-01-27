@@ -91,6 +91,25 @@ namespace connection {
         return false;
     }
 
+    void Connection::Write(std::string_view data) {
+        ec_.clear();
+        auto visitor = std::make_shared<WriteVisitor>(
+            this->shared_from_this(), data);
+
+        std::visit(*visitor, socket_);
+        if (ec_) {
+            logging::ReportError(ec_, "Writing");
+        }
+    }
+
+    void Connection::AsyncWrite(std::string_view data) {
+        AsyncWrite(data, [](const sys::error_code& ec) {
+            if (ec) {
+                logging::ReportError(ec, "Writing");
+            }
+            });
+    }
+
     bool Connection::IsConnected() const {
         return ssl_connected_ || connected_;
     }
@@ -182,6 +201,14 @@ namespace connection {
             socket.lowest_layer().close(connection_.ec_);
         }
         connection_.ssl_connected_ = false;
+    }
+
+    void Connection::WriteVisitor::operator()(tcp::socket& socket) {
+        WriteMessages(connection_->connected_, socket);
+    }
+
+    void Connection::WriteVisitor::operator()(ssl::stream<tcp::socket>& socket) {
+        WriteMessages(connection_->ssl_connected_, socket);
     }
 
 }

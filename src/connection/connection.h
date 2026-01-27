@@ -102,56 +102,29 @@ namespace connection {
     class Connection : public std::enable_shared_from_this<Connection> {
     public:
         Connection(net::io_context& ioc, Strand& read_strand, Strand& write_strand);
-
         Connection(net::io_context& ioc, ssl::context& ctx, Strand& read_strand, Strand& write_strand);
 
         void Connect(std::string_view host, std::string_view port);
-
         void Disconnect(bool is_need_to_close_socket = true);
 
         bool IsReconnectRequired();
 
         template <typename Handler>
-        void AsyncRead(Handler&& handler) {
-            auto visitor = std::make_shared<AsyncReadVisitor<Handler>>(
-                this->shared_from_this(), std::forward<Handler>(handler));
-            std::visit(*visitor, socket_);
-        }
+        void AsyncRead(Handler&& handler);
 
-        void Write(std::string_view data) {
-            ec_.clear();
-            auto visitor = std::make_shared<WriteVisitor>(
-                this->shared_from_this(), data);
-
-            std::visit(*visitor, socket_);
-            if (ec_) {
-                logging::ReportError(ec_, "Writing");
-            }
-        }
+        void Write(std::string_view data);
 
         template <typename Handler>
-        void AsyncWrite(std::string_view data, Handler&& callback) {
-            auto visitor = std::make_shared<AsyncWriteVisitor<Handler>>(
-                this->shared_from_this(), data, std::forward<Handler>(callback));
-
-            std::visit(*visitor, socket_);
-        }
-
-        void AsyncWrite(std::string_view data) {
-            AsyncWrite(data, [](const sys::error_code& ec) {
-                if (ec) {
-                    logging::ReportError(ec, "Writing");
-                }
-                });
-        }
+        void AsyncWrite(std::string_view data, Handler&& callback);
+        void AsyncWrite(std::string_view data);
 
         bool IsConnected() const;
+        bool IsSecured() const;
 
         net::io_context* GetContext();
 
-        bool IsSecured() const;
-
     private:
+        net::io_context* ioc_ = nullptr;
         Strand& write_strand_;
         Strand& read_strand_;
         sys::error_code ec_;
@@ -162,11 +135,11 @@ namespace connection {
         bool connected_ = false;
         bool reconnect_required_ = false;
 
-        net::io_context* ioc_ = nullptr;
-
         class ConnectionVisitor {
         public:
-            explicit ConnectionVisitor(Connection& connection, std::string_view host, std::string_view port)
+            explicit ConnectionVisitor(Connection& connection,
+                std::string_view host,
+                std::string_view port)
                 : connection_(connection)
                 , host_(host)
                 , port_(port)
@@ -174,7 +147,6 @@ namespace connection {
             }
 
             void operator()(tcp::socket& socket);
-
             void operator()(ssl::stream<tcp::socket>& socket);
 
         private:
@@ -192,7 +164,6 @@ namespace connection {
             }
 
             void operator()(tcp::socket& socket);
-
             void operator()(ssl::stream<tcp::socket>& socket);
 
         private:
@@ -219,53 +190,20 @@ namespace connection {
             {
             }
 
-            void operator()(tcp::socket& socket) {
-                ReadMessages(connection_->connected_, socket);
-            }
-
-            void operator()(ssl::stream<tcp::socket>& socket) {
-                ReadMessages(connection_->ssl_connected_, socket);
-            }
+            void operator()(tcp::socket& socket);
+            void operator()(ssl::stream<tcp::socket>& socket);
 
         private:
             HandlerType handler_;
             std::shared_ptr<Connection> connection_;
 
             size_t read_buffer_size_;
-            std::shared_ptr<std::vector<char>> buffer_ = std::make_shared<std::vector<char>>(read_buffer_size_);
+            std::shared_ptr<std::vector<char>> buffer_ = 
+                std::make_shared<std::vector<char>>(read_buffer_size_);
 
             template <typename Socket>
-            void ReadMessages(bool is_connected, Socket& socket) {
-                if (is_connected) {
-                    net::async_read(socket, net::buffer(*buffer_), net::transfer_at_least(1)
-                        , net::bind_executor(connection_->read_strand_
-                            , [self = this->shared_from_this()]
-                            (const sys::error_code& ec, std::size_t bytes_readed) mutable
-                            {
-                                if (bytes_readed > 0) {
-                                    self->OnRead(ec, std::vector<char>(self->buffer_->begin(), self->buffer_->begin() + bytes_readed));
-                                }
-                                else {
-                                    LOG_ERROR("0 bytes readed");
-                                }
-                            }));
-                }
-                else {
-                    throw std::runtime_error("Trying read socket without connection");
-                }
-            }
-
-
-            void OnRead(const sys::error_code& ec, std::vector<char>&& bytes) {
-                if (ec) {
-                    logging::ReportError(ec, "Reading");
-                    connection_->reconnect_required_ = true;
-                }
-                net::post(connection_->read_strand_,
-                    [handler = handler_, bytes = std::move(bytes)]() mutable {
-                        handler(std::move(bytes));
-                    });
-            }
+            void ReadMessages(bool is_connected, Socket& socket);
+            void OnRead(const sys::error_code& ec, std::vector<char>&& bytes);
         };
 
         class WriteVisitor : public std::enable_shared_from_this<WriteVisitor> {
@@ -277,26 +215,15 @@ namespace connection {
 
             }
 
-            void operator()(tcp::socket& socket) {
-                WriteMessages(connection_->connected_, socket);
-            }
-
-            void operator()(ssl::stream<tcp::socket>& socket) {
-                WriteMessages(connection_->ssl_connected_, socket);
-            }
+            void operator()(tcp::socket& socket);
+            void operator()(ssl::stream<tcp::socket>& socket);
 
         private:
             std::shared_ptr<Connection> connection_;
             std::string data_;
 
             template <typename Socket>
-            void WriteMessages(bool is_connected, Socket& socket) {
-                if (!is_connected) {
-                    throw std::runtime_error("Writing socket without connection");
-                }
-                LOG_INFO("Sending: "s.append(data_));
-                net::write(socket, net::buffer(data_), connection_->ec_);
-            }
+            void WriteMessages(bool is_connected, Socket& socket);
         };
 
         template <typename Handler>
@@ -310,13 +237,8 @@ namespace connection {
 
             }
 
-            void operator()(tcp::socket& socket) {
-                AsyncWriteMessages(connection_->connected_, socket);
-            }
-
-            void operator()(ssl::stream<tcp::socket>& socket) {
-                AsyncWriteMessages(connection_->ssl_connected_, socket);
-            }
+            void operator()(tcp::socket& socket);
+            void operator()(ssl::stream<tcp::socket>& socket);
 
         private:
             std::shared_ptr<Connection> connection_;
@@ -324,27 +246,112 @@ namespace connection {
             Handler handler_;
 
             template <typename Socket>
-            void AsyncWriteMessages(bool is_connected, Socket& socket) {
-                if (!is_connected) {
-                    throw std::runtime_error("Writing socket without connection");
-                }
-                LOG_INFO("Sending: "s.append(data_));
-                net::write(socket, net::buffer(data_), connection_->ec_);
-
-                net::async_write(socket, net::buffer(data_), net::bind_executor(connection_->write_strand_
-                    , [self = this->shared_from_this()](const sys::error_code& ec, size_t bytes_writen) {
-                        if (ec) {
-                            if (ec == boost::asio::error::eof) {
-                                LOG_INFO("Connection closed gracefully by server");
-                            }
-                            else {
-                                self->handler_(ec);
-                            }
-                        }
-                    }));
-            }
+            void AsyncWriteMessages(bool is_connected, Socket& socket);
         };
 
     };
+
+    template<typename Handler>
+    inline void Connection::AsyncWrite(std::string_view data, Handler&& callback) {
+        auto visitor = std::make_shared<AsyncWriteVisitor<Handler>>(
+            this->shared_from_this(), data, std::forward<Handler>(callback));
+
+        std::visit(*visitor, socket_);
+    }
+
+    template<typename Handler>
+    inline void Connection::AsyncRead(Handler&& handler) {
+        auto visitor = std::make_shared<AsyncReadVisitor<Handler>>(
+            this->shared_from_this(), std::forward<Handler>(handler));
+        std::visit(*visitor, socket_);
+    }
+
+    template<typename Handler>
+    inline void Connection::AsyncReadVisitor<Handler>::operator()(tcp::socket& socket) {
+        ReadMessages(connection_->connected_, socket);
+    }
+
+    template<typename Handler>
+    inline void Connection::AsyncReadVisitor<Handler>::operator()(ssl::stream<tcp::socket>& socket) {
+        ReadMessages(connection_->ssl_connected_, socket);
+    }
+
+    template<typename Handler>
+    inline void Connection::AsyncReadVisitor<Handler>::OnRead(const sys::error_code& ec
+        , std::vector<char>&& bytes) {
+        if (ec) {
+            logging::ReportError(ec, "Reading");
+            connection_->reconnect_required_ = true;
+        }
+        net::post(connection_->read_strand_,
+            [handler = handler_, bytes = std::move(bytes)]() mutable {
+                handler(std::move(bytes));
+            });
+    }
+
+    template<typename Handler>
+    template<typename Socket>
+    inline void Connection::AsyncReadVisitor<Handler>::ReadMessages(bool is_connected, Socket& socket) {
+        if (is_connected) {
+            net::async_read(socket, net::buffer(*buffer_), net::transfer_at_least(1)
+                , net::bind_executor(connection_->read_strand_
+                    , [self = this->shared_from_this()]
+                    (const sys::error_code& ec, std::size_t bytes_readed) mutable
+                    {
+                        if (bytes_readed > 0) {
+                            self->OnRead(ec, std::vector<char>
+                                (self->buffer_->begin(), self->buffer_->begin() + bytes_readed));
+                        }
+                        else {
+                            LOG_ERROR("0 bytes readed");
+                        }
+                    }));
+        }
+        else {
+            throw std::runtime_error("Trying read socket without connection");
+        }
+    }
+
+    template<typename Socket>
+    inline void Connection::WriteVisitor::WriteMessages(bool is_connected, Socket& socket) {
+        if (!is_connected) {
+            throw std::runtime_error("Writing socket without connection");
+        }
+        LOG_INFO("Sending: "s.append(data_));
+        net::write(socket, net::buffer(data_), connection_->ec_);
+    }
+
+    template<typename Handler>
+    inline void Connection::AsyncWriteVisitor<Handler>::operator()(tcp::socket& socket) {
+        AsyncWriteMessages(connection_->connected_, socket);
+    }
+
+    template<typename Handler>
+    inline void Connection::AsyncWriteVisitor<Handler>::operator()(ssl::stream<tcp::socket>& socket) {
+        AsyncWriteMessages(connection_->ssl_connected_, socket);
+    }
+
+    template<typename Handler>
+    template<typename Socket>
+    inline void Connection::AsyncWriteVisitor<Handler>::AsyncWriteMessages(bool is_connected
+        , Socket& socket) {
+        if (!is_connected) {
+            throw std::runtime_error("Writing socket without connection");
+        }
+        LOG_INFO("Sending: "s.append(data_));
+        net::write(socket, net::buffer(data_), connection_->ec_);
+
+        net::async_write(socket, net::buffer(data_), net::bind_executor(connection_->write_strand_
+            , [self = this->shared_from_this()](const sys::error_code& ec, size_t bytes_writen) {
+                if (ec) {
+                    if (ec == boost::asio::error::eof) {
+                        LOG_INFO("Connection closed gracefully by server");
+                    }
+                    else {
+                        self->handler_(ec);
+                    }
+                }
+            }));
+    }
 
 }
