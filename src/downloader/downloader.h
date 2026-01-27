@@ -3,6 +3,8 @@
 #include <memory>
 #include <string>
 #include <string_view>
+#include <filesystem>
+#include <optional>
 #include <unordered_set>
 
 #include "osu_file_manager/osu_file_manager.h"
@@ -12,6 +14,9 @@
 #include <boost/asio/ip/tcp.hpp>
 #include <boost/asio/io_context.hpp>
 #include <boost/asio/strand.hpp>
+#include <vector>
+#include <utility>
+#include <chrono>
 
 namespace downloader {
 
@@ -79,28 +84,33 @@ namespace downloader {
         Downloader(net::io_context& ioc, bool secured = true);
         ~Downloader() { LOG_DEBUG("Downloader destructed"); }
 
-        void SetupBaseServers(const std::vector<std::pair<std::string, std::string>>& servers);
-        void SetUserAgent(std::string_view user_agent);
-        void SetResourceAndPrefix(std::string_view resource, std::string_view uri_prefix);
-        void AddBaseServer(std::string_view host, std::string_view prefix);
-        void SetDownloadsDirectory(std::string_view path);
-        std::shared_ptr<http_domain::Client> SetupNonSecuredConnection();
-        std::shared_ptr<http_domain::Client> SetupSecuredConnection();
-        void SetMaxFileSize(size_t MiB);
-
-        void MesureServersDownloadSpeed(std::string_view file);
-        void MesureSpeed(Server& server, std::string_view to_file);
         void Download(std::string_view file);
-        bool IsNeedToMesureSpeed() const;
-        std::string GetAccessTestResult();
 
-        std::optional<std::string> GetResource() const;
-        std::optional<std::string> GetPrefix() const;
-        size_t GetMaxFileSize() const;
-        std::optional<std::filesystem::path> GetDownloadsDirectory() const;
+        void AddBaseServer(std::string_view host, std::string_view prefix);
+        void SetupBaseServers(const std::vector<std::pair<std::string, std::string>>& servers);
+        
+        void SetUserAgent(std::string_view user_agent);
         std::string GetUserAgent() const;
 
-        void RemoveDublicatesInRootDirectory();
+        void SetDownloadsDirectory(std::string_view path);
+        std::optional<std::filesystem::path> GetDownloadsDirectory() const;
+
+        void SetMaxFileSize(size_t MiB);
+        size_t GetMaxFileSize() const;
+
+        std::shared_ptr<http_domain::Client> SetupNonSecuredConnection();
+        std::shared_ptr<http_domain::Client> SetupSecuredConnection();
+
+        bool IsNeedToMesureSpeed() const;
+        void MesureServersDownloadSpeed(std::string_view file);
+        void MesureSpeed(Server& server, std::string_view to_file);
+        std::string GetAccessTestResult();
+
+        void SetResourceAndPrefix(std::string_view resource, std::string_view uri_prefix);
+        std::optional<std::string> GetResource() const;
+        std::optional<std::string> GetPrefix() const;
+
+        void RemoveDublicatesInRootDirectory(); // todo .......
 
     private:
         net::io_context& ioc_;
@@ -111,7 +121,7 @@ namespace downloader {
         bool is_speed_mesured_ = false;
         bool is_any_available_ = false;
 
-        std::string user_agent_ = "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36";
+        std::string user_agent_ = "RequestFlow/0.1";
 
         std::shared_ptr<osu_file_manager::OsuFileManager> osu_file_manager_{ nullptr };
         std::optional<std::string> resource_;
