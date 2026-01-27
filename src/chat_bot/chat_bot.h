@@ -13,6 +13,7 @@
 namespace chat_bot {
 
     using Mode = commands::Command;
+    using Command = commands::Command;
 
     namespace net = boost::asio;
 
@@ -35,10 +36,11 @@ namespace chat_bot {
 
         void SetCommandStart(char ch);
         char GetCommandStart() const;
-        void AddCommand(std::string_view command_name, commands::Command&& command);
-        void AddMode(std::string_view mode_name, Mode&& mode);
 
-        commands::Command* GetCommand(std::string_view command_name);
+        void AddCommand(std::string_view command_name, commands::Command&& command);
+        Command* GetCommand(std::string_view command_name);
+
+        void AddMode(std::string_view mode_name, Mode&& mode);
         Mode* GetMode(std::string_view mode_name);
 
     private:
