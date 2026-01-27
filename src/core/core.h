@@ -169,7 +169,7 @@ namespace core {
         std::shared_ptr<irc::Client> client_{ nullptr };
         irc::domain::AuthorizeData auth_data_;
 
-        const std::string main_mode_name_ = "dl_osu_map";
+        std::string main_mode_name_ = "dl_osu_map";
 
         void CheckReadyness();
         json GetUserVerificatorSettings();
