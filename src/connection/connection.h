@@ -17,16 +17,30 @@
 #include <boost/asio/ssl/stream.hpp>
 #include <boost/asio/ssl/stream_base.hpp>
 #include <boost/asio/ssl/verify_mode.hpp>
+
 #include <openssl/ssl.h>
+#include <openssl/ossl_typ.h>
+
 
 #include <string>
 #include <string_view>
 #include <variant>
 #include <memory>
 #include <stdexcept>
+#include <type_traits>
+#include <vector>
+#include <utility>
 
 #include "logger/logging.h"
 #include "ssl_certs_loader/ca_sertificates_loader.h"
+
+#include <exception>
+#include <openssl/tls1.h>
+#include <boost/system/detail/error_code.hpp>
+
+#include <boost/asio/completion_condition.hpp>
+#include <boost/asio/error.hpp>
+#include <boost/asio/io_context.hpp>
 
 
 namespace connection {
