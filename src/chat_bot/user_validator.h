@@ -17,17 +17,10 @@ namespace commands {
 
         class RoleFilter {
         public:
-            bool CheckRole(irc::domain::Role role) {
-                return role >= accept_from_;
-            }
+            bool CheckRole(irc::domain::Role role) const;
 
-            void SetLevel(int level) {
-                accept_from_ = static_cast<irc::domain::Role>(level);
-            }
-
-            int GetLevel() const {
-                return static_cast<int>(accept_from_);
-            }
+            void SetLevel(int level);
+            int GetLevel() const;
 
         private:
             irc::domain::Role accept_from_ = irc::domain::Role::MODERATOR;

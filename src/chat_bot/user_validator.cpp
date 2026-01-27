@@ -60,6 +60,18 @@ namespace commands {
             return black_list_.get();
         }
 
+        bool RoleFilter::CheckRole(irc::domain::Role role) const {
+            return role >= accept_from_;
+        }
+
+        void RoleFilter::SetLevel(int level) {
+                accept_from_ = static_cast<irc::domain::Role>(level);
+        }
+
+        int RoleFilter::GetLevel() const {
+            return static_cast<int>(accept_from_);
+        }
+
     }
 
 }
