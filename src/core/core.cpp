@@ -1,6 +1,38 @@
 #include "core.h"
 
-#include <utility>
+#include "twitch_irc_client/irc_client.h"
+#include "twitch_irc_client/auth_data.h"
+#include "connection/connection.h"
+#include "chat_bot/command_executor.h"
+#include "chat_bot/chat_bot.h"
+#include "downloader/downloader.h"
+
+#include <boost/asio/ip/tcp.hpp>
+#include <boost/asio/io_context.hpp>
+
+#include <nlohmann/json.hpp>
+
+#include <memory>
+#include <string_view>
+#include <string>
+#include <unordered_set>
+#include <filesystem>
+#include <boost/asio/ssl/context.hpp>
+#include <vector>
+
+#include <windows.h>
+#include <shobjidl.h>
+#include <boost/asio/strand.hpp>
+#include <stdexcept>
+#include <chat_bot/command.h>
+#include <fstream>
+#include <logger/logging.h>
+#include <exception>
+#include <ostream>
+#include <iostream>
+#include <optional>
+#include <cstdlib>
+#include <ShObjIdl_core.h>
 
 namespace core {
 
@@ -82,7 +114,8 @@ namespace core {
 
     void Core::LoadSettings() {
         json settings;
-        if (!std::filesystem::exists(std::filesystem::current_path() / std::string(SettingsKeys::FILENAME.data(), SettingsKeys::FILENAME.size()))) {
+        if (!std::filesystem::exists(std::filesystem::current_path() 
+            / std::string(SettingsKeys::FILENAME.data(), SettingsKeys::FILENAME.size()))) {
             LOG_ERROR("Settings file not exist");
             return;
         }
@@ -418,7 +451,6 @@ namespace core {
         if (auto id = CheckForOsuMapURLAndGetID(content)) {
             downloader_->Download(*id);
         }
-
     }
 
     void OsuMapDownloader::SetGameMode(std::string_view mode) {

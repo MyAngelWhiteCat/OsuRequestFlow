@@ -19,9 +19,8 @@
 #include <filesystem>
 #include <boost/asio/ssl/context.hpp>
 #include <vector>
-
-#include <windows.h>
-#include <shobjidl.h>
+#include <optional>
+#include <boost/asio/strand.hpp>
 
 
 namespace core {
