@@ -1,20 +1,28 @@
-#include "downloader/downloader.h"
-#include "osu_file_manager/osu_file_manager.h"
-#include "http_client/http_client.h"
 #include "connection/connection.h"
+#include "downloader/downloader.h"
+#include "http_client/http_client.h"
+#include "logger/logging.h"
+#include "osu_file_manager/osu_file_manager.h"
 
 #include <memory>
 #include <string>
 #include <string_view>
-#include <vector>
-#include <utility>
 #include <unordered_map>
+#include <utility>
+#include <vector>
 
-#include <boost/asio/ip/tcp.hpp>
 #include <boost/asio/io_context.hpp>
+#include <boost/asio/ip/tcp.hpp>
 #include <boost/asio/strand.hpp>
 #include <stdexcept>
-#include "logger/logging.h"
+#include <boost/asio/dispatch.hpp>
+#include <exception>
+#include <chrono>
+#include <thread>
+#include <algorithm>
+#include <filesystem>
+#include <boost/asio/post.hpp>
+#include <fstream>
 
 
 namespace downloader {
@@ -26,7 +34,8 @@ namespace downloader {
     using namespace std::literals;
 
     using Strand = net::strand<net::io_context::executor_type>;
-    using ResourcesAccess = std::unordered_map<std::string, std::vector<std::shared_ptr<http_domain::Client>>>;
+    using ResourcesAccess = std::unordered_map
+        <std::string, std::vector<std::shared_ptr<http_domain::Client>>>;
 
 
     Downloader::Downloader(net::io_context& ioc, bool secured)
@@ -64,11 +73,12 @@ namespace downloader {
             }
             });
 
-        LOG_INFO("Mesuring dl speed to "s.append(server.host_).append(server.prefix_));
+        LOG_INFO("Mesuring download speed to "s.append(server.host_).append(server.prefix_));
         try {
             auto client = GetReadyClient();
             client->SetSpeedMesureMode(true);
-            client->Get(GetEndpoint(to_file), user_agent_, [self = this->shared_from_this(), client, &server]
+            client->Get(GetEndpoint(to_file), user_agent_, 
+                [self = this->shared_from_this(), client, &server]
             (http_domain::DLMetaData&& metadata) {
                     self->OnMesureSpeed(server, std::move(metadata));
                 });
@@ -80,6 +90,7 @@ namespace downloader {
     }
 
     void Downloader::Download(std::string_view file) {
+        //need to create toggle before add this feature
         //if (osu_file_manager_->IsAlreadyInstalled(file)) {
         //    LOG_INFO("Map already exist");
         //    return;
@@ -91,7 +102,7 @@ namespace downloader {
         auto now = std::chrono::steady_clock::now();
         auto dur = std::chrono::duration_cast<std::chrono::milliseconds>(now - last_dl_start_).count();
         if (dur < dl_timout_millisec_) {
-            LOG_INFO("DL Timeout");
+            LOG_INFO("Download Timeout");
             std::this_thread::sleep_for(std::chrono::milliseconds(dur));
         }
 
@@ -175,7 +186,8 @@ namespace downloader {
     }
 
     void Downloader::SetDownloadsDirectory(std::string_view path) {
-        osu_file_manager_ = std::make_shared<osu_file_manager::OsuFileManager>(std::filesystem::path(path));
+        osu_file_manager_ = std::make_shared<osu_file_manager::OsuFileManager>
+            (std::filesystem::path(path));
     }
 
     void Downloader::OnDownload(std::string_view file, http_domain::DLMetaData&& metadata) {
@@ -203,7 +215,8 @@ namespace downloader {
             return;
         }
         server.status = ServerStatus::AVAILABLE;
-        LOG_INFO(server.host_ + " EVAILABLE with speed "s.append(std::to_string(metadata.speed_mbs_).append("MB/s")));
+        LOG_INFO(server.host_ + " EVAILABLE with speed "s
+            .append(std::to_string(metadata.speed_mbs_).append("MB/s")));
         server.speed_mbs_ = metadata.speed_mbs_;
         std::sort(base_servers_.begin(), base_servers_.end());
         std::string servers;
@@ -230,7 +243,8 @@ namespace downloader {
             for (const auto& elem : download_queue_) {
                 dl_queue += elem + " ";
             }
-            LOG_INFO(std::to_string(download_queue_.size()).append(" elements in download queue: ").append(dl_queue));
+            LOG_INFO(std::to_string(download_queue_.size()).
+                append(" elements in download queue: ").append(dl_queue));
             std::string elem = *download_queue_.begin();
             download_queue_.erase(elem);
             Download(elem);
