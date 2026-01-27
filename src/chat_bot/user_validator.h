@@ -45,13 +45,17 @@ namespace commands {
             bool Verify(const std::string_view user_name, const irc::domain::Role& role);
 
             void SetWhiteListOnly(bool status);
+            bool GetWhiteListOnly() const;
+
             void AddUserInWhiteList(std::string_view user_name);
             void RemoveUserFromWhiteList(std::string_view user_name);
+
             void AddUserInBlackList(std::string_view user_name);
             void RemoveUserFromBlackList(std::string_view user_name);
+
             void SetRoleLevel(int level);
             int GetRoleLevel();
-            bool GetWhiteListOnly() const;
+
             std::unordered_set<std::string>* GetWhiteList();
             std::unordered_set<std::string>* GetBlackList();
 
