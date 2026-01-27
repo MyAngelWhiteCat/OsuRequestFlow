@@ -1,27 +1,36 @@
 #pragma once
 
+#include <boost/asio/connect.hpp>
 #include <boost/asio/io_context.hpp>
 #include <boost/asio/ip/tcp.hpp>
-#include <boost/asio/strand.hpp>
 #include <boost/asio/ssl.hpp>
 #include <boost/asio/ssl/context.hpp>
 #include <boost/asio/ssl/stream.hpp>
 #include <boost/asio/ssl/stream_base.hpp>
-#include <boost/asio/connect.hpp>
+#include <boost/asio/strand.hpp>
 
-#include <boost/beast/core/tcp_stream.hpp>
-#include <boost/beast/core/error.hpp>
 #include <boost/beast.hpp>
+#include <boost/beast/core/error.hpp>
+#include <boost/beast/core/tcp_stream.hpp>
+#include <boost/beast/http/dynamic_body.hpp>
+#include <boost/beast/http/message.hpp>
+#include <boost/beast/http/string_body.hpp>
 
 #include <memory>
-#include <variant>
-#include <string_view>
+#include <optional>
 #include <stdexcept>
 #include <string>
-#include <optional>
+#include <string_view>
+#include <variant>
 #include <vector>
+#include <cstdio>
+#include <openssl/x509_vfy.h>
+#include <openssl/err.h>
 
 #include "logger/logging.h"
+#include <boost/asio/impl/connect.hpp>
+#include <openssl/tls1.h>
+#include <openssl/ssl.h>
 
 
 namespace http_domain {
