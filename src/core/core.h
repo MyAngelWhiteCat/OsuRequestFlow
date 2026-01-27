@@ -2,21 +2,26 @@
 
 #include "twitch_irc_client/irc_client.h"
 #include "twitch_irc_client/auth_data.h"
-
 #include "connection/connection.h"
-
 #include "chat_bot/command_executor.h"
 #include "chat_bot/chat_bot.h"
-
 #include "downloader/downloader.h"
+
+#include <boost/asio/ip/tcp.hpp>
+#include <boost/asio/io_context.hpp>
+
+#include <nlohmann/json.hpp>
 
 #include <memory>
 #include <string_view>
+#include <string>
+#include <unordered_set>
+#include <filesystem>
+#include <boost/asio/ssl/context.hpp>
+#include <vector>
 
 #include <windows.h>
 #include <shobjidl.h>
-#include <nlohmann/json.hpp>
-#include <chat_bot/command.h>
 
 
 namespace core {
@@ -68,7 +73,7 @@ namespace core {
         std::shared_ptr<downloader::Downloader> downloader_;
 
         const std::string OSU_BEATMAPS_URL = "https://osu.ppy.sh/beatmapsets/";
-        std::string OSU_GAME_MODE = "osu";
+        const std::string OSU_GAME_MODE = "osu";
 
         std::optional<std::string> CheckForOsuMapURLAndGetID(std::string_view url);
         bool CheckGameMode(std::string_view url);
@@ -91,6 +96,7 @@ namespace core {
         void SetupChatBot();
         void SetAuthData(std::string_view nick, std::string_view tocken);
         void SetupIRCClient(bool secured);
+
         void Start();
 
         // settings
@@ -102,42 +108,48 @@ namespace core {
 
         std::unordered_set<std::string>* GetWhiteList();
         std::unordered_set<std::string>* GetBlackList();
-        bool IsUserInWhiteList(std::string_view username);
-        bool IsUserInBlackList(std::string_view username);
-        void AddUserInWhiteList(std::string_view user);
-        void AddUserInBlackList(std::string_view user);
-        void RemoveUserFromWhiteList(std::string_view user);
-        void RemoveUserFromBlackList(std::string_view user);
-        void SetRoleLevelFilter(int level);
-        void SetWhiteListOnly(bool on);
 
+        void AddUserInWhiteList(std::string_view user);
+        void RemoveUserFromWhiteList(std::string_view user);
+        bool IsUserInWhiteList(std::string_view username);
+        
+        void AddUserInBlackList(std::string_view user);
+        void RemoveUserFromBlackList(std::string_view user);
+        bool IsUserInBlackList(std::string_view username);
+
+        void SetRoleLevelFilter(int level);
         int GetRoleLevelFilter();
+        
+        void SetWhiteListOnly(bool on);
         bool GetWhiteListOnly();
 
         // downloader
 
         void SetDownloadResourceAndPrefix(std::string_view resource, std::string_view prefix);
+        std::optional<std::string_view> GetDownloadPrefix();
+        std::optional<std::string_view> GetDownloadResource();
+        
         void SetDownloadsDirectory(std::string_view path);
         void PickDownloadsDirectory();
+        std::optional<std::filesystem::path> GetDownloadsDirectory();
+
         void SetMaxFileSize(size_t MiB);
+        size_t GetMaxFileSize();
+
         void RemoveDublicates();
 
         bool IsNeedToMesureSpeed();
-        std::string GetAccessTestResult();
         void MesureDownloadSpeed(std::string_view to_resourse = "1886002");
-
-        std::optional<std::string_view> GetDownloadResource();
-        std::optional<std::string_view> GetDownloadPrefix();
-        std::optional<std::filesystem::path> GetDownloadsDirectory();
-        size_t GetMaxFileSize();
+        std::string GetAccessTestResult();
 
         // irc client
 
         void Join(std::string_view channel);
         void Part(std::string_view channel);
-        void SetReconnectTimeout(int seconds);
         
         std::vector<std::string_view> GetJoinedChannels();
+
+        void SetReconnectTimeout(int seconds);
 
         // Chat Widget
 
@@ -157,7 +169,7 @@ namespace core {
         std::shared_ptr<irc::Client> client_{ nullptr };
         irc::domain::AuthorizeData auth_data_;
 
-        std::string main_mode_name_ = "dl_osu_map";
+        const std::string main_mode_name_ = "dl_osu_map";
 
         void CheckReadyness();
         json GetUserVerificatorSettings();
