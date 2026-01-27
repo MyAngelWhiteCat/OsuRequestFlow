@@ -4,7 +4,6 @@
 #include <sdkddkver.h>
 #endif
 
-
 #include <boost/asio/ip/tcp.hpp>
 #include <boost/asio/strand.hpp>
 #include <boost/asio/ssl/context.hpp>
@@ -41,6 +40,8 @@
 #include <boost/asio/completion_condition.hpp>
 #include <boost/asio/error.hpp>
 #include <boost/asio/io_context.hpp>
+#include <boost/asio/ip/basic_resolver_results.hpp>
+#include <boost/asio/any_io_executor.hpp>
 
 
 namespace connection {
@@ -52,6 +53,8 @@ namespace connection {
     using namespace std::literals;
 
     using Strand = net::strand<net::io_context::executor_type>;
+    using ResolverResults = net::ip::basic_resolver_results<net::ip::tcp>;
+
 
     // AI on
     static std::shared_ptr<ssl::context> GetSSLContext() {
@@ -153,6 +156,10 @@ namespace connection {
             Connection& connection_;
             std::string host_;
             std::string port_;
+
+            ResolverResults Resolve(const net::any_io_executor& ioc
+                , std::string_view host
+                , std::string_view port);
         };
 
         class DisconnectVisitor {

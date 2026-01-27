@@ -4,7 +4,6 @@
 #include <sdkddkver.h>
 #endif
 
-
 #include <boost/asio/ip/tcp.hpp>
 #include <boost/asio/strand.hpp>
 #include <boost/asio/ssl/context.hpp>
@@ -16,14 +15,25 @@
 #include <boost/asio/ssl/impl/context.ipp>
 #include <boost/asio/ssl/stream.hpp>
 #include <boost/asio/ssl/stream_base.hpp>
+#include <boost/system/detail/error_code.hpp>
+#include <boost/asio/impl/connect.hpp>
 #include <boost/asio/ssl/verify_mode.hpp>
+#include <boost/asio/any_io_executor.hpp>
+#include <boost/asio/socket_base.hpp>
+#include <boost/asio/ip/basic_resolver_results.hpp>
+#include <boost/asio/io_context.hpp>
 
+#include <openssl/x509_vfy.h>
+#include <openssl/err.h>
+#include <openssl/tls1.h>
 #include <openssl/ssl.h>
 
 #include <string>
 #include <string_view>
 #include <variant>
 #include <memory>
+#include <cstdio>
+#include <exception>
 #include <stdexcept>
 
 #include "logger/logging.h"
@@ -40,6 +50,7 @@ namespace connection {
     using namespace std::literals;
 
     using Strand = net::strand<net::io_context::executor_type>;
+    using ResolverResults = net::ip::basic_resolver_results<net::ip::tcp>;
 
 
     Connection::Connection(net::io_context& ioc, Strand& write_strand, Strand& read_strand)
@@ -68,8 +79,9 @@ namespace connection {
         ConnectionVisitor visitor(*this, host, port);
         std::visit(visitor, socket_);
         if (ec_) {
-            logging::ReportError(ec_, "Connection");
+            logging::ReportError(ec_, "Connecting");
         }
+        LOG_INFO("Connected to "s.append(std::string(host)).append(":").append(std::string(port)));
     }
 
     void Connection::Disconnect(bool is_need_to_close_socket) {
@@ -86,6 +98,7 @@ namespace connection {
     bool Connection::IsReconnectRequired() {
         if (reconnect_required_) {
             reconnect_required_ = false;
+            LOG_INFO("Reconnect required");
             return true;
         }
         return false;
@@ -123,35 +136,38 @@ namespace connection {
     }
 
     void Connection::ConnectionVisitor::operator()(tcp::socket& socket) {
-        tcp::resolver resolver(socket.get_executor()); // :(
-        auto endpoints = resolver.resolve(host_, port_);
-        if (connection_.ec_) {
-            logging::ReportError(connection_.ec_, "Resolving");
+        ResolverResults endpoints;
+        try {
+            endpoints = Resolve(socket.get_executor(), host_, port_);
         }
-        else {
-            LOG_INFO("Resolved "s.append(host_).append(":"s).append(port_));
-            for (const auto& ep : endpoints) {
-                LOG_INFO(endpoints.begin()->endpoint().address().to_string().append(":"s).append(port_));
-            }
+        catch (const std::exception& e) {
+            LOG_CRITICAL("Can't resolve "s.append(host_).append(":").append(port_));
+            throw e;
         }
+
+        for (const auto& ep : endpoints) {
+            LOG_INFO(endpoints.begin()->endpoint().address().to_string().append(":"s).append(port_));
+        }
+
         net::connect(socket, endpoints, connection_.ec_);
         if (connection_.ec_) {
-            logging::ReportError(connection_.ec_, "Connection"sv);
+            logging::ReportError(connection_.ec_, "Connecting"sv);
             return;
         }
         connection_.connected_ = true;
     }
 
     void Connection::ConnectionVisitor::operator()(ssl::stream<tcp::socket>& socket) {
-        tcp::resolver resolver(socket.get_executor()); // :(
-        auto endpoints = resolver.resolve(host_, port_, connection_.ec_);
-
-        if (connection_.ec_) {
-            logging::ReportError(connection_.ec_, "Resolving");
-            throw std::runtime_error("cant resolve: "s.append(host_).append(" ").append(port_));
+        ResolverResults endpoints;
+        try {
+            auto exec = socket.get_executor();
+            endpoints = Resolve(exec, host_, port_);
+        }
+        catch (const std::exception& e) {
+            LOG_CRITICAL("Can't resolve "s.append(host_).append(":").append(port_));
+            throw e;
         }
 
-        LOG_INFO("Resolved "s.append(host_).append(":"s).append(port_));
         for (const auto& ep : endpoints) {
             LOG_INFO(endpoints.begin()->endpoint().address().to_string().append(":"s).append(port_));
         }
@@ -169,15 +185,14 @@ namespace connection {
         socket.handshake(ssl::stream_base::client, connection_.ec_);
         if (connection_.ec_) {
             ERR_print_errors_fp(stderr);
-
             logging::ReportError(connection_.ec_, "SSL Handshake");
             socket.lowest_layer().close();
             return;
         }
-
         else {
             LOG_INFO("HANDSHAKE SUCESS");
         }
+
         connection_.ssl_connected_ = true;
         if (SSL_get_verify_result(socket.native_handle()) != X509_V_OK) {
             LOG_INFO("SSL Certificate verification failed");
@@ -185,6 +200,20 @@ namespace connection {
         else {
             LOG_INFO("SSL Certificate verified successfully");
         }
+    }
+
+    ResolverResults Connection::ConnectionVisitor::Resolve(const net::any_io_executor& ioc,
+        std::string_view host,
+        std::string_view port) {
+        tcp::resolver resolver(ioc);
+        auto endpoints = resolver.resolve(host_, port_, connection_.ec_);
+
+        if (connection_.ec_) {
+            logging::ReportError(connection_.ec_, "Resolving");
+            throw std::runtime_error("cant resolve: "s.append(host_).append(" ").append(port_));
+        }
+
+        LOG_INFO("Resolved "s.append(host_).append(":"s).append(port_));
     }
 
     void Connection::DisconnectVisitor::operator()(tcp::socket& socket) {
