@@ -2,13 +2,13 @@
 
 #include "command.h"
 
+#include <memory>
 #include <string>
 #include <string_view>
 #include <unordered_map>
-#include <vector>
-#include <memory>
 
-#include <boost/asio.hpp>
+#include <boost/asio/io_context.hpp>
+#include <twitch_irc_client/message.h>
 
 namespace chat_bot {
 
@@ -40,11 +40,12 @@ namespace chat_bot {
 
         commands::Command* GetCommand(std::string_view command_name);
         Mode* GetMode(std::string_view mode_name);
+
     private:
         net::io_context& ioc_;
-        char command_start_ = '!';
         std::unordered_map<std::string, commands::Command> name_to_command_;
         std::unordered_map<std::string, Mode> name_to_mode_;
+        char command_start_ = '!';
 
         void UseModes(irc::domain::Message&& msg);
         void ProcessCommand(irc::domain::Message&& msg);
